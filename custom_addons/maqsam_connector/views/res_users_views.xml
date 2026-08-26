@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_users_form_maqsam" model="ir.ui.view">
+        <field name="name">res.users.form.maqsam</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='email']" position="after">
+                <field name="maqsam_agent_email" placeholder="agent@example.com"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
