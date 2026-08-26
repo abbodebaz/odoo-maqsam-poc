@@ -2,6 +2,8 @@
 
 Proof of concept for running **Odoo 19 Community** on Railway with an embedded **Maqsam Dialer**.
 
+> Railway POC is configured to install `maqsam_connector` during deployment before starting Odoo.
+
 ## Architecture
 
 - Odoo 19 Community
