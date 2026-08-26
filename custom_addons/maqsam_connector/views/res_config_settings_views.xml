@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_maqsam" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.maqsam</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app string="Maqsam" name="maqsam_connector" data-string="Maqsam">
+                    <block title="Maqsam API" name="maqsam_api_settings">
+                        <setting string="API Connection" help="بيانات الربط الخاصة بحساب Maqsam. يحفظ Access Secret في إعدادات النظام ولا يرسل للمتصفح.">
+                            <div class="content-group">
+                                <div class="row mt16">
+                                    <label for="maqsam_base_url" class="col-lg-3 o_light_label"/>
+                                    <field name="maqsam_base_url" placeholder="your-account.maqsam.com" class="col-lg-6"/>
+                                </div>
+                                <div class="row mt16">
+                                    <label for="maqsam_access_key_id" class="col-lg-3 o_light_label"/>
+                                    <field name="maqsam_access_key_id" class="col-lg-6"/>
+                                </div>
+                                <div class="row mt16">
+                                    <label for="maqsam_access_secret" class="col-lg-3 o_light_label"/>
+                                    <field name="maqsam_access_secret" password="True" class="col-lg-6"/>
+                                </div>
+                                <div class="row mt16">
+                                    <label for="maqsam_default_caller" class="col-lg-3 o_light_label"/>
+                                    <field name="maqsam_default_caller" placeholder="966..." class="col-lg-6"/>
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>
