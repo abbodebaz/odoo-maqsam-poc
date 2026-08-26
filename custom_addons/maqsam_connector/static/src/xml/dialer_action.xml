@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="maqsam_connector.DialerAction">
+        <div class="o_maqsam_dialer h-100 d-flex flex-column">
+            <div class="o_maqsam_header d-flex align-items-center justify-content-between px-3 py-2 border-bottom bg-white">
+                <div>
+                    <strong>Maqsam Dialer</strong>
+                    <div class="text-muted small">الاتصال والاستقبال من داخل Odoo</div>
+                </div>
+                <span class="badge text-bg-success">Embedded</span>
+            </div>
+            <div class="o_maqsam_frame_wrap flex-grow-1">
+                <iframe
+                    class="o_maqsam_frame"
+                    src="/maqsam/dialer"
+                    allow="microphone; autoplay"
+                    title="Maqsam Dialer"
+                />
+            </div>
+        </div>
+    </t>
+</templates>
