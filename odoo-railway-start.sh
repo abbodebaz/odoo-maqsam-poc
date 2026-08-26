@@ -38,7 +38,6 @@ else
 fi
 
 export PGPASSWORD="${ODOO_DB_PASSWORD}"
-TABLE_EXISTS="$(psql -h "${PGHOST}" -p "${PGPORT}" -U "${ODOO_DB_USER}" -d "${ODOO_DB_NAME}" -tAc "SELECT to_regclass('public.ir_module_module')" || true)"
 
 COMMON_ARGS=(
   "--db_host=${PGHOST}"
@@ -51,9 +50,16 @@ COMMON_ARGS=(
   "--proxy-mode"
 )
 
+TABLE_EXISTS="$(psql -h "${PGHOST}" -p "${PGPORT}" -U "${ODOO_DB_USER}" -d "${ODOO_DB_NAME}" -tAc "SELECT to_regclass('public.ir_module_module')" || true)"
 if [ "${TABLE_EXISTS}" != "ir_module_module" ]; then
   echo "Initializing Odoo database for the first time..."
   odoo "${COMMON_ARGS[@]}" -d "${ODOO_DB_NAME}" -i base --without-demo=all --stop-after-init
+fi
+
+MODULE_STATE="$(psql -h "${PGHOST}" -p "${PGPORT}" -U "${ODOO_DB_USER}" -d "${ODOO_DB_NAME}" -tAc "SELECT state FROM ir_module_module WHERE name='maqsam_connector' LIMIT 1" || true)"
+if [ "${MODULE_STATE}" != "installed" ]; then
+  echo "Installing Maqsam Connector module..."
+  odoo "${COMMON_ARGS[@]}" -d "${ODOO_DB_NAME}" -i maqsam_connector --without-demo=all --stop-after-init
 fi
 
 echo "Starting Odoo 19..."
