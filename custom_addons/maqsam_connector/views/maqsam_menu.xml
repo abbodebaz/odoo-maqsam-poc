@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_maqsam_dialer" model="ir.actions.client">
+        <field name="name">Maqsam Dialer</field>
+        <field name="tag">maqsam_connector.dialer</field>
+    </record>
+
+    <menuitem id="menu_maqsam_root" name="Maqsam" sequence="95"/>
+    <menuitem id="menu_maqsam_dialer" name="Dialer" parent="menu_maqsam_root" action="action_maqsam_dialer" sequence="10"/>
+</odoo>
