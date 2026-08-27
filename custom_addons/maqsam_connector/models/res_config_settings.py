@@ -20,10 +20,15 @@ class ResConfigSettings(models.TransientModel):
     maqsam_default_agent_email = fields.Char(
         string="Default Maqsam Agent Email",
         config_parameter="maqsam_connector.default_agent_email",
-        help="إيميل الـAgent المستخدم في تجربة الاتصال. يمكن لكل مستخدم لاحقًا تحديد إيميل مختلف من صفحة المستخدم.",
+        help="إيميل الـAgent المستخدم في تجربة الاتصال. يمكن لكل مستخدم تحديد إيميل مختلف من صفحة المستخدم.",
     )
     maqsam_default_caller = fields.Char(
         string="Default Caller Number",
         config_parameter="maqsam_connector.default_caller",
         help="رقم مقسم الافتراضي للاتصالات الصادرة، إن احتجته.",
+    )
+    maqsam_webhook_token = fields.Char(
+        string="Notify Webhook Token",
+        config_parameter="maqsam_connector.webhook_token",
+        help="نص عشوائي طويل لحماية رابط Notify webhook. استخدمه داخل رابط /maqsam/webhook/notify/<token> في Maqsam.",
     )
