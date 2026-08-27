@@ -1,35 +1,483 @@
-.o_maqsam_api_page {
-    background: #f6f7f9;
+.o_maqsam_workspace {
+    --maqsam-purple: #714b67;
+    --maqsam-purple-dark: #51354b;
+    --maqsam-green: #22a06b;
+    --maqsam-blue: #2f6fed;
+    --maqsam-red: #d64545;
+    --maqsam-amber: #c98517;
+    --maqsam-teal: #168a8a;
+    --maqsam-ink: #1f2937;
+    --maqsam-muted: #6b7280;
+    --maqsam-border: #e7e9ee;
+    --maqsam-bg: #f5f6f8;
+    background: var(--maqsam-bg);
+    color: var(--maqsam-ink);
 }
 
-.o_maqsam_card {
+.o_maqsam_content {
+    padding: 24px;
+    max-width: 1500px;
+    margin: 0 auto;
+}
+
+.o_maqsam_hero {
+    background: linear-gradient(135deg, #6f4a65 0%, #4e3650 58%, #2f293d 100%);
+    color: #fff;
+    padding: 28px 32px;
+    min-height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.o_maqsam_hero h2,
+.o_maqsam_page_head h2 {
+    font-size: 28px;
+    font-weight: 750;
+    margin: 0 0 4px;
+    letter-spacing: -0.3px;
+}
+
+.o_maqsam_hero p {
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 14px;
+}
+
+.o_maqsam_hero_btn {
+    min-height: 40px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.o_maqsam_page_head {
     background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 14px;
+    border-bottom: 1px solid var(--maqsam-border);
+    padding: 22px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+}
+
+.o_maqsam_page_head p {
+    margin: 3px 0 0;
+    color: var(--maqsam-muted);
+    font-size: 14px;
+}
+
+.o_maqsam_eyebrow {
+    color: #9b7f94;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.o_maqsam_hero .o_maqsam_eyebrow {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.o_maqsam_kpis {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.o_maqsam_kpis_compact {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.o_maqsam_kpi {
+    background: #fff;
+    border: 1px solid var(--maqsam-border);
+    border-radius: 16px;
     padding: 16px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 4px 18px rgba(27, 31, 43, 0.04);
 }
 
-.o_maqsam_loading {
-    background: #fff;
-    border: 1px dashed #d1d5db;
+.o_maqsam_kpi_icon {
+    width: 42px;
+    height: 42px;
     border-radius: 12px;
-    padding: 36px;
-    text-align: center;
-    color: #6b7280;
+    display: grid;
+    place-items: center;
+    font-size: 16px;
 }
 
-.o_maqsam_phone_input {
-    max-width: 260px;
+.o_maqsam_kpi_icon.is-purple { background: #f0e9ef; color: #714b67; }
+.o_maqsam_kpi_icon.is-green { background: #e7f7ef; color: #168a59; }
+.o_maqsam_kpi_icon.is-blue { background: #eaf1ff; color: #2f6fed; }
+.o_maqsam_kpi_icon.is-red { background: #fdecec; color: #c83e3e; }
+.o_maqsam_kpi_icon.is-amber { background: #fff3df; color: #b26f0d; }
+.o_maqsam_kpi_icon.is-teal { background: #e5f5f5; color: #168a8a; }
+
+.o_maqsam_kpi_value {
+    font-size: 22px;
+    font-weight: 750;
+    line-height: 1.1;
+}
+
+.o_maqsam_kpi_label {
+    color: var(--maqsam-muted);
+    font-size: 12px;
+    margin-top: 4px;
+    white-space: nowrap;
+}
+
+.o_maqsam_panel,
+.o_maqsam_detail_drawer {
+    background: #fff;
+    border: 1px solid var(--maqsam-border);
+    border-radius: 16px;
+    padding: 18px;
+    box-shadow: 0 4px 18px rgba(27, 31, 43, 0.04);
+}
+
+.o_maqsam_panel_head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.o_maqsam_panel_head h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.o_maqsam_panel_head span {
+    display: block;
+    color: var(--maqsam-muted);
+    font-size: 12px;
+    margin-top: 3px;
+}
+
+.o_maqsam_recent_row {
+    display: grid;
+    grid-template-columns: 40px minmax(170px, 1fr) auto auto 64px;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 4px;
+    border-bottom: 1px solid #f0f1f3;
+}
+
+.o_maqsam_recent_row:last-child { border-bottom: 0; }
+
+.o_maqsam_recent_main { min-width: 0; }
+
+.o_maqsam_call_icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+}
+
+.o_maqsam_call_icon.is-inbound { background: #e7f7ef; color: #168a59; }
+.o_maqsam_call_icon.is-outbound { background: #eaf1ff; color: #2f6fed; }
+.o_maqsam_call_icon.is-internal { background: #f0e9ef; color: #714b67; }
+.o_maqsam_call_icon.is-campaign { background: #fff3df; color: #b26f0d; }
+
+.o_maqsam_badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    width: fit-content;
+    border-radius: 999px;
+    padding: 5px 9px;
+    font-size: 11px;
+    font-weight: 650;
+    line-height: 1;
+    background: #f2f3f5;
+    color: #5e6672;
+}
+
+.o_maqsam_badge.is-inbound,
+.o_maqsam_badge.is-success { background: #e8f7ef; color: #168a59; }
+.o_maqsam_badge.is-outbound { background: #eaf1ff; color: #2f6fed; }
+.o_maqsam_badge.is-internal { background: #f0e9ef; color: #714b67; }
+.o_maqsam_badge.is-campaign,
+.o_maqsam_badge.is-warning { background: #fff3df; color: #a96708; }
+.o_maqsam_badge.is-danger { background: #fdecec; color: #c83e3e; }
+.o_maqsam_badge.is-neutral { background: #f2f3f5; color: #626b77; }
+
+.o_maqsam_dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.o_maqsam_duration {
+    color: #4b5563;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.o_maqsam_phone_field {
+    height: 40px;
+    border: 1px solid #d9dde4;
+    border-radius: 10px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 0 12px;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.o_maqsam_phone_field:focus-within {
+    border-color: #9b7f94;
+    box-shadow: 0 0 0 3px rgba(113, 75, 103, 0.09);
+}
+
+.o_maqsam_phone_field i { color: #8a929e; }
+
+.o_maqsam_phone_field input {
+    border: 0;
+    outline: 0;
+    background: transparent;
+    width: 100%;
+    min-width: 0;
     direction: ltr;
     text-align: left;
 }
 
-.o_maqsam_text_block {
-    background: #f8fafc;
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
+.o_maqsam_small_input {
+    width: 145px;
+    direction: ltr;
+    text-align: left;
+}
+
+.o_maqsam_quick_call { display: grid; gap: 10px; }
+
+.o_maqsam_shortcuts { display: grid; gap: 7px; }
+
+.o_maqsam_shortcuts button {
+    width: 100%;
+    border: 0;
+    background: #fafafb;
+    border-radius: 12px;
+    padding: 10px 12px;
+    display: grid;
+    grid-template-columns: 34px 1fr auto;
+    align-items: center;
+    gap: 10px;
+    text-align: right;
+    color: var(--maqsam-ink);
+    transition: background .15s ease, transform .15s ease;
+}
+
+.o_maqsam_shortcuts button:hover {
+    background: #f2eef2;
+    transform: translateX(-2px);
+}
+
+.o_maqsam_shortcuts strong,
+.o_maqsam_shortcuts small { display: block; }
+.o_maqsam_shortcuts small { color: var(--maqsam-muted); margin-top: 2px; font-size: 11px; }
+
+.o_maqsam_shortcut_icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    background: #efe8ee;
+    color: #714b67;
+    display: grid;
+    place-items: center;
+}
+
+.o_maqsam_table thead th {
+    background: #fafafb;
+    color: #626b77;
+    border-bottom: 1px solid var(--maqsam-border);
+    padding: 12px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.o_maqsam_table tbody td {
+    border-color: #f0f1f3;
+    padding: 13px 14px;
+    font-size: 13px;
+}
+
+.o_maqsam_table tbody tr:hover td { background: #fcfbfc; }
+
+.o_maqsam_pagination {
+    border-top: 1px solid var(--maqsam-border);
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--maqsam-muted);
+    font-size: 12px;
+}
+
+.o_maqsam_detail_drawer { padding: 22px; }
+
+.o_maqsam_detail_head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 15px;
+    margin-bottom: 18px;
+}
+
+.o_maqsam_detail_head h3 { margin: 2px 0; font-size: 22px; }
+.o_maqsam_detail_head span { color: var(--maqsam-muted); font-size: 11px; }
+
+.o_maqsam_detail_grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.o_maqsam_detail_grid > div {
+    background: #fafafb;
+    border: 1px solid #eef0f2;
+    border-radius: 11px;
     padding: 12px;
+}
+
+.o_maqsam_detail_grid span,
+.o_maqsam_detail_grid strong { display: block; }
+.o_maqsam_detail_grid span { color: var(--maqsam-muted); font-size: 11px; margin-bottom: 3px; }
+
+.o_maqsam_recording {
+    border: 1px solid #e6e8ed;
+    border-radius: 12px;
+    padding: 12px;
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) minmax(280px, 2fr);
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+
+.o_maqsam_recording span { display: block; color: var(--maqsam-muted); font-size: 11px; margin-top: 2px; }
+.o_maqsam_recording audio { width: 100%; height: 34px; }
+
+.o_maqsam_insight {
+    background: #fafafb;
+    border: 1px solid #eceef1;
+    border-radius: 12px;
+    padding: 14px;
+    margin-top: 12px;
     white-space: pre-wrap;
     overflow-wrap: anywhere;
+}
+
+.o_maqsam_insight_title { font-weight: 700; margin-bottom: 8px; }
+.o_maqsam_insight pre { margin: 0; white-space: pre-wrap; font: inherit; }
+
+.o_maqsam_person {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 180px;
+}
+
+.o_maqsam_person strong,
+.o_maqsam_person span { display: block; }
+.o_maqsam_person span { color: var(--maqsam-muted); font-size: 11px; margin-top: 2px; }
+
+.o_maqsam_avatar {
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
+    border-radius: 11px;
+    display: grid;
+    place-items: center;
+    background: #eee7ed;
+    color: #714b67;
+    font-weight: 750;
+    font-size: 12px;
+}
+
+.o_maqsam_avatar.is-contact { background: #e9f2ff; color: #2f6fed; }
+
+.o_maqsam_permission {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+}
+.o_maqsam_permission.is-on { color: #168a59; }
+.o_maqsam_permission.is-off { color: #9aa1ab; }
+
+.o_maqsam_loading,
+.o_maqsam_empty {
+    background: #fff;
+    border: 1px dashed #d9dde4;
+    border-radius: 14px;
+    padding: 34px;
+    text-align: center;
+    color: var(--maqsam-muted);
+}
+
+.o_maqsam_empty {
+    border: 0;
+    background: transparent;
+    padding: 28px;
+}
+
+.o_maqsam_alert { border-radius: 12px; }
+
+.o_maqsam_workspace .btn {
+    border-radius: 9px;
+    font-weight: 600;
+}
+
+.o_maqsam_workspace .btn-primary {
+    background: #714b67;
+    border-color: #714b67;
+}
+
+.o_maqsam_workspace .btn-primary:hover {
+    background: #5f3f57;
+    border-color: #5f3f57;
+}
+
+.o_maqsam_workspace .btn-success {
+    background: #22a06b;
+    border-color: #22a06b;
+}
+
+.o_maqsam_workspace .form-control {
+    border-radius: 10px;
+    border-color: #d9dde4;
+    min-height: 40px;
+}
+
+@media (max-width: 1199px) {
+    .o_maqsam_kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .o_maqsam_kpis_compact { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 767px) {
+    .o_maqsam_content { padding: 14px; }
+    .o_maqsam_hero,
+    .o_maqsam_page_head { padding: 18px; flex-direction: column; align-items: stretch; }
+    .o_maqsam_kpis,
+    .o_maqsam_kpis_compact { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .o_maqsam_kpi { padding: 12px; }
+    .o_maqsam_kpi_icon { width: 36px; height: 36px; }
+    .o_maqsam_kpi_value { font-size: 18px; }
+    .o_maqsam_recent_row { grid-template-columns: 36px minmax(0, 1fr) auto; }
+    .o_maqsam_recent_row .o_maqsam_badge:nth-of-type(2),
+    .o_maqsam_recent_row .o_maqsam_duration { display: none; }
+    .o_maqsam_detail_grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .o_maqsam_recording { grid-template-columns: 1fr; }
 }
