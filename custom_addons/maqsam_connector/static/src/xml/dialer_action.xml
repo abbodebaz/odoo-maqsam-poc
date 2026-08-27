@@ -13,7 +13,8 @@
                 <iframe
                     class="o_maqsam_frame"
                     src="/maqsam/dialer"
-                    allow="microphone; autoplay"
+                    allow="microphone *; autoplay *; clipboard-read *; clipboard-write *"
+                    referrerpolicy="strict-origin-when-cross-origin"
                     title="Maqsam Dialer"
                 />
             </div>
