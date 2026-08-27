@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="maqsam_connector.CallsAction">
+        <div class="o_maqsam_api_page h-100 overflow-auto p-3" dir="rtl">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                <div>
+                    <h3 class="mb-1">سجل مكالمات Maqsam</h3>
+                    <div class="text-muted">Calls API V3 · التفاصيل · التسجيلات · الاتصال الصادر</div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-secondary" t-on-click="toggleMine">
+                        <t t-if="state.mine">عرض كل المكالمات</t>
+                        <t t-else="">عرض مكالماتي فقط</t>
+                    </button>
+                    <button class="btn btn-primary" t-on-click="() => this.loadCalls(1)">تحديث</button>
+                </div>
+            </div>
+
+            <div class="o_maqsam_card mb-3">
+                <div class="fw-bold mb-2">اتصال صادر عبر Calls API</div>
+                <form class="d-flex flex-wrap gap-2" t-on-submit="makeCall">
+                    <input class="form-control o_maqsam_phone_input" t-model="state.phone" placeholder="9665XXXXXXXX" inputmode="tel" required="required"/>
+                    <input class="form-control o_maqsam_phone_input" t-model="state.caller" placeholder="Caller اختياري" inputmode="tel"/>
+                    <button class="btn btn-success" type="submit" t-att-disabled="state.callBusy">
+                        <t t-if="state.callBusy">جاري الاتصال…</t>
+                        <t t-else="">اتصال</t>
+                    </button>
+                </form>
+                <div t-if="state.callMessage" class="mt-2 small" t-att-class="state.callMessage.startsWith('خطأ') ? 'text-danger' : 'text-success'">
+                    <t t-esc="state.callMessage"/>
+                </div>
+            </div>
+
+            <div t-if="state.error" class="alert alert-danger"><t t-esc="state.error"/></div>
+            <div t-if="state.loading" class="o_maqsam_loading">جاري تحميل سجل المكالمات…</div>
+
+            <div t-else="" class="o_maqsam_card p-0 overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>الاتجاه</th>
+                                <th>الرقم</th>
+                                <th>الحالة</th>
+                                <th>الموظف</th>
+                                <th>المدة</th>
+                                <th>التاريخ</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-if="!state.calls.length">
+                                <td colspan="7" class="text-center text-muted py-5">لا توجد مكالمات في هذه الصفحة.</td>
+                            </tr>
+                            <tr t-foreach="state.calls" t-as="call" t-key="call.referenceId || call.id">
+                                <td><span class="badge text-bg-light"><t t-esc="direction(call)"/></span></td>
+                                <td class="fw-semibold" dir="ltr"><t t-esc="callPhone(call)"/></td>
+                                <td><t t-esc="call.state || '—'"/></td>
+                                <td><t t-esc="agents(call)"/></td>
+                                <td><t t-esc="(call.duration || 0) + ' ث'"/></td>
+                                <td><t t-esc="formatTime(call.timestamp)"/></td>
+                                <td><button class="btn btn-sm btn-outline-primary" t-on-click="() => this.openCall(call)">تفاصيل</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="d-flex align-items-center justify-content-between p-3 border-top">
+                    <button class="btn btn-outline-secondary" t-att-disabled="state.page &lt;= 1" t-on-click="previousPage">السابق</button>
+                    <span>صفحة <t t-esc="state.page"/></span>
+                    <button class="btn btn-outline-secondary" t-att-disabled="state.calls.length &lt; 100" t-on-click="nextPage">التالي</button>
+                </div>
+            </div>
+
+            <div t-if="state.detailLoading" class="o_maqsam_loading mt-3">جاري تحميل تفاصيل المكالمة…</div>
+
+            <div t-if="state.selected" class="o_maqsam_card mt-3">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div>
+                        <h4 class="mb-1">تفاصيل المكالمة</h4>
+                        <div class="text-muted" dir="ltr">Reference: <t t-esc="state.selected.referenceId || '—'"/></div>
+                    </div>
+                    <button class="btn-close" aria-label="إغلاق" t-on-click="closeDetail"/>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-3"><div class="text-muted small">النوع</div><strong><t t-esc="direction(state.selected)"/></strong></div>
+                    <div class="col-md-3"><div class="text-muted small">الحالة</div><strong><t t-esc="state.selected.state || '—'"/></strong></div>
+                    <div class="col-md-3"><div class="text-muted small">المدة</div><strong><t t-esc="(state.selected.duration || 0) + ' ثانية'"/></strong></div>
+                    <div class="col-md-3"><div class="text-muted small">Sentiment</div><strong><t t-esc="state.selected.sentiment || '—'"/></strong></div>
+                    <div class="col-md-3"><div class="text-muted small">Ringing</div><strong><t t-esc="(state.selected.ringingTime || 0) + ' ث'"/></strong></div>
+                    <div class="col-md-3"><div class="text-muted small">Waiting</div><strong><t t-esc="(state.selected.waitingTime || 0) + ' ث'"/></strong></div>
+                    <div class="col-md-3"><div class="text-muted small">Hold</div><strong><t t-esc="(state.selected.holdTime || 0) + ' ث'"/></strong></div>
+                    <div class="col-md-3"><div class="text-muted small">Handling</div><strong><t t-esc="(state.selected.handlingTime || 0) + ' ث'"/></strong></div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="fw-bold mb-2">التسجيل</div>
+                    <audio class="w-100" controls="controls" preload="none" t-att-src="recordingUrl(state.selected)"/>
+                    <div class="text-muted small mt-1">التسجيل قد يحتاج 10–20 ثانية بعد انتهاء المكالمة حتى يصبح متاحًا.</div>
+                </div>
+
+                <div t-if="summary(state.selected)" class="mb-3">
+                    <div class="fw-bold mb-2">AI Summary</div>
+                    <div class="o_maqsam_text_block"><t t-esc="summary(state.selected)"/></div>
+                </div>
+
+                <div t-if="transcription(state.selected)" class="mb-2">
+                    <div class="fw-bold mb-2">Transcription</div>
+                    <pre class="o_maqsam_text_block mb-0"><t t-esc="transcription(state.selected)"/></pre>
+                </div>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="maqsam_connector.AgentsAction">
+        <div class="o_maqsam_api_page h-100 overflow-auto p-3" dir="rtl">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div>
+                    <h3 class="mb-1">موظفو Maqsam</h3>
+                    <div class="text-muted">Agents API V1 · الحالة والصلاحيات</div>
+                </div>
+                <button class="btn btn-primary" t-on-click="() => this.loadAgents(state.page)">تحديث</button>
+            </div>
+
+            <div t-if="state.error" class="alert alert-danger"><t t-esc="state.error"/></div>
+            <div t-if="state.loading" class="o_maqsam_loading">جاري تحميل الموظفين…</div>
+
+            <div t-else="" class="o_maqsam_card p-0 overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>الموظف</th>
+                                <th>الحالة</th>
+                                <th>نشط</th>
+                                <th>استقبال</th>
+                                <th>صادر</th>
+                                <th>WhatsApp</th>
+                                <th>المجموعات</th>
+                                <th>تاريخ الإنشاء</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-if="!state.agents.length"><td colspan="8" class="text-center text-muted py-5">لا يوجد موظفون.</td></tr>
+                            <tr t-foreach="state.agents" t-as="agent" t-key="agent.identifier || agent.email">
+                                <td><strong><t t-esc="agent.name || '—'"/></strong><div class="text-muted small"><t t-esc="agent.email || '—'"/></div></td>
+                                <td><t t-esc="stateLabel(agent)"/></td>
+                                <td><t t-esc="agent.active ? '✅' : '❌'"/></td>
+                                <td><t t-esc="agent.incomingEnabled ? '✅' : '❌'"/></td>
+                                <td><t t-esc="agent.outgoingEnabled ? '✅' : '❌'"/></td>
+                                <td><t t-esc="agent.whatsappEnabled ? '✅' : '❌'"/></td>
+                                <td><t t-esc="(agent.groups || []).join('، ') || '—'"/></td>
+                                <td><t t-esc="createdAt(agent)"/></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="d-flex align-items-center justify-content-between p-3 border-top">
+                    <button class="btn btn-outline-secondary" t-att-disabled="state.page &lt;= 1" t-on-click="previousPage">السابق</button>
+                    <span>صفحة <t t-esc="state.page"/></span>
+                    <button class="btn btn-outline-secondary" t-att-disabled="state.agents.length &lt; 100" t-on-click="nextPage">التالي</button>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>
