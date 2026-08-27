@@ -1,18 +1,116 @@
 .o_maqsam_dialer {
     min-height: 0;
-    background: #f8f9fa;
+    background: #f5f6f8;
+    color: #1f2937;
 }
 
-.o_maqsam_frame_wrap {
+.o_maqsam_dialer_head {
+    background: #fff;
+    border-bottom: 1px solid #e7e9ee;
+    padding: 20px 26px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.o_maqsam_dialer_head h2 {
+    margin: 0;
+    font-size: 25px;
+    font-weight: 750;
+}
+
+.o_maqsam_dialer_head p {
+    margin: 4px 0 0;
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.o_maqsam_dialer_eyebrow {
+    color: #9b7f94;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    font-size: 10px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.o_maqsam_dialer_status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 11px;
+    border-radius: 999px;
+    background: #e8f7ef;
+    color: #168a59;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.o_maqsam_live_dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #22a06b;
+    display: inline-block;
+    box-shadow: 0 0 0 4px rgba(34, 160, 107, .11);
+}
+
+.o_maqsam_frame_area {
     min-height: 0;
-    padding: 12px;
+    padding: 18px;
+}
+
+.o_maqsam_frame_shell {
+    height: 100%;
+    min-height: 680px;
+    background: #fff;
+    border: 1px solid #e4e7ec;
+    border-radius: 17px;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(27, 31, 43, .06);
+    display: flex;
+    flex-direction: column;
+}
+
+.o_maqsam_frame_top {
+    min-height: 42px;
+    padding: 0 14px;
+    border-bottom: 1px solid #eceef1;
+    background: #fafafb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    color: #6b7280;
+    font-size: 11px;
+}
+
+.o_maqsam_frame_top > div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #374151;
+    font-weight: 650;
 }
 
 .o_maqsam_frame {
     width: 100%;
     height: 100%;
-    min-height: 650px;
+    flex: 1 1 auto;
+    min-height: 635px;
     border: 0;
-    border-radius: 12px;
     background: #fff;
+}
+
+@media (max-width: 767px) {
+    .o_maqsam_dialer_head {
+        padding: 16px;
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .o_maqsam_frame_area { padding: 10px; }
+    .o_maqsam_frame_shell { min-height: 620px; border-radius: 13px; }
+    .o_maqsam_frame { min-height: 575px; }
 }
