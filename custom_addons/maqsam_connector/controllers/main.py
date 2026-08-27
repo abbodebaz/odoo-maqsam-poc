@@ -78,15 +78,6 @@ class MaqsamController(http.Controller):
             )
         )
 
-    @staticmethod
-    def _agent_label(agent):
-        name = str(agent.get("name") or "").strip() or "بدون اسم"
-        email = str(agent.get("email") or "").strip() or "بدون إيميل"
-        incoming = "نعم" if agent.get("incomingEnabled") is True else "لا"
-        outgoing = "نعم" if agent.get("outgoingEnabled") is True else "لا"
-        state = str(agent.get("state") or "غير معروف")
-        return f"{name} <{email}> — استقبال: {incoming}، صادر: {outgoing}، الحالة: {state}"
-
     def _resolve_agent(self, cfg):
         agents = self._agents(cfg)
         requested = (cfg.get("agent_email") or "").strip().lower()
@@ -102,95 +93,40 @@ class MaqsamController(http.Controller):
             )
             if not match:
                 raise ValueError(
-                    f"تم الاتصال بـMaqsam بنجاح، لكن Agent Email ({requested}) غير موجود في الحساب. "
-                    "ضع نفس Agent Email الذي استخدمته في برنامج RTC من Settings → Maqsam."
+                    f"تم الاتصال بـMaqsam بنجاح، لكن Agent Email ({requested}) غير موجود في الحساب."
                 )
             if match.get("active") is False:
                 raise ValueError(f"Agent {requested} موجود لكنه غير نشط في Maqsam")
             if not self._can_use_dialer(match):
-                raise ValueError(
-                    "المستخدم المحدد موجود في Maqsam لكنه لا يملك صلاحية Dialer. "
-                    f"المستخدم الحالي: {self._agent_label(match)}. "
-                    "اختر Agent لديه Incoming أو Outgoing enabled، وليس حساب Admin فقط."
-                )
+                raise ValueError("المستخدم المحدد لا يملك صلاحية Incoming أو Outgoing في Maqsam")
             return match
 
-        dialer_agents = [agent for agent in agents if self._can_use_dialer(agent) and agent.get("email")]
+        dialer_agents = [
+            agent for agent in agents if self._can_use_dialer(agent) and agent.get("email")
+        ]
         if len(dialer_agents) == 1:
             return dialer_agents[0]
-
-        if not dialer_agents:
-            raise ValueError(
-                "لم أجد أي Agent نشط لديه صلاحية Incoming أو Outgoing في Maqsam. "
-                "فعّل صلاحيات الاتصال للموظف في Maqsam أولاً."
-            )
-
-        preview = " | ".join(self._agent_label(agent) for agent in dialer_agents[:8])
-        raise ValueError(
-            "يوجد أكثر من Agent لديه صلاحية Dialer. حدد Default Maqsam Agent Email من Settings → Maqsam. "
-            f"المتاحون: {preview}"
-        )
+        raise ValueError("حدد Maqsam Agent Email لهذا المستخدم أو من Settings → Maqsam")
 
     def _error_page(self, exc):
         message = html.escape(str(exc))
         return request.make_response(
-            "<html dir='rtl'><body style='font-family:Arial,sans-serif;padding:32px;background:#f7f7f8'>"
-            "<div style='max-width:900px;margin:auto;background:#fff;padding:28px;border-radius:14px'>"
-            "<h2 style='margin-top:0'>تعذر فتح Maqsam Dialer</h2>"
-            f"<p style='font-size:16px'>{message}</p>"
-            "</div></body></html>",
+            "<html dir='rtl'><body style='font-family:Arial,sans-serif;padding:32px'>"
+            "<h3>تعذر تحميل Maqsam Dialer</h3>"
+            f"<p>{message}</p>"
+            "</body></html>",
             headers=[("Content-Type", "text/html; charset=utf-8")],
             status=500,
         )
 
-    @http.route("/maqsam/dialer", type="http", auth="user", methods=["GET"], csrf=False)
-    def dialer_status(self, **kwargs):
-        try:
-            cfg = self._config()
-            agent = self._resolve_agent(cfg)
-            name = html.escape(str(agent.get("name") or "بدون اسم"))
-            email = html.escape(str(agent.get("email") or ""))
-            state = html.escape(str(agent.get("state") or "غير معروف"))
-            incoming = "مفعّل ✅" if agent.get("incomingEnabled") is True else "غير مفعّل ❌"
-            outgoing = "مفعّل ✅" if agent.get("outgoingEnabled") is True else "غير مفعّل ❌"
-            base_url = html.escape(cfg["base_url"])
-
-            page = f"""
-            <html dir='rtl'>
-            <head><meta charset='utf-8'><title>Maqsam Diagnostic</title></head>
-            <body style='font-family:Arial,sans-serif;background:#f6f7f9;margin:0;padding:32px'>
-              <div style='max-width:820px;margin:auto;background:white;border:1px solid #e5e7eb;border-radius:16px;padding:28px'>
-                <h2 style='margin-top:0'>تم الاتصال بـ Maqsam بنجاح ✅</h2>
-                <p>هذه هي هوية الـAgent التي سيستخدمها Odoo قبل فتح الـDialer:</p>
-                <div style='background:#f8fafc;border-radius:12px;padding:18px;line-height:2'>
-                  <b>الاسم:</b> {name}<br>
-                  <b>الإيميل:</b> {email}<br>
-                  <b>الحالة:</b> {state}<br>
-                  <b>استقبال:</b> {incoming}<br>
-                  <b>صادر:</b> {outgoing}<br>
-                  <b>Base URL:</b> {base_url}
-                </div>
-                <p style='margin-top:20px'>إذا هذا هو نفس الموظف الذي اشتغل معك في برنامج RTC اضغط الزر:</p>
-                <a href='/maqsam/dialer/go' style='display:inline-block;background:#714b67;color:white;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:bold'>فتح Maqsam Dialer</a>
-              </div>
-            </body>
-            </html>
-            """
-            return request.make_response(
-                page,
-                headers=[("Content-Type", "text/html; charset=utf-8")],
-                status=200,
-            )
-        except Exception as exc:
-            return self._error_page(exc)
-
-    @http.route("/maqsam/dialer/go", type="http", auth="user", methods=["GET"], csrf=False)
-    def dialer_go(self, **kwargs):
+    @http.route(["/maqsam/dialer", "/maqsam/dialer/go"], type="http", auth="user", methods=["GET"], csrf=False)
+    def dialer(self, **kwargs):
         try:
             cfg = self._config()
             agent = self._resolve_agent(cfg)
             agent_email = str(agent.get("email") or "").strip().lower()
 
+            # This intentionally mirrors the proven RTC Node POC request shape.
             response = requests.post(
                 f"https://api.{cfg['base_url']}/v2/token",
                 auth=self._auth(cfg),
@@ -201,7 +137,7 @@ class MaqsamController(http.Controller):
             if not response.ok:
                 raise ValueError(
                     f"Maqsam رفض Autologin Token ({response.status_code}): "
-                    f"{self._response_message(response)} — Agent: {agent_email}"
+                    f"{self._response_message(response)}"
                 )
 
             payload = response.json() or {}
