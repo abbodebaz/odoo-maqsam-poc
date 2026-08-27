@@ -1,241 +1,95 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
-    <t t-name="maqsam_connector.CallsAction">
-        <div class="o_maqsam_api_page h-100 overflow-auto p-3" dir="rtl">
-            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <t t-name="maqsam_connector.DashboardAction">
+        <div class="o_maqsam_workspace h-100 overflow-auto" dir="rtl">
+            <div class="o_maqsam_hero">
                 <div>
-                    <h3 class="mb-1">سجل مكالمات Maqsam</h3>
-                    <div class="text-muted">Calls API V3 · التفاصيل · التسجيلات · الاتصال الصادر</div>
+                    <div class="o_maqsam_eyebrow">مركز الاتصالات</div>
+                    <h2 class="mb-1">لوحة Maqsam</h2>
+                    <p class="mb-0">اتصال، متابعة، تسجيلات وفريق خدمة العملاء من مكان واحد.</p>
                 </div>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-outline-secondary" t-on-click="toggleMine">
-                        <t t-if="state.mine">عرض كل المكالمات</t>
-                        <t t-else="">عرض مكالماتي فقط</t>
-                    </button>
-                    <button class="btn btn-primary" t-on-click="() => this.loadCalls(1)">تحديث</button>
+                <div class="d-flex flex-wrap gap-2">
+                    <button class="btn btn-light o_maqsam_hero_btn" t-on-click="() => this.openSection('dialer')"><i class="fa fa-phone me-1"/> فتح الهاتف</button>
+                    <button class="btn btn-outline-light o_maqsam_hero_btn" t-on-click="loadDashboard"><i class="fa fa-refresh me-1"/> تحديث</button>
                 </div>
             </div>
-
-            <div class="o_maqsam_card mb-3">
-                <div class="fw-bold mb-2">اتصال صادر عبر Calls API</div>
-                <form class="d-flex flex-wrap gap-2" t-on-submit="makeCall">
-                    <input class="form-control o_maqsam_phone_input" t-model="state.phone" placeholder="9665XXXXXXXX" inputmode="tel" required="required"/>
-                    <input class="form-control o_maqsam_phone_input" t-model="state.caller" placeholder="Caller اختياري" inputmode="tel"/>
-                    <button class="btn btn-success" type="submit" t-att-disabled="state.callBusy">
-                        <t t-if="state.callBusy">جاري الاتصال…</t>
-                        <t t-else="">اتصال</t>
-                    </button>
-                </form>
-                <div t-if="state.callMessage" class="mt-2 small" t-att-class="state.callMessage.startsWith('خطأ') ? 'text-danger' : 'text-success'">
-                    <t t-esc="state.callMessage"/>
-                </div>
-            </div>
-
-            <div t-if="state.error" class="alert alert-danger"><t t-esc="state.error"/></div>
-            <div t-if="state.loading" class="o_maqsam_loading">جاري تحميل سجل المكالمات…</div>
-
-            <div t-else="" class="o_maqsam_card p-0 overflow-hidden">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead>
-                            <tr>
-                                <th>الاتجاه</th>
-                                <th>الرقم</th>
-                                <th>الحالة</th>
-                                <th>الموظف</th>
-                                <th>المدة</th>
-                                <th>التاريخ</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr t-if="!state.calls.length">
-                                <td colspan="7" class="text-center text-muted py-5">لا توجد مكالمات في هذه الصفحة.</td>
-                            </tr>
-                            <tr t-foreach="state.calls" t-as="call" t-key="call.referenceId || call.id">
-                                <td><span class="badge text-bg-light"><t t-esc="direction(call)"/></span></td>
-                                <td class="fw-semibold" dir="ltr"><t t-esc="callPhone(call)"/></td>
-                                <td><t t-esc="call.state || '—'"/></td>
-                                <td><t t-esc="agents(call)"/></td>
-                                <td><t t-esc="(call.duration || 0) + ' ث'"/></td>
-                                <td><t t-esc="formatTime(call.timestamp)"/></td>
-                                <td><button class="btn btn-sm btn-outline-primary" t-on-click="() => this.openCall(call)">تفاصيل</button></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div class="d-flex align-items-center justify-content-between p-3 border-top">
-                    <button class="btn btn-outline-secondary" t-att-disabled="state.page &lt;= 1" t-on-click="previousPage">السابق</button>
-                    <span>صفحة <t t-esc="state.page"/></span>
-                    <button class="btn btn-outline-secondary" t-att-disabled="state.calls.length &lt; 100" t-on-click="nextPage">التالي</button>
-                </div>
-            </div>
-
-            <div t-if="state.detailLoading" class="o_maqsam_loading mt-3">جاري تحميل تفاصيل المكالمة…</div>
-
-            <div t-if="state.selected" class="o_maqsam_card mt-3">
-                <div class="d-flex align-items-center justify-content-between mb-3">
-                    <div>
-                        <h4 class="mb-1">تفاصيل المكالمة</h4>
-                        <div class="text-muted" dir="ltr">Reference: <t t-esc="state.selected.referenceId || '—'"/></div>
+            <div class="o_maqsam_content">
+                <div t-if="state.error" class="alert alert-danger o_maqsam_alert"><t t-esc="state.error"/></div>
+                <div t-if="state.loading" class="o_maqsam_loading">جاري تجهيز لوحة الاتصالات…</div>
+                <t t-else="">
+                    <div class="o_maqsam_kpis">
+                        <div class="o_maqsam_kpi"><div class="o_maqsam_kpi_icon is-purple"><i class="fa fa-phone"/></div><div><div class="o_maqsam_kpi_value"><t t-esc="totalCalls()"/></div><div class="o_maqsam_kpi_label">آخر المكالمات</div></div></div>
+                        <div class="o_maqsam_kpi"><div class="o_maqsam_kpi_icon is-green"><i class="fa fa-arrow-down"/></div><div><div class="o_maqsam_kpi_value"><t t-esc="inboundCalls()"/></div><div class="o_maqsam_kpi_label">وارد</div></div></div>
+                        <div class="o_maqsam_kpi"><div class="o_maqsam_kpi_icon is-blue"><i class="fa fa-arrow-up"/></div><div><div class="o_maqsam_kpi_value"><t t-esc="outboundCalls()"/></div><div class="o_maqsam_kpi_label">صادر</div></div></div>
+                        <div class="o_maqsam_kpi"><div class="o_maqsam_kpi_icon is-red"><i class="fa fa-phone-square"/></div><div><div class="o_maqsam_kpi_value"><t t-esc="missedCalls()"/></div><div class="o_maqsam_kpi_label">غير مجابة</div></div></div>
+                        <div class="o_maqsam_kpi"><div class="o_maqsam_kpi_icon is-amber"><i class="fa fa-clock-o"/></div><div><div class="o_maqsam_kpi_value"><t t-esc="averageDuration()"/></div><div class="o_maqsam_kpi_label">متوسط المدة</div></div></div>
+                        <div class="o_maqsam_kpi"><div class="o_maqsam_kpi_icon is-teal"><i class="fa fa-users"/></div><div><div class="o_maqsam_kpi_value"><t t-esc="availableAgents()"/>/<t t-esc="onlineAgents()"/></div><div class="o_maqsam_kpi_label">متاح / Online</div></div></div>
                     </div>
-                    <button class="btn-close" aria-label="إغلاق" t-on-click="closeDetail"/>
-                </div>
+                    <div class="row g-3 mt-1">
+                        <div class="col-xl-8">
+                            <div class="o_maqsam_panel h-100">
+                                <div class="o_maqsam_panel_head"><div><h4>آخر المكالمات</h4><span>أحدث نشاط للموظف الحالي</span></div><button class="btn btn-sm btn-outline-secondary" t-on-click="() => this.openSection('calls')">عرض السجل كامل</button></div>
+                                <div class="o_maqsam_recent_calls">
+                                    <div t-if="!recentCalls().length" class="o_maqsam_empty">لا توجد مكالمات حتى الآن.</div>
+                                    <div t-foreach="recentCalls()" t-as="call" t-key="call.referenceId || call.id" class="o_maqsam_recent_row">
+                                        <div class="o_maqsam_call_icon" t-att-class="directionClass(call)"><i class="fa" t-att-class="call.type === 'inbound' ? 'fa-arrow-down' : 'fa-arrow-up'"/></div>
+                                        <div class="o_maqsam_recent_main"><div class="fw-semibold" dir="ltr"><t t-esc="callPhone(call)"/></div><div class="text-muted small"><t t-esc="formatTime(call.timestamp)"/></div></div>
+                                        <span class="o_maqsam_badge" t-att-class="directionClass(call)"><t t-esc="direction(call)"/></span>
+                                        <span class="o_maqsam_badge" t-att-class="stateClass(call)"><t t-esc="call.state || '—'"/></span>
+                                        <div class="o_maqsam_duration"><t t-esc="duration(call.duration)"/></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-4">
+                            <div class="o_maqsam_panel mb-3">
+                                <div class="o_maqsam_panel_head"><div><h4>اتصال سريع</h4><span>ابدأ مكالمة بدون مغادرة اللوحة</span></div></div>
+                                <form class="o_maqsam_quick_call" t-on-submit="quickCall"><div class="o_maqsam_phone_field"><i class="fa fa-phone"/><input t-model="state.phone" placeholder="9665XXXXXXXX" inputmode="tel" required="required"/></div><button class="btn btn-success w-100" type="submit" t-att-disabled="state.quickCallBusy"><t t-if="state.quickCallBusy">جاري الاتصال…</t><t t-else=""><i class="fa fa-phone me-1"/> اتصال الآن</t></button></form>
+                                <div t-if="state.quickCallMessage" class="mt-2 small" t-att-class="state.quickCallMessage.startsWith('خطأ') ? 'text-danger' : 'text-success'"><t t-esc="state.quickCallMessage"/></div>
+                            </div>
+                            <div class="o_maqsam_panel">
+                                <div class="o_maqsam_panel_head"><div><h4>وصول سريع</h4><span>إدارة مركز الاتصال</span></div></div>
+                                <div class="o_maqsam_shortcuts">
+                                    <button t-on-click="() => this.openSection('dialer')"><span class="o_maqsam_shortcut_icon"><i class="fa fa-phone"/></span><span><strong>الهاتف</strong><small>اتصال واستقبال</small></span><i class="fa fa-angle-left"/></button>
+                                    <button t-on-click="() => this.openSection('calls')"><span class="o_maqsam_shortcut_icon"><i class="fa fa-history"/></span><span><strong>سجل المكالمات</strong><small>تفاصيل وتسجيلات</small></span><i class="fa fa-angle-left"/></button>
+                                    <button t-on-click="() => this.openSection('agents')"><span class="o_maqsam_shortcut_icon"><i class="fa fa-headphones"/></span><span><strong>الموظفون</strong><small>الحالة والصلاحيات</small></span><i class="fa fa-angle-left"/></button>
+                                    <button t-on-click="() => this.openSection('contacts')"><span class="o_maqsam_shortcut_icon"><i class="fa fa-address-book"/></span><span><strong>جهات الاتصال</strong><small>Phonebook مقسم</small></span><i class="fa fa-angle-left"/></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </div>
+        </div>
+    </t>
 
+    <t t-name="maqsam_connector.CallsAction">
+        <div class="o_maqsam_workspace h-100 overflow-auto" dir="rtl">
+            <div class="o_maqsam_page_head"><div><div class="o_maqsam_eyebrow">Calls API V3</div><h2>سجل المكالمات</h2><p>تابع المكالمات، التسجيلات، التحليلات والاتصال الصادر.</p></div><div class="d-flex flex-wrap gap-2"><button class="btn btn-outline-secondary" t-on-click="toggleMine"><t t-if="state.mine">كل المكالمات</t><t t-else="">مكالماتي فقط</t></button><button class="btn btn-primary" t-on-click="() => this.loadCalls(1)"><i class="fa fa-refresh me-1"/> تحديث</button></div></div>
+            <div class="o_maqsam_content">
                 <div class="row g-3 mb-3">
-                    <div class="col-md-3"><div class="text-muted small">النوع</div><strong><t t-esc="direction(state.selected)"/></strong></div>
-                    <div class="col-md-3"><div class="text-muted small">الحالة</div><strong><t t-esc="state.selected.state || '—'"/></strong></div>
-                    <div class="col-md-3"><div class="text-muted small">المدة</div><strong><t t-esc="(state.selected.duration || 0) + ' ثانية'"/></strong></div>
-                    <div class="col-md-3"><div class="text-muted small">Sentiment</div><strong><t t-esc="state.selected.sentiment || '—'"/></strong></div>
-                    <div class="col-md-3"><div class="text-muted small">Ringing</div><strong><t t-esc="(state.selected.ringingTime || 0) + ' ث'"/></strong></div>
-                    <div class="col-md-3"><div class="text-muted small">Waiting</div><strong><t t-esc="(state.selected.waitingTime || 0) + ' ث'"/></strong></div>
-                    <div class="col-md-3"><div class="text-muted small">Hold</div><strong><t t-esc="(state.selected.holdTime || 0) + ' ث'"/></strong></div>
-                    <div class="col-md-3"><div class="text-muted small">Handling</div><strong><t t-esc="(state.selected.handlingTime || 0) + ' ث'"/></strong></div>
+                    <div class="col-xl-7"><div class="o_maqsam_panel h-100"><div class="o_maqsam_panel_head"><div><h4>بحث في المكالمات</h4><span>ابحث برقم العميل</span></div></div><form class="d-flex gap-2 flex-wrap" t-on-submit="searchCalls"><div class="o_maqsam_phone_field flex-grow-1"><i class="fa fa-search"/><input t-model="state.searchPhone" placeholder="رقم الهاتف" inputmode="tel"/></div><button class="btn btn-primary" type="submit">بحث</button><button class="btn btn-light" type="button" t-on-click="clearSearch">مسح</button></form></div></div>
+                    <div class="col-xl-5"><div class="o_maqsam_panel h-100"><div class="o_maqsam_panel_head"><div><h4>اتصال صادر</h4><span>ابدأ المكالمة مباشرة عبر Calls API</span></div></div><form class="d-flex gap-2 flex-wrap" t-on-submit="makeCall"><div class="o_maqsam_phone_field flex-grow-1"><i class="fa fa-phone"/><input t-model="state.phone" placeholder="9665XXXXXXXX" inputmode="tel" required="required"/></div><input class="form-control o_maqsam_small_input" t-model="state.caller" placeholder="Caller اختياري" inputmode="tel"/><button class="btn btn-success" type="submit" t-att-disabled="state.callBusy"><t t-if="state.callBusy">…</t><t t-else="">اتصال</t></button></form><div t-if="state.callMessage" class="mt-2 small" t-att-class="state.callMessage.startsWith('خطأ') ? 'text-danger' : 'text-success'"><t t-esc="state.callMessage"/></div></div></div>
                 </div>
-
-                <div class="mb-3">
-                    <div class="fw-bold mb-2">التسجيل</div>
-                    <audio class="w-100" controls="controls" preload="none" t-att-src="recordingUrl(state.selected)"/>
-                    <div class="text-muted small mt-1">التسجيل قد يحتاج 10–20 ثانية بعد انتهاء المكالمة حتى يصبح متاحًا.</div>
-                </div>
-
-                <div t-if="summary(state.selected)" class="mb-3">
-                    <div class="fw-bold mb-2">AI Summary</div>
-                    <div class="o_maqsam_text_block"><t t-esc="summary(state.selected)"/></div>
-                </div>
-
-                <div t-if="transcription(state.selected)" class="mb-2">
-                    <div class="fw-bold mb-2">Transcription</div>
-                    <pre class="o_maqsam_text_block mb-0"><t t-esc="transcription(state.selected)"/></pre>
-                </div>
+                <div t-if="state.error" class="alert alert-danger o_maqsam_alert"><t t-esc="state.error"/></div><div t-if="state.loading" class="o_maqsam_loading">جاري تحميل سجل المكالمات…</div>
+                <div t-else="" class="o_maqsam_panel p-0 overflow-hidden"><div class="table-responsive"><table class="table o_maqsam_table align-middle mb-0"><thead><tr><th>الاتجاه</th><th>الرقم</th><th>الحالة</th><th>الموظف</th><th>المدة</th><th>التاريخ</th><th></th></tr></thead><tbody><tr t-if="!state.calls.length"><td colspan="7"><div class="o_maqsam_empty">لا توجد مكالمات في هذه الصفحة.</div></td></tr><tr t-foreach="state.calls" t-as="call" t-key="call.referenceId || call.id"><td><span class="o_maqsam_badge" t-att-class="directionClass(call)"><t t-esc="direction(call)"/></span></td><td><div class="fw-semibold" dir="ltr"><t t-esc="callPhone(call)"/></div></td><td><span class="o_maqsam_badge" t-att-class="stateClass(call)"><t t-esc="call.state || '—'"/></span></td><td><t t-esc="agents(call)"/></td><td><t t-esc="duration(call.duration)"/></td><td><t t-esc="formatTime(call.timestamp)"/></td><td><button class="btn btn-sm btn-light" t-on-click="() => this.openCall(call)">تفاصيل <i class="fa fa-angle-left ms-1"/></button></td></tr></tbody></table></div><div class="o_maqsam_pagination"><button class="btn btn-light" t-att-disabled="state.page &lt;= 1" t-on-click="previousPage">السابق</button><span>صفحة <strong><t t-esc="state.page"/></strong></span><button class="btn btn-light" t-att-disabled="state.calls.length &lt; 100" t-on-click="nextPage">التالي</button></div></div>
+                <div t-if="state.detailLoading" class="o_maqsam_loading mt-3">جاري تحميل تفاصيل المكالمة…</div>
+                <div t-if="state.selected" class="o_maqsam_detail_drawer mt-3"><div class="o_maqsam_detail_head"><div><div class="o_maqsam_eyebrow">تفاصيل المكالمة</div><h3 dir="ltr"><t t-esc="callPhone(state.selected)"/></h3><span dir="ltr">Ref: <t t-esc="state.selected.referenceId || '—'"/></span></div><button class="btn btn-light" t-on-click="closeDetail"><i class="fa fa-times"/></button></div><div class="o_maqsam_detail_grid"><div><span>النوع</span><strong><t t-esc="direction(state.selected)"/></strong></div><div><span>الحالة</span><strong><t t-esc="state.selected.state || '—'"/></strong></div><div><span>المدة</span><strong><t t-esc="duration(state.selected.duration)"/></strong></div><div><span>Sentiment</span><strong><t t-esc="state.selected.sentiment || '—'"/></strong></div><div><span>Ringing</span><strong><t t-esc="duration(state.selected.ringingTime)"/></strong></div><div><span>Waiting</span><strong><t t-esc="duration(state.selected.waitingTime)"/></strong></div><div><span>Hold</span><strong><t t-esc="duration(state.selected.holdTime)"/></strong></div><div><span>Handling</span><strong><t t-esc="duration(state.selected.handlingTime)"/></strong></div></div><div class="o_maqsam_recording"><div><strong>تسجيل المكالمة</strong><span>قد يتأخر ظهوره ثوانٍ بعد انتهاء المكالمة.</span></div><audio controls="controls" preload="none" t-att-src="recordingUrl(state.selected)"/></div><div t-if="summary(state.selected)" class="o_maqsam_insight"><div class="o_maqsam_insight_title"><i class="fa fa-magic"/> AI Summary</div><div><t t-esc="summary(state.selected)"/></div></div><div t-if="transcription(state.selected)" class="o_maqsam_insight"><div class="o_maqsam_insight_title"><i class="fa fa-file-text-o"/> Transcription</div><pre><t t-esc="transcription(state.selected)"/></pre></div></div>
             </div>
         </div>
     </t>
 
     <t t-name="maqsam_connector.AgentsAction">
-        <div class="o_maqsam_api_page h-100 overflow-auto p-3" dir="rtl">
-            <div class="d-flex align-items-center justify-content-between mb-3">
-                <div>
-                    <h3 class="mb-1">موظفو Maqsam</h3>
-                    <div class="text-muted">Agents API V1 · الحالة والصلاحيات</div>
-                </div>
-                <button class="btn btn-primary" t-on-click="() => this.loadAgents(state.page)">تحديث</button>
-            </div>
-
-            <div t-if="state.error" class="alert alert-danger"><t t-esc="state.error"/></div>
-            <div t-if="state.loading" class="o_maqsam_loading">جاري تحميل الموظفين…</div>
-
-            <div t-else="" class="o_maqsam_card p-0 overflow-hidden">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead>
-                            <tr>
-                                <th>الموظف</th>
-                                <th>الحالة</th>
-                                <th>نشط</th>
-                                <th>استقبال</th>
-                                <th>صادر</th>
-                                <th>WhatsApp</th>
-                                <th>المجموعات</th>
-                                <th>تاريخ الإنشاء</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr t-if="!state.agents.length"><td colspan="8" class="text-center text-muted py-5">لا يوجد موظفون.</td></tr>
-                            <tr t-foreach="state.agents" t-as="agent" t-key="agent.identifier || agent.email">
-                                <td><strong><t t-esc="agent.name || '—'"/></strong><div class="text-muted small"><t t-esc="agent.email || '—'"/></div></td>
-                                <td><t t-esc="stateLabel(agent)"/></td>
-                                <td><t t-esc="agent.active ? '✅' : '❌'"/></td>
-                                <td><t t-esc="agent.incomingEnabled ? '✅' : '❌'"/></td>
-                                <td><t t-esc="agent.outgoingEnabled ? '✅' : '❌'"/></td>
-                                <td><t t-esc="agent.whatsappEnabled ? '✅' : '❌'"/></td>
-                                <td><t t-esc="(agent.groups || []).join('، ') || '—'"/></td>
-                                <td><t t-esc="createdAt(agent)"/></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div class="d-flex align-items-center justify-content-between p-3 border-top">
-                    <button class="btn btn-outline-secondary" t-att-disabled="state.page &lt;= 1" t-on-click="previousPage">السابق</button>
-                    <span>صفحة <t t-esc="state.page"/></span>
-                    <button class="btn btn-outline-secondary" t-att-disabled="state.agents.length &lt; 100" t-on-click="nextPage">التالي</button>
-                </div>
-            </div>
+        <div class="o_maqsam_workspace h-100 overflow-auto" dir="rtl">
+            <div class="o_maqsam_page_head"><div><div class="o_maqsam_eyebrow">Agents API V1</div><h2>فريق خدمة العملاء</h2><p>راقب الحالة والصلاحيات والجاهزية في الوقت الحقيقي.</p></div><button class="btn btn-primary" t-on-click="() => this.loadAgents(state.page)"><i class="fa fa-refresh me-1"/> تحديث</button></div>
+            <div class="o_maqsam_content"><div class="o_maqsam_kpis o_maqsam_kpis_compact"><div class="o_maqsam_kpi"><div class="o_maqsam_kpi_icon is-purple"><i class="fa fa-users"/></div><div><div class="o_maqsam_kpi_value"><t t-esc="totalAgents()"/></div><div class="o_maqsam_kpi_label">إجمالي الموظفين</div></div></div><div class="o_maqsam_kpi"><div class="o_maqsam_kpi_icon is-green"><i class="fa fa-check"/></div><div><div class="o_maqsam_kpi_value"><t t-esc="availableAgents()"/></div><div class="o_maqsam_kpi_label">متاح</div></div></div><div class="o_maqsam_kpi"><div class="o_maqsam_kpi_icon is-amber"><i class="fa fa-headphones"/></div><div><div class="o_maqsam_kpi_value"><t t-esc="busyAgents()"/></div><div class="o_maqsam_kpi_label">مشغول</div></div></div><div class="o_maqsam_kpi"><div class="o_maqsam_kpi_icon is-teal"><i class="fa fa-user"/></div><div><div class="o_maqsam_kpi_value"><t t-esc="activeAgents()"/></div><div class="o_maqsam_kpi_label">نشط</div></div></div></div><div t-if="state.error" class="alert alert-danger o_maqsam_alert mt-3"><t t-esc="state.error"/></div><div t-if="state.loading" class="o_maqsam_loading mt-3">جاري تحميل الفريق…</div><div t-else="" class="o_maqsam_panel p-0 overflow-hidden mt-3"><div class="table-responsive"><table class="table o_maqsam_table align-middle mb-0"><thead><tr><th>الموظف</th><th>الحالة</th><th>استقبال</th><th>صادر</th><th>WhatsApp</th><th>المجموعات</th></tr></thead><tbody><tr t-if="!state.agents.length"><td colspan="6"><div class="o_maqsam_empty">لا يوجد موظفون.</div></td></tr><tr t-foreach="state.agents" t-as="agent" t-key="agent.identifier || agent.email"><td><div class="o_maqsam_person"><div class="o_maqsam_avatar"><t t-esc="initials(agent)"/></div><div><strong><t t-esc="agent.name || '—'"/></strong><span><t t-esc="agent.email || '—'"/></span></div></div></td><td><span class="o_maqsam_badge" t-att-class="stateClass(agent)"><span class="o_maqsam_dot"/><t t-esc="stateLabel(agent)"/></span></td><td><span class="o_maqsam_permission" t-att-class="agent.incomingEnabled ? 'is-on' : 'is-off'"><i class="fa" t-att-class="agent.incomingEnabled ? 'fa-check' : 'fa-times'"/> <t t-esc="agent.incomingEnabled ? 'مفعّل' : 'موقوف'"/></span></td><td><span class="o_maqsam_permission" t-att-class="agent.outgoingEnabled ? 'is-on' : 'is-off'"><i class="fa" t-att-class="agent.outgoingEnabled ? 'fa-check' : 'fa-times'"/> <t t-esc="agent.outgoingEnabled ? 'مفعّل' : 'موقوف'"/></span></td><td><span class="o_maqsam_permission" t-att-class="agent.whatsappEnabled ? 'is-on' : 'is-off'"><i class="fa" t-att-class="agent.whatsappEnabled ? 'fa-check' : 'fa-times'"/> <t t-esc="agent.whatsappEnabled ? 'مفعّل' : 'موقوف'"/></span></td><td><t t-esc="(agent.groups || []).join('، ') || '—'"/></td></tr></tbody></table></div><div class="o_maqsam_pagination"><button class="btn btn-light" t-att-disabled="state.page &lt;= 1" t-on-click="previousPage">السابق</button><span>صفحة <strong><t t-esc="state.page"/></strong></span><button class="btn btn-light" t-att-disabled="state.agents.length &lt; 100" t-on-click="nextPage">التالي</button></div></div></div>
         </div>
     </t>
 
     <t t-name="maqsam_connector.ContactsAction">
-        <div class="o_maqsam_api_page h-100 overflow-auto p-3" dir="rtl">
-            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-                <div>
-                    <h3 class="mb-1">جهات اتصال Maqsam</h3>
-                    <div class="text-muted">Contacts API V2 · بحث · إنشاء · حذف</div>
-                </div>
-                <button class="btn btn-primary" t-on-click="() => this.loadContacts(state.page)">تحديث</button>
-            </div>
-
-            <div class="row g-3 mb-3">
-                <div class="col-lg-6">
-                    <div class="o_maqsam_card h-100">
-                        <div class="fw-bold mb-2">بحث في Phonebook</div>
-                        <form class="d-flex flex-wrap gap-2" t-on-submit="search">
-                            <input class="form-control o_maqsam_phone_input" t-model="state.searchName" placeholder="الاسم"/>
-                            <input class="form-control o_maqsam_phone_input" t-model="state.searchPhone" placeholder="رقم الهاتف" inputmode="tel"/>
-                            <button class="btn btn-outline-primary" type="submit">بحث</button>
-                            <button class="btn btn-outline-secondary" type="button" t-on-click="clearSearch">مسح</button>
-                        </form>
-                    </div>
-                </div>
-                <div class="col-lg-6">
-                    <div class="o_maqsam_card h-100">
-                        <div class="fw-bold mb-2">إضافة جهة اتصال</div>
-                        <form class="d-flex flex-wrap align-items-center gap-2" t-on-submit="createContact">
-                            <input class="form-control o_maqsam_phone_input" t-model="state.newName" placeholder="الاسم" required="required"/>
-                            <input class="form-control o_maqsam_phone_input" t-model="state.newPhone" placeholder="+9665XXXXXXXX" inputmode="tel" required="required"/>
-                            <label class="form-check d-flex align-items-center gap-2 mb-0">
-                                <input class="form-check-input" type="checkbox" t-model="state.newHighPriority"/>
-                                <span>أولوية عالية</span>
-                            </label>
-                            <button class="btn btn-success" type="submit" t-att-disabled="state.busy">إضافة</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <div t-if="state.message" class="alert" t-att-class="state.message.startsWith('خطأ') ? 'alert-danger' : 'alert-success'"><t t-esc="state.message"/></div>
-            <div t-if="state.error" class="alert alert-danger"><t t-esc="state.error"/></div>
-            <div t-if="state.loading" class="o_maqsam_loading">جاري تحميل جهات الاتصال…</div>
-
-            <div t-else="" class="o_maqsam_card p-0 overflow-hidden">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead>
-                            <tr>
-                                <th>الاسم</th>
-                                <th>الرقم</th>
-                                <th>أولوية عالية</th>
-                                <th>Identifier</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr t-if="!state.contacts.length"><td colspan="5" class="text-center text-muted py-5">لا توجد جهات اتصال.</td></tr>
-                            <tr t-foreach="state.contacts" t-as="contact" t-key="contact.identifier || contact.phone">
-                                <td class="fw-semibold"><t t-esc="contact.name || '—'"/></td>
-                                <td dir="ltr"><t t-esc="contact.phone || '—'"/></td>
-                                <td><t t-esc="contact.high_priority ? '✅' : '—'"/></td>
-                                <td dir="ltr"><t t-esc="contact.identifier || '—'"/></td>
-                                <td><button class="btn btn-sm btn-outline-danger" t-on-click="() => this.deleteContact(contact)">حذف</button></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div class="d-flex align-items-center justify-content-between p-3 border-top">
-                    <button class="btn btn-outline-secondary" t-att-disabled="state.page &lt;= 1" t-on-click="previousPage">السابق</button>
-                    <span>صفحة <t t-esc="state.page"/> <t t-if="state.pagination.total_pages">من <t t-esc="state.pagination.total_pages"/></t></span>
-                    <button class="btn btn-outline-secondary" t-on-click="nextPage">التالي</button>
-                </div>
-            </div>
+        <div class="o_maqsam_workspace h-100 overflow-auto" dir="rtl">
+            <div class="o_maqsam_page_head"><div><div class="o_maqsam_eyebrow">Contacts API V2</div><h2>جهات الاتصال</h2><p>Phonebook مقسم مع بحث وإضافة وإدارة مباشرة.</p></div><button class="btn btn-primary" t-on-click="() => this.loadContacts(state.page)"><i class="fa fa-refresh me-1"/> تحديث</button></div>
+            <div class="o_maqsam_content"><div class="row g-3 mb-3"><div class="col-xl-7"><div class="o_maqsam_panel h-100"><div class="o_maqsam_panel_head"><div><h4>بحث في Phonebook</h4><span>بالاسم أو رقم الهاتف</span></div></div><form class="d-flex gap-2 flex-wrap" t-on-submit="search"><div class="o_maqsam_phone_field flex-grow-1"><i class="fa fa-user"/><input t-model="state.searchName" placeholder="اسم جهة الاتصال"/></div><div class="o_maqsam_phone_field flex-grow-1"><i class="fa fa-phone"/><input t-model="state.searchPhone" placeholder="رقم الهاتف" inputmode="tel"/></div><button class="btn btn-primary" type="submit">بحث</button><button class="btn btn-light" type="button" t-on-click="clearSearch">مسح</button></form></div></div><div class="col-xl-5"><div class="o_maqsam_panel h-100"><div class="o_maqsam_panel_head"><div><h4>إضافة جهة اتصال</h4><span>تُضاف مباشرة إلى Maqsam</span></div></div><form class="d-grid gap-2" t-on-submit="createContact"><input class="form-control" t-model="state.newName" placeholder="الاسم" required="required"/><div class="o_maqsam_phone_field"><i class="fa fa-phone"/><input t-model="state.newPhone" placeholder="+9665XXXXXXXX" inputmode="tel" required="required"/></div><div class="d-flex justify-content-between align-items-center"><label class="form-check mb-0"><input class="form-check-input" type="checkbox" t-model="state.newHighPriority"/><span class="form-check-label ms-2">أولوية عالية</span></label><button class="btn btn-success" type="submit" t-att-disabled="state.busy"><i class="fa fa-plus me-1"/> إضافة</button></div></form></div></div></div><div t-if="state.message" class="alert o_maqsam_alert" t-att-class="state.message.startsWith('خطأ') ? 'alert-danger' : 'alert-success'"><t t-esc="state.message"/></div><div t-if="state.error" class="alert alert-danger o_maqsam_alert"><t t-esc="state.error"/></div><div t-if="state.loading" class="o_maqsam_loading">جاري تحميل جهات الاتصال…</div><div t-else="" class="o_maqsam_panel p-0 overflow-hidden"><div class="table-responsive"><table class="table o_maqsam_table align-middle mb-0"><thead><tr><th>جهة الاتصال</th><th>الرقم</th><th>الأولوية</th><th>Identifier</th><th></th></tr></thead><tbody><tr t-if="!state.contacts.length"><td colspan="5"><div class="o_maqsam_empty">لا توجد جهات اتصال.</div></td></tr><tr t-foreach="state.contacts" t-as="contact" t-key="contact.identifier || contact.phone"><td><div class="o_maqsam_person"><div class="o_maqsam_avatar is-contact"><t t-esc="initials(contact)"/></div><div><strong><t t-esc="contact.name || '—'"/></strong></div></div></td><td dir="ltr"><strong><t t-esc="contact.phone || '—'"/></strong></td><td><span t-if="contact.high_priority" class="o_maqsam_badge is-warning"><i class="fa fa-star"/> عالية</span><span t-else="" class="text-muted">عادية</span></td><td dir="ltr" class="text-muted small"><t t-esc="contact.identifier || '—'"/></td><td><button class="btn btn-sm btn-light text-danger" t-on-click="() => this.deleteContact(contact)"><i class="fa fa-trash"/> حذف</button></td></tr></tbody></table></div><div class="o_maqsam_pagination"><button class="btn btn-light" t-att-disabled="state.page &lt;= 1" t-on-click="previousPage">السابق</button><span>صفحة <strong><t t-esc="state.page"/></strong></span><button class="btn btn-light" t-on-click="nextPage">التالي</button></div></div></div>
         </div>
     </t>
 </templates>
