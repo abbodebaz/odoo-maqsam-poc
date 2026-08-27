@@ -108,6 +108,8 @@ Odoo calls its own server route:
 
 The server requests a short-lived Maqsam Autologin token and redirects the iframe to the Maqsam Dialer.
 
+Important: Odoo redirects are local by default, so external Maqsam Autologin redirects must explicitly use an external redirect (`local=False`). Otherwise `/autologin` is incorrectly opened on the Odoo domain and results in an Odoo 404 page.
+
 Expected user experience:
 
 ```text
