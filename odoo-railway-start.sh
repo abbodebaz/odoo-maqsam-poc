@@ -8,6 +8,8 @@ set -euo pipefail
 : "${PGDATABASE:=odoo}"
 
 ADDONS_PATH="/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons"
+DATA_DIR="/var/lib/odoo"
+FILESTORE_DIR="${DATA_DIR}/filestore/${PGDATABASE}"
 export PGPASSWORD
 
 echo "Waiting for PostgreSQL at ${PGHOST}:${PGPORT}..."
@@ -23,6 +25,7 @@ COMMON_ARGS=(
   "--db_user=${PGUSER}"
   "--db_password=${PGPASSWORD}"
   "--addons-path=${ADDONS_PATH}"
+  "--data-dir=${DATA_DIR}"
   "--http-interface=0.0.0.0"
   "--http-port=8069"
   "--proxy-mode"
@@ -31,13 +34,24 @@ COMMON_ARGS=(
 TABLE_EXISTS="$(psql -h "${PGHOST}" -p "${PGPORT}" -U "${PGUSER}" -d "${PGDATABASE}" -tAc "SELECT to_regclass('public.ir_module_module')" || true)"
 if [ "${TABLE_EXISTS}" != "ir_module_module" ]; then
   echo "Initializing Odoo database for the first time..."
-  odoo "${COMMON_ARGS[@]}" -d "${PGDATABASE}" -i base --without-demo=all --stop-after-init
+  odoo "${COMMON_ARGS[@]}" -d "${PGDATABASE}" -i base --without-demo --stop-after-init
 fi
 
 MODULE_STATE="$(psql -h "${PGHOST}" -p "${PGPORT}" -U "${PGUSER}" -d "${PGDATABASE}" -tAc "SELECT state FROM ir_module_module WHERE name='maqsam_connector' LIMIT 1" || true)"
 if [ "${MODULE_STATE}" != "installed" ]; then
   echo "Installing Maqsam Connector module..."
-  odoo "${COMMON_ARGS[@]}" -d "${PGDATABASE}" -i maqsam_connector --without-demo=all --stop-after-init
+  odoo "${COMMON_ARGS[@]}" -d "${PGDATABASE}" -i maqsam_connector --without-demo --stop-after-init
+fi
+
+# A newly attached Railway volume starts with an empty filestore while the
+# database can still contain references to asset files from a previous
+# ephemeral container. Remove only generated web asset references so Odoo
+# can recreate CSS/JS bundles on the new persistent filestore.
+mkdir -p "${FILESTORE_DIR}"
+if ! find "${FILESTORE_DIR}" -type f -print -quit 2>/dev/null | grep -q .; then
+  echo "Filestore is empty; clearing stale generated web asset references..."
+  psql -v ON_ERROR_STOP=1 -h "${PGHOST}" -p "${PGPORT}" -U "${PGUSER}" -d "${PGDATABASE}" \
+    -c "DELETE FROM ir_attachment WHERE COALESCE(url, '') LIKE '/web/assets/%' OR COALESCE(name, '') LIKE '/web/assets/%';"
 fi
 
 echo "Starting Odoo 19..."
