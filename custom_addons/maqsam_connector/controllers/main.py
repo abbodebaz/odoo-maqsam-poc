@@ -69,7 +69,25 @@ class MaqsamController(http.Controller):
         payload = response.json() or {}
         return payload.get("message") if isinstance(payload.get("message"), list) else []
 
-    def _resolve_agent_email(self, cfg):
+    @staticmethod
+    def _can_use_dialer(agent):
+        return (
+            agent.get("active") is not False
+            and (
+                agent.get("incomingEnabled") is True
+                or agent.get("outgoingEnabled") is True
+            )
+        )
+
+    @staticmethod
+    def _agent_label(agent):
+        name = str(agent.get("name") or "").strip() or "بدون اسم"
+        email = str(agent.get("email") or "").strip() or "بدون إيميل"
+        incoming = "نعم" if agent.get("incomingEnabled") is True else "لا"
+        outgoing = "نعم" if agent.get("outgoingEnabled") is True else "لا"
+        return f"{name} <{email}> — استقبال: {incoming}، صادر: {outgoing}"
+
+    def _resolve_agent(self, cfg):
         agents = self._agents(cfg)
         requested = (cfg.get("agent_email") or "").strip().lower()
 
@@ -89,26 +107,36 @@ class MaqsamController(http.Controller):
                 )
             if match.get("active") is False:
                 raise ValueError(f"Agent {requested} موجود لكنه غير نشط في Maqsam")
-            return requested
+            if not self._can_use_dialer(match):
+                raise ValueError(
+                    "المستخدم المحدد موجود في Maqsam لكنه لا يملك صلاحية Dialer. "
+                    f"المستخدم الحالي: {self._agent_label(match)}. "
+                    "اختر Agent لديه Incoming أو Outgoing enabled، وليس حساب Admin فقط."
+                )
+            return match
 
-        # Helpful POC fallback: if the account exposes exactly one active agent,
-        # use it automatically. For multi-agent accounts require an explicit email.
-        active_agents = [
-            agent for agent in agents if agent.get("active") is not False and agent.get("email")
-        ]
-        if len(active_agents) == 1:
-            return str(active_agents[0]["email"]).strip().lower()
+        dialer_agents = [agent for agent in agents if self._can_use_dialer(agent) and agent.get("email")]
+        if len(dialer_agents) == 1:
+            return dialer_agents[0]
 
+        if not dialer_agents:
+            raise ValueError(
+                "لم أجد أي Agent نشط لديه صلاحية Incoming أو Outgoing في Maqsam. "
+                "فعّل صلاحيات الاتصال للموظف في Maqsam أولاً."
+            )
+
+        preview = " | ".join(self._agent_label(agent) for agent in dialer_agents[:8])
         raise ValueError(
-            "حدد Default Maqsam Agent Email من Settings → Maqsam، "
-            "أو Maqsam Agent Email من إعدادات المستخدم."
+            "يوجد أكثر من Agent لديه صلاحية Dialer. حدد Default Maqsam Agent Email من Settings → Maqsam. "
+            f"المتاحون: {preview}"
         )
 
     @http.route("/maqsam/dialer", type="http", auth="user", methods=["GET"], csrf=False)
     def dialer(self, **kwargs):
         try:
             cfg = self._config()
-            agent_email = self._resolve_agent_email(cfg)
+            agent = self._resolve_agent(cfg)
+            agent_email = str(agent.get("email") or "").strip().lower()
 
             # Same request shape as the RTC Node POC that was proven to work.
             response = requests.post(
