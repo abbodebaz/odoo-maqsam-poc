@@ -32,6 +32,17 @@
                                 </div>
                             </div>
                         </setting>
+                        <setting string="Notify Webhook" help="يستقبل Odoo إشعارات المكالمات من Maqsam ويخزنها للربط مع CRM لاحقًا.">
+                            <div class="content-group">
+                                <div class="row mt16">
+                                    <label for="maqsam_webhook_token" class="col-lg-3 o_light_label"/>
+                                    <field name="maqsam_webhook_token" password="True" placeholder="ضع نصًا عشوائيًا طويلًا" class="col-lg-6"/>
+                                </div>
+                                <div class="text-muted mt8">
+                                    رابط Notify يكون بالشكل: /maqsam/webhook/notify/&lt;token&gt;
+                                </div>
+                            </div>
+                        </setting>
                     </block>
                 </app>
             </xpath>
