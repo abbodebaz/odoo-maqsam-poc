@@ -15,8 +15,14 @@
         <field name="tag">maqsam_connector.agents</field>
     </record>
 
+    <record id="action_maqsam_contacts" model="ir.actions.client">
+        <field name="name">Maqsam Contacts</field>
+        <field name="tag">maqsam_connector.contacts</field>
+    </record>
+
     <menuitem id="menu_maqsam_root" name="Maqsam" sequence="95"/>
     <menuitem id="menu_maqsam_dialer" name="Dialer" parent="menu_maqsam_root" action="action_maqsam_dialer" sequence="10"/>
     <menuitem id="menu_maqsam_calls" name="Calls" parent="menu_maqsam_root" action="action_maqsam_calls" sequence="20"/>
     <menuitem id="menu_maqsam_agents" name="Agents" parent="menu_maqsam_root" action="action_maqsam_agents" sequence="30"/>
+    <menuitem id="menu_maqsam_contacts" name="Contacts" parent="menu_maqsam_root" action="action_maqsam_contacts" sequence="40"/>
 </odoo>
