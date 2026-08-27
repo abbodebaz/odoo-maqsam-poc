@@ -163,4 +163,79 @@
             </div>
         </div>
     </t>
+
+    <t t-name="maqsam_connector.ContactsAction">
+        <div class="o_maqsam_api_page h-100 overflow-auto p-3" dir="rtl">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                <div>
+                    <h3 class="mb-1">جهات اتصال Maqsam</h3>
+                    <div class="text-muted">Contacts API V2 · بحث · إنشاء · حذف</div>
+                </div>
+                <button class="btn btn-primary" t-on-click="() => this.loadContacts(state.page)">تحديث</button>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-lg-6">
+                    <div class="o_maqsam_card h-100">
+                        <div class="fw-bold mb-2">بحث في Phonebook</div>
+                        <form class="d-flex flex-wrap gap-2" t-on-submit="search">
+                            <input class="form-control o_maqsam_phone_input" t-model="state.searchName" placeholder="الاسم"/>
+                            <input class="form-control o_maqsam_phone_input" t-model="state.searchPhone" placeholder="رقم الهاتف" inputmode="tel"/>
+                            <button class="btn btn-outline-primary" type="submit">بحث</button>
+                            <button class="btn btn-outline-secondary" type="button" t-on-click="clearSearch">مسح</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="o_maqsam_card h-100">
+                        <div class="fw-bold mb-2">إضافة جهة اتصال</div>
+                        <form class="d-flex flex-wrap align-items-center gap-2" t-on-submit="createContact">
+                            <input class="form-control o_maqsam_phone_input" t-model="state.newName" placeholder="الاسم" required="required"/>
+                            <input class="form-control o_maqsam_phone_input" t-model="state.newPhone" placeholder="+9665XXXXXXXX" inputmode="tel" required="required"/>
+                            <label class="form-check d-flex align-items-center gap-2 mb-0">
+                                <input class="form-check-input" type="checkbox" t-model="state.newHighPriority"/>
+                                <span>أولوية عالية</span>
+                            </label>
+                            <button class="btn btn-success" type="submit" t-att-disabled="state.busy">إضافة</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div t-if="state.message" class="alert" t-att-class="state.message.startsWith('خطأ') ? 'alert-danger' : 'alert-success'"><t t-esc="state.message"/></div>
+            <div t-if="state.error" class="alert alert-danger"><t t-esc="state.error"/></div>
+            <div t-if="state.loading" class="o_maqsam_loading">جاري تحميل جهات الاتصال…</div>
+
+            <div t-else="" class="o_maqsam_card p-0 overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>الاسم</th>
+                                <th>الرقم</th>
+                                <th>أولوية عالية</th>
+                                <th>Identifier</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-if="!state.contacts.length"><td colspan="5" class="text-center text-muted py-5">لا توجد جهات اتصال.</td></tr>
+                            <tr t-foreach="state.contacts" t-as="contact" t-key="contact.identifier || contact.phone">
+                                <td class="fw-semibold"><t t-esc="contact.name || '—'"/></td>
+                                <td dir="ltr"><t t-esc="contact.phone || '—'"/></td>
+                                <td><t t-esc="contact.high_priority ? '✅' : '—'"/></td>
+                                <td dir="ltr"><t t-esc="contact.identifier || '—'"/></td>
+                                <td><button class="btn btn-sm btn-outline-danger" t-on-click="() => this.deleteContact(contact)">حذف</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="d-flex align-items-center justify-content-between p-3 border-top">
+                    <button class="btn btn-outline-secondary" t-att-disabled="state.page &lt;= 1" t-on-click="previousPage">السابق</button>
+                    <span>صفحة <t t-esc="state.page"/> <t t-if="state.pagination.total_pages">من <t t-esc="state.pagination.total_pages"/></t></span>
+                    <button class="btn btn-outline-secondary" t-on-click="nextPage">التالي</button>
+                </div>
+            </div>
+        </div>
+    </t>
 </templates>
