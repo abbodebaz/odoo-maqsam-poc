@@ -153,10 +153,11 @@ class MaqsamController(http.Controller):
                     "continue_path": "/phone/dialer",
                 }
             )
-            redirect_response = request.redirect(
-                f"https://portal.{cfg['base_url']}/autologin?{query}",
-                code=302,
-            )
+            target = f"https://portal.{cfg['base_url']}/autologin?{query}"
+
+            # Odoo defaults redirects to local URLs. local=False is required so
+            # the browser is actually sent to Maqsam instead of /autologin on Odoo.
+            redirect_response = request.redirect(target, code=302, local=False)
             redirect_response.headers["Cache-Control"] = "no-store, private, max-age=0"
             redirect_response.headers["Pragma"] = "no-cache"
             redirect_response.headers["Expires"] = "0"
