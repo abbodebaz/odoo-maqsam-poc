@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <record id="action_maqsam_dashboard" model="ir.actions.client">
+        <field name="name">Maqsam Dashboard</field>
+        <field name="tag">maqsam_connector.dashboard</field>
+    </record>
+
     <record id="action_maqsam_dialer" model="ir.actions.client">
         <field name="name">Maqsam Dialer</field>
         <field name="tag">maqsam_connector.dialer</field>
@@ -20,7 +25,8 @@
         <field name="tag">maqsam_connector.contacts</field>
     </record>
 
-    <menuitem id="menu_maqsam_root" name="Maqsam" sequence="95"/>
+    <menuitem id="menu_maqsam_root" name="Maqsam" action="action_maqsam_dashboard" sequence="95"/>
+    <menuitem id="menu_maqsam_dashboard" name="Dashboard" parent="menu_maqsam_root" action="action_maqsam_dashboard" sequence="5"/>
     <menuitem id="menu_maqsam_dialer" name="Dialer" parent="menu_maqsam_root" action="action_maqsam_dialer" sequence="10"/>
     <menuitem id="menu_maqsam_calls" name="Calls" parent="menu_maqsam_root" action="action_maqsam_calls" sequence="20"/>
     <menuitem id="menu_maqsam_agents" name="Agents" parent="menu_maqsam_root" action="action_maqsam_agents" sequence="30"/>
