@@ -1,7 +1,7 @@
 {
     "name": "Maqsam Connector",
-    "version": "19.0.1.2.1",
-    "summary": "Embed Maqsam Dialer and core APIs inside Odoo",
+    "version": "19.0.2.0.0",
+    "summary": "Premium Maqsam call center workspace inside Odoo",
     "category": "Productivity",
     "author": "Abdulrhman Bazarah",
     "license": "LGPL-3",
