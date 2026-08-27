@@ -12,7 +12,7 @@
                             <div class="content-group">
                                 <div class="row mt16">
                                     <label for="maqsam_base_url" class="col-lg-3 o_light_label"/>
-                                    <field name="maqsam_base_url" placeholder="your-account.maqsam.com" class="col-lg-6"/>
+                                    <field name="maqsam_base_url" placeholder="av.maqsam.com" class="col-lg-6"/>
                                 </div>
                                 <div class="row mt16">
                                     <label for="maqsam_access_key_id" class="col-lg-3 o_light_label"/>
@@ -21,6 +21,10 @@
                                 <div class="row mt16">
                                     <label for="maqsam_access_secret" class="col-lg-3 o_light_label"/>
                                     <field name="maqsam_access_secret" password="True" class="col-lg-6"/>
+                                </div>
+                                <div class="row mt16">
+                                    <label for="maqsam_default_agent_email" class="col-lg-3 o_light_label"/>
+                                    <field name="maqsam_default_agent_email" placeholder="agent@example.com" class="col-lg-6"/>
                                 </div>
                                 <div class="row mt16">
                                     <label for="maqsam_default_caller" class="col-lg-3 o_light_label"/>
