@@ -1,12 +1,13 @@
 {
     "name": "Maqsam Connector",
-    "version": "19.0.1.2.0",
+    "version": "19.0.1.2.1",
     "summary": "Embed Maqsam Dialer and core APIs inside Odoo",
     "category": "Productivity",
     "author": "Abdulrhman Bazarah",
     "license": "LGPL-3",
     "depends": ["base", "base_setup", "web", "contacts", "crm"],
     "data": [
+        "security/ir.model.access.csv",
         "views/res_config_settings_views.xml",
         "views/res_users_views.xml",
         "views/maqsam_menu.xml"
