@@ -38,7 +38,10 @@ if [ "${TABLE_EXISTS}" != "ir_module_module" ]; then
 fi
 
 MODULE_STATE="$(psql -h "${PGHOST}" -p "${PGPORT}" -U "${PGUSER}" -d "${PGDATABASE}" -tAc "SELECT state FROM ir_module_module WHERE name='maqsam_connector' LIMIT 1" || true)"
-if [ "${MODULE_STATE}" != "installed" ]; then
+if [ "${MODULE_STATE}" = "installed" ]; then
+  echo "Upgrading Maqsam Connector module..."
+  odoo "${COMMON_ARGS[@]}" -d "${PGDATABASE}" -u maqsam_connector --without-demo --stop-after-init
+else
   echo "Installing Maqsam Connector module..."
   odoo "${COMMON_ARGS[@]}" -d "${PGDATABASE}" -i maqsam_connector --without-demo --stop-after-init
 fi
