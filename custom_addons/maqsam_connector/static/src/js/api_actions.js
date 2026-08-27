@@ -216,5 +216,108 @@ export class MaqsamAgentsAction extends Component {
     }
 }
 
+export class MaqsamContactsAction extends Component {
+    static template = "maqsam_connector.ContactsAction";
+
+    setup() {
+        this.state = useState({
+            loading: true,
+            error: "",
+            message: "",
+            contacts: [],
+            page: 1,
+            pagination: {},
+            searchName: "",
+            searchPhone: "",
+            newName: "",
+            newPhone: "",
+            newHighPriority: false,
+            busy: false,
+        });
+        onWillStart(() => this.loadContacts());
+    }
+
+    async loadContacts(page = this.state.page) {
+        this.state.loading = true;
+        this.state.error = "";
+        try {
+            const params = new URLSearchParams({ page: String(page) });
+            if (this.state.searchName.trim()) params.set("name", this.state.searchName.trim());
+            if (this.state.searchPhone.trim()) params.set("phone", this.state.searchPhone.trim());
+            const result = await api(`/maqsam/api/contacts?${params.toString()}`);
+            this.state.contacts = result.contacts || [];
+            this.state.page = result.page || page;
+            this.state.pagination = result.pagination || {};
+        } catch (error) {
+            this.state.error = error.message;
+        } finally {
+            this.state.loading = false;
+        }
+    }
+
+    async search(event) {
+        event.preventDefault();
+        await this.loadContacts(1);
+    }
+
+    async clearSearch() {
+        this.state.searchName = "";
+        this.state.searchPhone = "";
+        await this.loadContacts(1);
+    }
+
+    async createContact(event) {
+        event.preventDefault();
+        this.state.busy = true;
+        this.state.message = "";
+        try {
+            await api("/maqsam/api/contacts", {
+                method: "POST",
+                body: JSON.stringify({
+                    name: this.state.newName,
+                    phone: this.state.newPhone,
+                    high_priority: this.state.newHighPriority,
+                }),
+            });
+            this.state.newName = "";
+            this.state.newPhone = "";
+            this.state.newHighPriority = false;
+            this.state.message = "تم إنشاء جهة الاتصال في Maqsam";
+            await this.loadContacts(1);
+        } catch (error) {
+            this.state.message = `خطأ: ${error.message}`;
+        } finally {
+            this.state.busy = false;
+        }
+    }
+
+    async deleteContact(contact) {
+        if (!contact?.identifier) return;
+        this.state.message = "";
+        try {
+            await api(`/maqsam/api/contacts/${encodeURIComponent(contact.identifier)}`, {
+                method: "DELETE",
+            });
+            this.state.message = "تم إرسال طلب حذف جهة الاتصال";
+            await this.loadContacts(this.state.page);
+        } catch (error) {
+            this.state.message = `خطأ: ${error.message}`;
+        }
+    }
+
+    async nextPage() {
+        const totalPages = Number(this.state.pagination.total_pages || 0);
+        if (totalPages && this.state.page >= totalPages) return;
+        if (!totalPages && this.state.contacts.length < 100) return;
+        await this.loadContacts(this.state.page + 1);
+    }
+
+    async previousPage() {
+        if (this.state.page <= 1) return;
+        await this.loadContacts(this.state.page - 1);
+    }
+}
+
 registry.category("actions").add("maqsam_connector.calls", MaqsamCallsAction);
 registry.category("actions").add("maqsam_connector.agents", MaqsamAgentsAction);
+registry.category("actions").add("maqsam_connector.contacts", MaqsamContactsAction);
