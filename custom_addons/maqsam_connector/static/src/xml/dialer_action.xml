@@ -1,22 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
     <t t-name="maqsam_connector.DialerAction">
-        <div class="o_maqsam_dialer h-100 d-flex flex-column">
-            <div class="o_maqsam_header d-flex align-items-center justify-content-between px-3 py-2 border-bottom bg-white">
+        <div class="o_maqsam_dialer h-100 d-flex flex-column" dir="rtl">
+            <div class="o_maqsam_dialer_head">
                 <div>
-                    <strong>Maqsam Dialer</strong>
-                    <div class="text-muted small">الاتصال والاستقبال من داخل Odoo</div>
+                    <div class="o_maqsam_dialer_eyebrow">WebRTC · Embedded</div>
+                    <h2>هاتف خدمة العملاء</h2>
+                    <p>الاتصال والاستقبال من Maqsam بدون مغادرة Odoo.</p>
                 </div>
-                <span class="badge text-bg-success">Embedded</span>
+                <div class="o_maqsam_dialer_status"><span class="o_maqsam_live_dot"/> Maqsam متصل</div>
             </div>
-            <div class="o_maqsam_frame_wrap flex-grow-1">
-                <iframe
-                    class="o_maqsam_frame"
-                    t-att-src="dialerUrl"
-                    allow="microphone *; autoplay *; clipboard-read *; clipboard-write *"
-                    referrerpolicy="strict-origin-when-cross-origin"
-                    title="Maqsam Dialer"
-                />
+            <div class="o_maqsam_frame_area flex-grow-1">
+                <div class="o_maqsam_frame_shell">
+                    <div class="o_maqsam_frame_top"><div><span class="o_maqsam_live_dot"/> Dialer</div><span>Microphone enabled</span></div>
+                    <iframe
+                        class="o_maqsam_frame"
+                        t-att-src="dialerUrl"
+                        allow="microphone *; autoplay *; clipboard-read *; clipboard-write *"
+                        referrerpolicy="strict-origin-when-cross-origin"
+                        title="Maqsam Dialer"
+                    />
+                </div>
             </div>
         </div>
     </t>
