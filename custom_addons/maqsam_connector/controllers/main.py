@@ -110,7 +110,7 @@ class MaqsamController(http.Controller):
 
     def _error_page(self, exc):
         message = html.escape(str(exc))
-        return request.make_response(
+        response = request.make_response(
             "<html dir='rtl'><body style='font-family:Arial,sans-serif;padding:32px'>"
             "<h3>تعذر تحميل Maqsam Dialer</h3>"
             f"<p>{message}</p>"
@@ -118,6 +118,9 @@ class MaqsamController(http.Controller):
             headers=[("Content-Type", "text/html; charset=utf-8")],
             status=500,
         )
+        response.headers["Cache-Control"] = "no-store, private, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        return response
 
     @http.route(["/maqsam/dialer", "/maqsam/dialer/go"], type="http", auth="user", methods=["GET"], csrf=False)
     def dialer(self, **kwargs):
@@ -126,7 +129,6 @@ class MaqsamController(http.Controller):
             agent = self._resolve_agent(cfg)
             agent_email = str(agent.get("email") or "").strip().lower()
 
-            # This intentionally mirrors the proven RTC Node POC request shape.
             response = requests.post(
                 f"https://api.{cfg['base_url']}/v2/token",
                 auth=self._auth(cfg),
@@ -151,9 +153,13 @@ class MaqsamController(http.Controller):
                     "continue_path": "/phone/dialer",
                 }
             )
-            return request.redirect(
+            redirect_response = request.redirect(
                 f"https://portal.{cfg['base_url']}/autologin?{query}",
                 code=302,
             )
+            redirect_response.headers["Cache-Control"] = "no-store, private, max-age=0"
+            redirect_response.headers["Pragma"] = "no-cache"
+            redirect_response.headers["Expires"] = "0"
+            return redirect_response
         except Exception as exc:
             return self._error_page(exc)
