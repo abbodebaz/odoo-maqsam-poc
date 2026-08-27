@@ -1,0 +1,35 @@
+.o_maqsam_api_page {
+    background: #f6f7f9;
+}
+
+.o_maqsam_card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.o_maqsam_loading {
+    background: #fff;
+    border: 1px dashed #d1d5db;
+    border-radius: 12px;
+    padding: 36px;
+    text-align: center;
+    color: #6b7280;
+}
+
+.o_maqsam_phone_input {
+    max-width: 260px;
+    direction: ltr;
+    text-align: left;
+}
+
+.o_maqsam_text_block {
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 12px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
