@@ -10,6 +10,7 @@
                 <link rel="stylesheet" href="/wati_connector/static/src/inbox/inbox.css"/>
                 <link rel="stylesheet" href="/wati_connector/static/src/inbox/inbox_fix.css"/>
                 <link rel="stylesheet" href="/wati_connector/static/src/inbox/media_enhance.css"/>
+                <link rel="stylesheet" href="/wati_connector/static/src/inbox/attachment_send_v1.css"/>
             </head>
             <body>
                 <div id="watiInboxApp" class="wati-app" t-att-data-csrf="csrf_token">
@@ -83,7 +84,7 @@
                                     <textarea id="messageInput" name="message" rows="1" maxlength="4096" placeholder="اكتب رسالة..." required="required"></textarea>
                                     <button id="sendButton" type="submit">إرسال <span>➤</span></button>
                                 </form>
-                                <div class="wati-composer-note">الرسائل الحرة تعمل داخل جلسة WhatsApp المفتوحة. القوالب خارج الجلسة سنضيفها في المرحلة التالية.</div>
+                                <div class="wati-composer-note">الرسائل الحرة والمرفقات تعمل داخل جلسة WhatsApp المفتوحة. القوالب خارج الجلسة سنضيفها في المرحلة التالية.</div>
                             </div>
                         </section>
                     </main>
@@ -94,6 +95,7 @@
                 <script src="/wati_connector/static/src/inbox/partner_enhance.js" defer="defer"></script>
                 <script src="/wati_connector/static/src/inbox/assignment_takeover.js" defer="defer"></script>
                 <script src="/wati_connector/static/src/inbox/media_enhance.js" defer="defer"></script>
+                <script src="/wati_connector/static/src/inbox/attachment_send_v1.js" defer="defer"></script>
             </body>
         </html>
     </template>
