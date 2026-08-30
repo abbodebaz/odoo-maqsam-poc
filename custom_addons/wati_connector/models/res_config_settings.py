@@ -1,6 +1,6 @@
 import requests
 
-from odoo import _, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
 
@@ -20,8 +20,25 @@ class ResConfigSettings(models.TransientModel):
     wati_webhook_token = fields.Char(
         string="Webhook Secret Token",
         config_parameter="wati_connector.webhook_token",
-        help="نص سري طويل يوضع داخل رابط Webhook لحماية الاستقبال.",
+        help="سر مستقل لحماية Webhook بين WATI وOdoo. لا تستخدم WATI API Token هنا.",
     )
+    wati_webhook_url = fields.Char(
+        string="Webhook URL",
+        compute="_compute_wati_webhook_url",
+        help="انسخ هذا الرابط كاملًا كما هو إلى WATI Webhooks.",
+    )
+
+    @api.depends("wati_webhook_token")
+    def _compute_wati_webhook_url(self):
+        base_url = (
+            self.env["ir.config_parameter"].sudo().get_param("web.base.url")
+            or "https://odoo-production-790f.up.railway.app"
+        ).strip().rstrip("/")
+        for record in self:
+            token = (record.wati_webhook_token or "").strip()
+            record.wati_webhook_url = (
+                f"{base_url}/wati/webhook/{token}" if token else ""
+            )
 
     def _normalize_wati_endpoint(self, value):
         endpoint = (value or "").strip().rstrip("/")
