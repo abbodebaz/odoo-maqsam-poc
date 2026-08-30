@@ -43,6 +43,10 @@ class MaqsamController(http.Controller):
     def _auth(self, cfg):
         return HTTPBasicAuth(cfg["access_key_id"], cfg["access_secret"])
 
+    def _can_view_team(self):
+        user = request.env.user
+        return user.has_group("base.group_system") or bool(user.sudo().maqsam_supervisor)
+
     def _response_message(self, response):
         try:
             payload = response.json()
