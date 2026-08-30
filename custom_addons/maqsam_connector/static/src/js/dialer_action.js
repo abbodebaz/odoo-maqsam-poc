@@ -7,6 +7,8 @@ export class MaqsamDialerAction extends Component {
     static template = "maqsam_connector.DialerAction";
 
     setup() {
+        this.ensureTajawalFont();
+
         // Every mount requests a fresh local Odoo route so Maqsam's short-lived
         // autologin token is never reused from an old iframe/cache entry.
         this.dialerUrl = `/maqsam/dialer?ts=${Date.now()}`;
@@ -21,6 +23,18 @@ export class MaqsamDialerAction extends Component {
         onWillStart(async () => {
             await this.loadAgent();
         });
+    }
+
+    ensureTajawalFont() {
+        const id = "maqsam-tajawal-font";
+        if (document.getElementById(id)) {
+            return;
+        }
+        const link = document.createElement("link");
+        link.id = id;
+        link.rel = "stylesheet";
+        link.href = "https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap";
+        document.head.appendChild(link);
     }
 
     async loadAgent() {
