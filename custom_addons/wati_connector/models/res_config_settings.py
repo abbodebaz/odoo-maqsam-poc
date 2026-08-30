@@ -15,7 +15,7 @@ class ResConfigSettings(models.TransientModel):
     wati_api_token = fields.Char(
         string="WATI API Token",
         config_parameter="wati_connector.api_token",
-        help="Bearer / Access Token الخاص بـWATI. لا يتم إرساله إلى المتصفح.",
+        help="Bearer / Access Token الخاص بـWATI. يمكنك لصق التوكن فقط أو القيمة التي تبدأ بـ Bearer.",
     )
     wati_webhook_token = fields.Char(
         string="Webhook Secret Token",
@@ -31,12 +31,18 @@ class ResConfigSettings(models.TransientModel):
             raise UserError(_("WATI API Endpoint يجب أن يبدأ بـ https://"))
 
         # Users sometimes paste a complete API URL from WATI instead of the tenant base URL.
-        # Keep only the tenant root before /api/ so our connector can append the proper versioned route.
+        # Keep the tenant id/path (e.g. /310263) and strip only the versioned /api/... suffix.
         lower = endpoint.lower()
         api_pos = lower.find("/api/")
         if api_pos != -1:
             endpoint = endpoint[:api_pos].rstrip("/")
         return endpoint
+
+    def _normalize_wati_token(self, value):
+        token = (value or "").strip()
+        if token.lower().startswith("bearer "):
+            token = token[7:].strip()
+        return token
 
     def _wati_headers(self, token):
         return {
@@ -48,25 +54,25 @@ class ResConfigSettings(models.TransientModel):
     def action_wati_test_connection(self):
         self.ensure_one()
         endpoint = self._normalize_wati_endpoint(self.wati_api_endpoint)
-        token = (self.wati_api_token or "").strip()
+        token = self._normalize_wati_token(self.wati_api_token)
         if not endpoint or not token:
             raise UserError(_("أدخل WATI API Endpoint وAccess Token أولًا."))
 
         headers = self._wati_headers(token)
         attempts = []
 
-        # Prefer the current V3 API. Some WATI tenants still expose classic V1 routes only,
-        # so fall back to V1 for connection discovery instead of treating a V3 404 as bad credentials.
+        # Classic V1 is first because many existing WATI tenants (and the user's proven n8n flow)
+        # use tenant URLs such as /<tenant-id>/api/v1/.... V3 is kept as discovery fallback.
         probes = [
-            (
-                "V3",
-                f"{endpoint}/api/ext/v3/contacts/count",
-                {},
-            ),
             (
                 "V1",
                 f"{endpoint}/api/v1/getContacts",
                 {"pageSize": 1, "pageNumber": 1},
+            ),
+            (
+                "V3",
+                f"{endpoint}/api/ext/v3/contacts/count",
+                {},
             ),
         ]
 
@@ -86,31 +92,35 @@ class ResConfigSettings(models.TransientModel):
                 attempts.append(f"{version}: connection error — {exc}")
                 continue
 
+            detail = (response.text or response.reason or "").strip().replace("\n", " ")[:260]
             if response.ok:
                 successful_version = version
                 successful_response = response
                 break
 
-            detail = (response.text or response.reason or "").strip().replace("\n", " ")[:220]
             attempts.append(f"{version}: HTTP {response.status_code} — {detail}")
-
-            # 401/403 indicates credentials/permissions, so another API version will not fix it.
-            if response.status_code in (401, 403):
-                raise UserError(
-                    _("WATI رفض التوثيق (%s). تأكد من Access Token وصلاحياته. التفاصيل: %s")
-                    % (response.status_code, detail)
-                )
+            # Do not stop after V3/V1 auth errors: older tokens can be accepted by one API family
+            # and rejected by another. We only report auth failure after trying both families.
 
         if not successful_response:
+            auth_errors = [item for item in attempts if "HTTP 401" in item or "HTTP 403" in item]
+            if auth_errors:
+                raise UserError(
+                    _(
+                        "WATI لم يقبل التوثيق على المسارات التي اختبرناها. تأكد أن API Endpoint هو رابط الحساب نفسه وأن Access Token هو نفسه المستخدم في n8n. يمكنك لصق التوكن مع أو بدون كلمة Bearer.\n\nنتائج الاختبار:\n%s"
+                    )
+                    % "\n".join(attempts)
+                )
             raise UserError(
                 _(
-                    "لم نجد مسار API صالح على هذا WATI Endpoint. جرّب نسخ API Endpoint من WATI → API Docs بدون أي /api/... إضافية.\n\nنتائج الاختبار:\n%s"
+                    "لم نجد مسار API صالح على هذا WATI Endpoint. انسخ API Endpoint من WATI → API Docs بدون أي /api/... إضافية.\n\nنتائج الاختبار:\n%s"
                 )
                 % "\n".join(attempts)
             )
 
-        # Persist the normalized endpoint automatically so future calls use the clean tenant root.
+        # Persist normalized values automatically so future calls use exactly one Bearer prefix.
         self.wati_api_endpoint = endpoint
+        self.wati_api_token = token
 
         try:
             payload = successful_response.json()
@@ -125,7 +135,7 @@ class ResConfigSettings(models.TransientModel):
         if count is not None:
             message += _(" — عدد جهات الاتصال: %s") % count
         if successful_version == "V1":
-            message += _(" — حسابك يجيب على V1؛ سنستخدم المسارات المتاحة لحسابك تلقائيًا.")
+            message += _(" — تم اعتماد V1 لهذا الحساب.")
 
         return {
             "type": "ir.actions.client",
