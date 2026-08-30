@@ -1,5 +1,3 @@
-from urllib.parse import quote
-
 import requests
 
 from odoo import _, fields, models
@@ -34,9 +32,12 @@ class WatiConversation(models.Model):
     )
     assigned_at = fields.Datetime(string="وقت الاستلام")
 
-    def assign_to_odoo_user(self, user):
+    def assign_to_odoo_user(self, user, force=False):
         self.ensure_one()
         user.ensure_one()
+        if self.assigned_user_id and self.assigned_user_id != user and not force:
+            raise UserError(_("هذه المحادثة مستلمة بواسطة %s.") % self.assigned_user_id.name)
+
         email = user._wati_email()
         if not email:
             raise UserError(_("لا يوجد بريد WATI مرتبط بهذا المستخدم. أضف WATI Operator Email في بطاقة المستخدم."))
@@ -68,3 +69,12 @@ class WatiConversation(models.Model):
             "operator_email": email,
         })
         return True
+
+    def send_session_message(self, text):
+        self.ensure_one()
+        current_user = self.env.user
+        if not self.assigned_user_id:
+            self.assign_to_odoo_user(current_user)
+        elif self.assigned_user_id != current_user and not current_user.has_group("base.group_system"):
+            raise UserError(_("هذه المحادثة مستلمة بواسطة %s. لا يمكنك الرد عليها قبل تحويلها لك.") % self.assigned_user_id.name)
+        return super().send_session_message(text)
