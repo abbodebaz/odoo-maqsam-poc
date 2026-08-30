@@ -1,7 +1,16 @@
 from odoo import api, models
 
 
-_GENERIC_NAMES = {"", "whatsapp", "wati", "unknown", "none", "null", "-"}
+_GENERIC_NAMES = {
+    "",
+    "whatsapp",
+    "wati",
+    "unknown",
+    "none",
+    "null",
+    "-",
+    "عميل واتساب",
+}
 
 
 def _is_generic(value):
@@ -28,7 +37,7 @@ class WatiConversationNameGuard(models.Model):
                 vals["sender_name"] = wa_id or False
 
             if _is_generic(vals.get("name")):
-                vals["name"] = sender or wa_id or "عميل واتساب"
+                vals["name"] = sender or wa_id or "رقم غير متوفر"
 
             normalized_list.append(vals)
         return super().create(normalized_list)
@@ -56,14 +65,37 @@ class WatiConversationNameGuard(models.Model):
 
             if "name" in normalized and _is_generic(normalized.get("name")):
                 sender = _meaningful(normalized.get("sender_name")) or _meaningful(record.sender_name)
-                normalized["name"] = sender or wa_id or "عميل واتساب"
+                normalized["name"] = sender or wa_id or "رقم غير متوفر"
 
             result = super(WatiConversationNameGuard, record).write(normalized) and result
         return result
 
     def init(self):
-        """Repair legacy rows that were stored with a generic WhatsApp label."""
-        generic_sql = "('whatsapp','wati','unknown','none','null','-','')"
+        """Repair legacy rows and backfill missing WhatsApp numbers from messages."""
+        generic_sql = "('whatsapp','wati','unknown','none','null','-','','عميل واتساب')"
+
+        # Older conversations can have an empty wa_id even though their messages
+        # already contain the WhatsApp number. Recover the newest known number.
+        self.env.cr.execute(
+            """
+            UPDATE wati_conversation AS conversation
+               SET wa_id = latest.wa_id
+              FROM (
+                    SELECT DISTINCT ON (conversation_id)
+                           conversation_id,
+                           trim(wa_id) AS wa_id
+                      FROM wati_message
+                     WHERE conversation_id IS NOT NULL
+                       AND trim(coalesce(wa_id, '')) <> ''
+                     ORDER BY conversation_id,
+                              received_at DESC NULLS LAST,
+                              id DESC
+                   ) AS latest
+             WHERE conversation.id = latest.conversation_id
+               AND trim(coalesce(conversation.wa_id, '')) = ''
+            """
+        )
+
         self.env.cr.execute(
             f"""
             UPDATE wati_conversation
@@ -79,7 +111,7 @@ class WatiConversationNameGuard(models.Model):
                             ''
                         ),
                         NULLIF(trim(coalesce(wa_id, '')), ''),
-                        'عميل واتساب'
+                        'رقم غير متوفر'
                     )
                     ELSE name
                END,
@@ -90,5 +122,6 @@ class WatiConversationNameGuard(models.Model):
                END
              WHERE lower(trim(coalesce(name, ''))) IN {generic_sql}
                 OR lower(trim(coalesce(sender_name, ''))) IN {generic_sql}
+                OR trim(coalesce(wa_id, '')) <> ''
             """
         )
