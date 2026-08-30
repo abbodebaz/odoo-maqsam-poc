@@ -76,6 +76,12 @@
         </field>
     </record>
 
+    <record id="action_wati_inbox" model="ir.actions.act_url">
+        <field name="name">صندوق الوارد</field>
+        <field name="url">/wati/inbox</field>
+        <field name="target">self</field>
+    </record>
+
     <record id="action_wati_conversations" model="ir.actions.act_window">
         <field name="name">المحادثات</field>
         <field name="res_model">wati.conversation</field>
@@ -127,6 +133,7 @@
     </record>
 
     <menuitem id="menu_wati_root" name="WhatsApp" sequence="96"/>
+    <menuitem id="menu_wati_inbox" name="صندوق الوارد" parent="menu_wati_root" action="action_wati_inbox" sequence="5"/>
     <menuitem id="menu_wati_conversations" name="المحادثات" parent="menu_wati_root" action="action_wati_conversations" sequence="10"/>
     <menuitem id="menu_wati_messages" name="الرسائل" parent="menu_wati_root" action="action_wati_messages" sequence="20"/>
     <menuitem id="menu_wati_webhook_events" name="أحداث Webhook" parent="menu_wati_root" action="action_wati_webhook_events" groups="base.group_system" sequence="90"/>
