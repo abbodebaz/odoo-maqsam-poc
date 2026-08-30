@@ -5,9 +5,23 @@
         <field name="model">res.users</field>
         <field name="inherit_id" ref="base.view_users_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='email']" position="after">
-                <field name="maqsam_agent_email" placeholder="agent@example.com"/>
-                <field name="maqsam_supervisor" groups="base.group_system"/>
+            <xpath expr="//notebook" position="inside">
+                <page string="Maqsam" name="maqsam_user_integration">
+                    <group>
+                        <group string="ربط حساب الموظف">
+                            <field name="maqsam_agent_email" string="Maqsam Agent Email" placeholder="employee@company.com"/>
+                            <div class="text-muted">
+                                أدخل إيميل الموظف كما هو مسجل داخل Maqsam. سيتم استخدام هذا الحساب للـDialer والمكالمات وسجل الموظف.
+                            </div>
+                        </group>
+                        <group string="الصلاحيات" groups="base.group_system">
+                            <field name="maqsam_supervisor" string="مشرف Maqsam"/>
+                            <div class="text-muted">
+                                المشرف يستطيع مشاهدة مكالمات وتسجيلات وحالات جميع Agents. الموظف العادي يرى بياناته فقط.
+                            </div>
+                        </group>
+                    </group>
+                </page>
             </xpath>
         </field>
     </record>
