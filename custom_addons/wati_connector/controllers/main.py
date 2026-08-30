@@ -46,11 +46,21 @@ class WatiWebhookController(http.Controller):
         The page intentionally does not register anything in web.assets_web,
         so a UI error here cannot break the Odoo backend shell.
         """
+        conversations_action = request.env.ref(
+            "wati_connector.action_wati_conversations",
+            raise_if_not_found=False,
+        )
+        odoo_return_url = (
+            f"/odoo/action-{conversations_action.id}"
+            if conversations_action
+            else "/odoo"
+        )
         return request.render(
             "wati_connector.wati_inbox_page",
             {
                 "csrf_token": request.csrf_token(),
                 "user_name": request.env.user.name or "Odoo",
+                "odoo_return_url": odoo_return_url,
             },
         )
 
