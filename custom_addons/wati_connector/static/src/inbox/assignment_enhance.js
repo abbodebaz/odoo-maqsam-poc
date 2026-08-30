@@ -30,14 +30,14 @@
         if (sendButton) sendButton.disabled = !enabled;
     }
 
-    function makeButton(text, disabled = false) {
+    function makeButton(text, disabled = false, variant = "primary") {
         const button = document.createElement("button");
         button.type = "button";
         button.textContent = text;
         button.disabled = disabled;
-        button.style.border = "1px solid #d9e2e8";
-        button.style.background = disabled ? "#f3f6f8" : "#16a34a";
-        button.style.color = disabled ? "#52606d" : "white";
+        button.style.border = variant === "takeover" ? "1px solid #f59e0b" : "1px solid #d9e2e8";
+        button.style.background = disabled ? "#f3f6f8" : (variant === "takeover" ? "#fff7ed" : "#16a34a");
+        button.style.color = disabled ? "#52606d" : (variant === "takeover" ? "#b45309" : "white");
         button.style.borderRadius = "10px";
         button.style.padding = "8px 12px";
         button.style.fontWeight = "700";
@@ -45,9 +45,17 @@
         return button;
     }
 
-    async function assignMe(force = false) {
+    async function assignMe(force = false, previousUserName = "") {
         const id = selectedId();
         if (!id || busy) return;
+
+        if (force) {
+            const confirmed = window.confirm(
+                `المحادثة حاليًا عند ${previousUserName || "موظف آخر"}.\n\nهل تريد نقلها إليك؟`
+            );
+            if (!confirmed) return;
+        }
+
         busy = true;
         try {
             const body = new URLSearchParams({
@@ -67,6 +75,7 @@
             const payload = await response.json().catch(() => ({}));
             if (!response.ok || !payload.ok) throw new Error(payload.message || "تعذر استلام المحادثة");
             await refreshAssignment(true);
+            window.setTimeout(() => window.location.reload(), 250);
         } catch (error) {
             window.alert(error.message || "تعذر استلام المحادثة.");
         } finally {
@@ -92,9 +101,15 @@
             const data = await response.json();
             if (!data.ok) return;
 
-            if (forceRender || lastConversationId !== id || box.dataset.state !== JSON.stringify([data.assigned_user_id, data.assigned_to_me, data.wati_email])) {
+            const signature = JSON.stringify([
+                data.assigned_user_id,
+                data.assigned_to_me,
+                data.wati_email,
+                data.can_takeover,
+            ]);
+            if (forceRender || lastConversationId !== id || box.dataset.state !== signature) {
                 lastConversationId = id;
-                box.dataset.state = JSON.stringify([data.assigned_user_id, data.assigned_to_me, data.wati_email]);
+                box.dataset.state = signature;
                 box.replaceChildren();
 
                 if (!data.wati_email) {
@@ -115,9 +130,10 @@
                 } else {
                     const badge = makeButton(`عند ${data.assigned_user_name}`, true);
                     box.appendChild(badge);
-                    if (data.can_force) {
-                        const button = makeButton("استلام بدل الموظف");
-                        button.addEventListener("click", () => assignMe(true));
+                    if (data.can_takeover) {
+                        const button = makeButton("أخذ المحادثة", false, "takeover");
+                        button.title = `نقل المحادثة من ${data.assigned_user_name} إليك`;
+                        button.addEventListener("click", () => assignMe(true, data.assigned_user_name));
                         box.appendChild(button);
                     }
                     setComposerEnabled(false, `المحادثة عند ${data.assigned_user_name}`);
