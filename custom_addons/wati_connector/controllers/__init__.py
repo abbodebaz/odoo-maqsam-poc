@@ -3,3 +3,4 @@ from . import assignment
 from . import media
 from . import file_send
 from . import templates
+from . import customer_context
