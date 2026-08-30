@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_users_form_wati" model="ir.ui.view">
+        <field name="name">res.users.form.wati</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='email']" position="after">
+                <field name="wati_operator_email" placeholder="agent@example.com"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
