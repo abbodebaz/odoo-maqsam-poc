@@ -54,16 +54,23 @@ install_or_upgrade_module() {
 install_or_upgrade_module "maqsam_connector" "Maqsam Connector"
 install_or_upgrade_module "wati_connector" "WATI WhatsApp Connector"
 
-# A newly attached Railway volume starts with an empty filestore while the
-# database can still contain references to asset files from a previous
-# ephemeral container. Remove only generated web asset references so Odoo
-# can recreate CSS/JS bundles on the new persistent filestore.
 mkdir -p "${FILESTORE_DIR}"
-if ! find "${FILESTORE_DIR}" -type f -print -quit 2>/dev/null | grep -q .; then
-  echo "Filestore is empty; clearing stale generated web asset references..."
-  psql -v ON_ERROR_STOP=1 -h "${PGHOST}" -p "${PGPORT}" -U "${PGUSER}" -d "${PGDATABASE}" \
-    -c "DELETE FROM ir_attachment WHERE COALESCE(url, '') LIKE '/web/assets/%' OR COALESCE(name, '') LIKE '/web/assets/%';"
-fi
+
+# Railway containers use an ephemeral Odoo filestore. The database can retain
+# generated bundle attachments whose files disappeared on a previous deploy.
+# These are safe to delete on every deploy: Odoo recreates them on first load.
+echo "Clearing generated Odoo web asset attachments..."
+psql -v ON_ERROR_STOP=1 -h "${PGHOST}" -p "${PGPORT}" -U "${PGUSER}" -d "${PGDATABASE}" \
+  -c "DELETE FROM ir_attachment WHERE COALESCE(url, '') LIKE '/web/assets/%' OR COALESCE(name, '') LIKE '/web/assets/%';"
+
+# A short-lived WATI Inbox experiment temporarily assigned a client action to
+# the root WhatsApp menu. After rolling back, Odoo can keep that numeric menu
+# reference even though the client action record no longer exists, causing
+# /web/webclient/load_menus to return 404. Explicitly restore the root menu to
+# a container-only menu. Child actions (conversations/messages) remain intact.
+echo "Clearing stale WATI root menu action..."
+psql -v ON_ERROR_STOP=1 -h "${PGHOST}" -p "${PGPORT}" -U "${PGUSER}" -d "${PGDATABASE}" \
+  -c "UPDATE ir_ui_menu SET action = NULL WHERE id IN (SELECT res_id FROM ir_model_data WHERE module = 'wati_connector' AND name = 'menu_wati_root' AND model = 'ir.ui.menu');"
 
 echo "Starting Odoo 19..."
 exec odoo "${COMMON_ARGS[@]}" -d "${PGDATABASE}" --db-filter="^${PGDATABASE}$"
