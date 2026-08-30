@@ -1,0 +1,448 @@
+.wati-template-trigger {
+    height: 38px;
+    padding: 0 13px;
+    border: 1px solid #d8e1e6;
+    border-radius: 12px;
+    background: #fff;
+    color: #334155;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.wati-template-trigger:hover {
+    border-color: #8bd0a4;
+    background: #f1fbf5;
+    color: #15803d;
+}
+
+.wati-template-trigger-icon {
+    font-size: 17px;
+    line-height: 1;
+}
+
+.wati-template-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    background: rgba(15, 23, 42, .48);
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.wati-template-overlay.is-hidden {
+    display: none;
+}
+
+body.wati-template-modal-open {
+    overflow: hidden;
+}
+
+.wati-template-modal {
+    width: min(980px, 96vw);
+    height: min(720px, 88vh);
+    background: #fff;
+    border-radius: 22px;
+    box-shadow: 0 28px 80px rgba(15, 23, 42, .24);
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    direction: rtl;
+}
+
+.wati-template-modal-head {
+    min-height: 72px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    border-bottom: 1px solid #e7edf0;
+}
+
+.wati-template-modal-head > div {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.wati-template-modal-head strong {
+    font-size: 18px;
+    color: #0f172a;
+}
+
+.wati-template-modal-head span {
+    font-size: 11px;
+    color: #64748b;
+}
+
+.wati-template-close {
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 11px;
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.wati-template-close:hover {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.wati-template-layout {
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 330px minmax(0, 1fr);
+}
+
+.wati-template-sidebar {
+    min-width: 0;
+    min-height: 0;
+    border-left: 1px solid #e7edf0;
+    background: #f8fafb;
+    padding: 14px;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 12px;
+}
+
+.wati-template-search {
+    height: 42px;
+    border: 1px solid #dce4e9;
+    border-radius: 13px;
+    background: #fff;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #7b8790;
+}
+
+.wati-template-search input {
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    font: inherit;
+    font-size: 12px;
+}
+
+.wati-template-list {
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-left: 3px;
+}
+
+.wati-template-card {
+    width: 100%;
+    text-align: right;
+    border: 1px solid #e0e7eb;
+    background: #fff;
+    border-radius: 14px;
+    padding: 11px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    cursor: pointer;
+    color: #0f172a;
+}
+
+.wati-template-card:hover {
+    border-color: #a8dbb9;
+    background: #f7fdf9;
+}
+
+.wati-template-card.active {
+    border-color: #65c98a;
+    background: #effbf3;
+    box-shadow: 0 0 0 2px rgba(31, 168, 85, .06);
+}
+
+.wati-template-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.wati-template-card-top strong {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+}
+
+.wati-template-card-body {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    color: #64748b;
+    font-size: 11px;
+    line-height: 1.55;
+}
+
+.wati-template-card-meta {
+    color: #94a3b8;
+    font-size: 10px;
+}
+
+.wati-template-mini-status,
+.wati-template-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    white-space: nowrap;
+    font-weight: 700;
+}
+
+.wati-template-mini-status {
+    padding: 3px 7px;
+    font-size: 9px;
+}
+
+.wati-template-status {
+    padding: 5px 9px;
+    font-size: 10px;
+}
+
+.wati-template-mini-status.approved,
+.wati-template-status.approved {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.wati-template-mini-status.pending,
+.wati-template-status.pending {
+    background: #fef3c7;
+    color: #a16207;
+}
+
+.wati-template-mini-status.rejected,
+.wati-template-status.rejected {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.wati-template-mini-status.neutral,
+.wati-template-status.neutral {
+    background: #eef2f4;
+    color: #64748b;
+}
+
+.wati-template-detail {
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 24px;
+    background: #fff;
+}
+
+.wati-template-empty {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 7px;
+    color: #94a3b8;
+}
+
+.wati-template-empty > div {
+    width: 58px;
+    height: 58px;
+    border-radius: 18px;
+    background: #f1f5f9;
+    display: grid;
+    place-items: center;
+    font-size: 28px;
+    margin-bottom: 6px;
+}
+
+.wati-template-empty strong {
+    color: #334155;
+    font-size: 14px;
+}
+
+.wati-template-empty span {
+    font-size: 11px;
+}
+
+.wati-template-selected {
+    max-width: 620px;
+    margin: 0 auto;
+}
+
+.wati-template-selected.is-hidden {
+    display: none;
+}
+
+.wati-template-selected-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+.wati-template-selected-head > div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.wati-template-name {
+    font-size: 16px;
+    color: #0f172a;
+}
+
+.wati-template-meta {
+    font-size: 10px;
+    color: #94a3b8;
+}
+
+.wati-template-preview {
+    min-height: 112px;
+    border-radius: 16px;
+    background: #e8f8ee;
+    border: 1px solid #d4efdf;
+    padding: 16px;
+    color: #17222b;
+    white-space: pre-wrap;
+    line-height: 1.75;
+    font-size: 13px;
+    margin-bottom: 18px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+}
+
+.wati-template-params {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.wati-template-params:empty {
+    display: none;
+}
+
+.wati-template-params-title {
+    font-size: 12px;
+    color: #334155;
+    margin-bottom: 2px;
+}
+
+.wati-template-param {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.wati-template-param span {
+    color: #64748b;
+    font-size: 10px;
+}
+
+.wati-template-param input {
+    height: 42px;
+    border: 1px solid #dce4e9;
+    border-radius: 12px;
+    padding: 0 12px;
+    outline: 0;
+    font: inherit;
+    font-size: 12px;
+}
+
+.wati-template-param input:focus {
+    border-color: #7ed49f;
+    box-shadow: 0 0 0 3px rgba(31, 168, 85, .07);
+}
+
+.wati-template-actions {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.wati-template-send {
+    min-width: 132px;
+    height: 43px;
+    border: 0;
+    border-radius: 13px;
+    background: #1faa55;
+    color: #fff;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    padding: 0 18px;
+}
+
+.wati-template-send:hover:not(:disabled) {
+    background: #178b45;
+}
+
+.wati-template-send:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+.wati-template-no-data {
+    padding: 24px 10px;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 11px;
+}
+
+@media (max-width: 760px) {
+    .wati-template-trigger {
+        width: 38px;
+        padding: 0;
+        justify-content: center;
+    }
+    .wati-template-trigger > span:last-child {
+        display: none;
+    }
+    .wati-template-overlay {
+        padding: 0;
+        align-items: stretch;
+    }
+    .wati-template-modal {
+        width: 100%;
+        height: 100%;
+        max-height: none;
+        border-radius: 0;
+    }
+    .wati-template-layout {
+        grid-template-columns: 42% minmax(0, 1fr);
+    }
+    .wati-template-sidebar {
+        padding: 9px;
+    }
+    .wati-template-detail {
+        padding: 15px 12px;
+    }
+    .wati-template-card {
+        padding: 9px;
+    }
+    .wati-template-card-body {
+        display: none;
+    }
+}
