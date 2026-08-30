@@ -1,61 +1,80 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
     <t t-name="maqsam_connector.DialerAction">
-        <div class="o_maqsam_dialer h-100 d-flex flex-column" dir="rtl">
-            <div class="o_maqsam_dialer_head">
-                <div class="o_maqsam_head_copy">
-                    <div class="o_maqsam_dialer_eyebrow">هاتف خدمة العملاء</div>
-                    <h2>مركز الاتصال</h2>
-                    <p>الاتصال والاستقبال من Maqsam مباشرة داخل Odoo.</p>
-                </div>
-                <div class="o_maqsam_head_badges">
-                    <div class="o_maqsam_dialer_status">
-                        <span class="o_maqsam_live_dot"/>
-                        <span t-if="state.dialerReady">جاهز للاتصال والاستقبال</span>
-                        <span t-else="">جاري تجهيز الهاتف...</span>
+        <div class="o_maqsam_dialer h-100" dir="rtl">
+            <div class="o_maqsam_workspace">
+                <section class="o_maqsam_phone_panel" dir="ltr">
+                    <div class="o_maqsam_frame_shell">
+                        <div class="o_maqsam_frame_top" dir="rtl">
+                            <div class="o_maqsam_frame_title">
+                                <span class="o_maqsam_live_dot"/>
+                                <span>هاتف Maqsam</span>
+                            </div>
+                            <div class="o_maqsam_frame_meta">
+                                <span class="o_maqsam_meta_chip">الميكروفون مفعّل</span>
+                                <span class="o_maqsam_meta_chip o_maqsam_meta_chip_success" t-if="state.dialerReady">WebRTC جاهز</span>
+                            </div>
+                        </div>
+                        <div class="o_maqsam_frame_canvas">
+                            <iframe
+                                class="o_maqsam_frame"
+                                t-att-src="dialerUrl"
+                                t-on-load="onDialerLoad"
+                                allow="microphone *; autoplay *; clipboard-read *; clipboard-write *"
+                                referrerpolicy="strict-origin-when-cross-origin"
+                                title="Maqsam Dialer"
+                            />
+                        </div>
                     </div>
-                </div>
-            </div>
+                </section>
 
-            <div class="o_maqsam_workspace flex-grow-1">
-                <div class="o_maqsam_agent_card">
-                    <div class="o_maqsam_agent_avatar">
-                        <span t-esc="(state.agentName || 'M').charAt(0).toUpperCase()"/>
+                <aside class="o_maqsam_side_panel">
+                    <div class="o_maqsam_side_intro">
+                        <div class="o_maqsam_dialer_eyebrow">هاتف خدمة العملاء</div>
+                        <h2>مركز الاتصال</h2>
+                        <p>الاتصال والاستقبال من Maqsam مباشرة داخل Odoo.</p>
                     </div>
-                    <div class="o_maqsam_agent_info">
-                        <div class="o_maqsam_agent_label">Agent الحالي</div>
-                        <div class="o_maqsam_agent_name" t-esc="state.agentName"/>
-                        <div class="o_maqsam_agent_email" t-if="state.agentEmail" t-esc="state.agentEmail"/>
-                    </div>
-                    <div class="o_maqsam_agent_ready">
-                        <span class="o_maqsam_live_dot"/>
-                        <span t-if="state.dialerReady">متصل</span>
-                        <span t-else="">يتصل...</span>
-                    </div>
-                </div>
 
-                <div class="o_maqsam_frame_shell">
-                    <div class="o_maqsam_frame_top">
-                        <div class="o_maqsam_frame_title">
+                    <div class="o_maqsam_status_card">
+                        <div class="o_maqsam_status_icon">
                             <span class="o_maqsam_live_dot"/>
-                            <span>هاتف Maqsam</span>
                         </div>
-                        <div class="o_maqsam_frame_meta">
-                            <span class="o_maqsam_meta_chip">الميكروفون مفعّل</span>
-                            <span class="o_maqsam_meta_chip o_maqsam_meta_chip_success" t-if="state.dialerReady">WebRTC جاهز</span>
+                        <div>
+                            <div class="o_maqsam_status_label">حالة الهاتف</div>
+                            <div class="o_maqsam_status_value" t-if="state.dialerReady">جاهز للاتصال والاستقبال</div>
+                            <div class="o_maqsam_status_value" t-else="">جاري تجهيز الهاتف...</div>
                         </div>
                     </div>
-                    <div class="o_maqsam_frame_canvas">
-                        <iframe
-                            class="o_maqsam_frame"
-                            t-att-src="dialerUrl"
-                            t-on-load="onDialerLoad"
-                            allow="microphone *; autoplay *; clipboard-read *; clipboard-write *"
-                            referrerpolicy="strict-origin-when-cross-origin"
-                            title="Maqsam Dialer"
-                        />
+
+                    <div class="o_maqsam_agent_card">
+                        <div class="o_maqsam_agent_avatar">
+                            <span t-esc="(state.agentName || 'M').charAt(0).toUpperCase()"/>
+                        </div>
+                        <div class="o_maqsam_agent_info">
+                            <div class="o_maqsam_agent_label">Agent الحالي</div>
+                            <div class="o_maqsam_agent_name" t-esc="state.agentName"/>
+                            <div class="o_maqsam_agent_email" t-if="state.agentEmail" t-esc="state.agentEmail"/>
+                        </div>
                     </div>
-                </div>
+
+                    <div class="o_maqsam_side_checks">
+                        <div class="o_maqsam_check_row">
+                            <span>الاتصال</span>
+                            <strong><span class="o_maqsam_live_dot"/> متصل</strong>
+                        </div>
+                        <div class="o_maqsam_check_row">
+                            <span>WebRTC</span>
+                            <strong t-if="state.dialerReady">جاهز</strong>
+                            <strong t-else="">يتصل...</strong>
+                        </div>
+                        <div class="o_maqsam_check_row">
+                            <span>الميكروفون</span>
+                            <strong>مفعّل</strong>
+                        </div>
+                    </div>
+
+                    <div class="o_maqsam_side_note">يمكنك إجراء واستقبال المكالمات من الهاتف مباشرة بدون مغادرة Odoo.</div>
+                </aside>
             </div>
         </div>
     </t>
