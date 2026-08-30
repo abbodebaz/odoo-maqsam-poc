@@ -44,6 +44,8 @@
                             </label>
                             <div class="wati-filters">
                                 <button class="wati-filter active" type="button" data-filter="all">الكل</button>
+                                <button class="wati-filter" type="button" data-filter="mine">محادثاتي</button>
+                                <button class="wati-filter" type="button" data-filter="unassigned">غير مسندة</button>
                                 <button class="wati-filter" type="button" data-filter="unread">غير مقروء</button>
                             </div>
                             <div id="conversationList" class="wati-conversation-list"></div>
