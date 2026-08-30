@@ -9,6 +9,7 @@
                 <title>WhatsApp Inbox | Odoo</title>
                 <link rel="stylesheet" href="/wati_connector/static/src/inbox/inbox.css"/>
                 <link rel="stylesheet" href="/wati_connector/static/src/inbox/inbox_fix.css"/>
+                <link rel="stylesheet" href="/wati_connector/static/src/inbox/media_enhance.css"/>
             </head>
             <body>
                 <div id="watiInboxApp" class="wati-app" t-att-data-csrf="csrf_token">
@@ -92,6 +93,7 @@
                 <script src="/wati_connector/static/src/inbox/inbox.js" defer="defer"></script>
                 <script src="/wati_connector/static/src/inbox/partner_enhance.js" defer="defer"></script>
                 <script src="/wati_connector/static/src/inbox/assignment_takeover.js" defer="defer"></script>
+                <script src="/wati_connector/static/src/inbox/media_enhance.js" defer="defer"></script>
             </body>
         </html>
     </template>
