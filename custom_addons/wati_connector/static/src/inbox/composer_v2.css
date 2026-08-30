@@ -1,0 +1,120 @@
+.wati-composer {
+    grid-template-columns: 46px minmax(0, 1fr) auto !important;
+    gap: 9px !important;
+    align-items: center !important;
+    padding: 10px 16px !important;
+    background: rgba(248, 250, 251, .98) !important;
+}
+
+.wati-composer .wati-attach-button {
+    grid-column: 1;
+    width: 46px;
+    height: 46px;
+    min-width: 46px;
+    padding: 0 !important;
+    border: 1px solid #d9e2e8 !important;
+    border-radius: 50% !important;
+    background: #fff !important;
+    color: #52616d !important;
+    font-size: 21px !important;
+    box-shadow: 0 2px 7px rgba(15, 23, 42, .05);
+}
+
+.wati-composer .wati-attach-button:hover:not(:disabled) {
+    background: #eefbf3 !important;
+    border-color: #9bdcb5 !important;
+    color: #149447 !important;
+    transform: none !important;
+}
+
+.wati-composer textarea {
+    grid-column: 2;
+    min-height: 46px !important;
+    border-radius: 23px !important;
+    padding: 11px 18px !important;
+    border-color: #dce4e9 !important;
+    box-shadow: none;
+}
+
+.wati-composer textarea:focus {
+    border-color: #7ed49f !important;
+    box-shadow: 0 0 0 3px rgba(31, 168, 85, .07) !important;
+}
+
+.wati-composer #sendButton {
+    grid-column: 3;
+    min-width: 92px;
+    height: 46px;
+    padding: 0 18px !important;
+    border-radius: 23px !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(31, 168, 85, .18);
+}
+
+.wati-attachment-preview {
+    margin: 8px 16px 0 !important;
+    padding: 8px 10px !important;
+    border-radius: 12px !important;
+    border-color: #dce5e9 !important;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, .04) !important;
+}
+
+.wati-attachment-preview-icon {
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 10px !important;
+    font-size: 18px !important;
+}
+
+.wati-attachment-preview-info strong {
+    font-size: 12px !important;
+}
+
+.wati-attachment-preview-info span {
+    font-size: 10px !important;
+}
+
+.wati-attachment-remove {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 18px !important;
+}
+
+@media (max-width: 720px) {
+    .wati-composer {
+        grid-template-columns: 42px minmax(0, 1fr) 48px !important;
+        padding: 8px 10px !important;
+        gap: 7px !important;
+    }
+
+    .wati-composer .wati-attach-button {
+        width: 42px;
+        height: 42px;
+        min-width: 42px;
+    }
+
+    .wati-composer textarea {
+        min-height: 42px !important;
+        padding: 9px 14px !important;
+    }
+
+    .wati-composer #sendButton {
+        min-width: 48px;
+        width: 48px;
+        height: 42px;
+        padding: 0 !important;
+        font-size: 0;
+    }
+
+    .wati-composer #sendButton span {
+        font-size: 18px;
+    }
+
+    .wati-attachment-preview {
+        margin: 7px 10px 0 !important;
+    }
+}
