@@ -19,7 +19,8 @@
             "maqsam_connector/static/src/xml/dialer_action.xml",
             "maqsam_connector/static/src/xml/api_actions.xml",
             "maqsam_connector/static/src/scss/dialer.scss",
-            "maqsam_connector/static/src/scss/api.scss"
+            "maqsam_connector/static/src/scss/api.scss",
+            "maqsam_connector/static/src/scss/dialer_isolation.scss"
         ]
     },
     "installable": True,
