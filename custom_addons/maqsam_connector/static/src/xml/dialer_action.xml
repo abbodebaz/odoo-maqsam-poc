@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
     <t t-name="maqsam_connector.DialerAction">
-        <div class="o_maqsam_dialer h-100" dir="rtl">
+        <div class="o_maqsam_dialer h-100" dir="rtl" style="font-family: 'Tajawal', 'Segoe UI', Tahoma, Arial, sans-serif;">
             <div class="o_maqsam_workspace">
                 <section class="o_maqsam_phone_panel" dir="ltr">
                     <div class="o_maqsam_frame_shell">
