@@ -1,50 +1,72 @@
 .o_maqsam_dialer {
     min-height: 0;
-    background: #f5f6f8;
+    background:
+        radial-gradient(circle at 12% 8%, rgba(94, 74, 143, .06), transparent 30%),
+        #f6f7f9;
     color: #1f2937;
 }
 
 .o_maqsam_dialer_head {
-    background: #fff;
+    background: rgba(255, 255, 255, .96);
     border-bottom: 1px solid #e7e9ee;
-    padding: 20px 26px;
+    padding: 16px 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 16px;
 }
 
+.o_maqsam_head_copy {
+    min-width: 0;
+}
+
 .o_maqsam_dialer_head h2 {
     margin: 0;
-    font-size: 25px;
-    font-weight: 750;
+    font-size: 24px;
+    line-height: 1.25;
+    font-weight: 800;
+    letter-spacing: -.02em;
 }
 
 .o_maqsam_dialer_head p {
-    margin: 4px 0 0;
+    margin: 5px 0 0;
     color: #6b7280;
     font-size: 13px;
 }
 
 .o_maqsam_dialer_eyebrow {
-    color: #9b7f94;
-    text-transform: uppercase;
-    letter-spacing: .08em;
-    font-size: 10px;
-    font-weight: 700;
-    margin-bottom: 4px;
+    color: #7c6a95;
+    font-size: 11px;
+    font-weight: 800;
+    margin-bottom: 3px;
 }
 
-.o_maqsam_dialer_status {
+.o_maqsam_head_badges {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.o_maqsam_dialer_status,
+.o_maqsam_agent_ready {
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    padding: 7px 11px;
     border-radius: 999px;
-    background: #e8f7ef;
-    color: #168a59;
+    background: #eaf8f1;
+    color: #137a50;
     font-size: 11px;
-    font-weight: 700;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.o_maqsam_dialer_status {
+    padding: 8px 12px;
+}
+
+.o_maqsam_agent_ready {
+    padding: 6px 10px;
+    margin-inline-start: auto;
 }
 
 .o_maqsam_live_dot {
@@ -53,64 +75,186 @@
     border-radius: 50%;
     background: #22a06b;
     display: inline-block;
+    flex: 0 0 auto;
     box-shadow: 0 0 0 4px rgba(34, 160, 107, .11);
 }
 
-.o_maqsam_frame_area {
+.o_maqsam_workspace {
     min-height: 0;
-    padding: 18px;
+    width: 100%;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 16px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.o_maqsam_agent_card {
+    min-height: 72px;
+    padding: 12px 14px;
+    border: 1px solid #e4e7ec;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, .96);
+    box-shadow: 0 6px 24px rgba(27, 31, 43, .045);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.o_maqsam_agent_avatar {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    background: linear-gradient(145deg, #7862a5, #5f4b8b);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 18px;
+    font-weight: 850;
+    box-shadow: 0 6px 18px rgba(95, 75, 139, .18);
+}
+
+.o_maqsam_agent_info {
+    min-width: 0;
+}
+
+.o_maqsam_agent_label {
+    margin-bottom: 1px;
+    color: #98a2b3;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.o_maqsam_agent_name {
+    color: #101828;
+    font-size: 15px;
+    line-height: 1.35;
+    font-weight: 800;
+}
+
+.o_maqsam_agent_email {
+    color: #667085;
+    font-size: 11px;
+    direction: ltr;
+    text-align: right;
+    margin-top: 2px;
 }
 
 .o_maqsam_frame_shell {
-    height: 100%;
-    min-height: 680px;
+    flex: 1 1 auto;
+    min-height: 650px;
     background: #fff;
     border: 1px solid #e4e7ec;
-    border-radius: 17px;
+    border-radius: 18px;
     overflow: hidden;
-    box-shadow: 0 8px 30px rgba(27, 31, 43, .06);
+    box-shadow: 0 10px 34px rgba(27, 31, 43, .06);
     display: flex;
     flex-direction: column;
 }
 
 .o_maqsam_frame_top {
-    min-height: 42px;
+    min-height: 48px;
     padding: 0 14px;
     border-bottom: 1px solid #eceef1;
-    background: #fafafb;
+    background: linear-gradient(180deg, #fff, #fafbfc);
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    color: #6b7280;
+    color: #667085;
     font-size: 11px;
 }
 
-.o_maqsam_frame_top > div {
+.o_maqsam_frame_title,
+.o_maqsam_frame_meta {
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #374151;
-    font-weight: 650;
+}
+
+.o_maqsam_frame_title {
+    color: #344054;
+    font-weight: 800;
+}
+
+.o_maqsam_meta_chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 8px;
+    border-radius: 999px;
+    background: #f2f4f7;
+    color: #667085;
+    font-weight: 700;
+}
+
+.o_maqsam_meta_chip_success {
+    background: #ecfdf3;
+    color: #027a48;
+}
+
+.o_maqsam_frame_canvas {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 0;
+    background: #fbfbfc;
 }
 
 .o_maqsam_frame {
+    display: block;
     width: 100%;
     height: 100%;
-    flex: 1 1 auto;
-    min-height: 635px;
+    min-height: 600px;
     border: 0;
     background: #fff;
 }
 
 @media (max-width: 767px) {
     .o_maqsam_dialer_head {
-        padding: 16px;
+        padding: 14px 14px 12px;
         align-items: flex-start;
         flex-direction: column;
     }
 
-    .o_maqsam_frame_area { padding: 10px; }
-    .o_maqsam_frame_shell { min-height: 620px; border-radius: 13px; }
-    .o_maqsam_frame { min-height: 575px; }
+    .o_maqsam_dialer_head h2 {
+        font-size: 21px;
+    }
+
+    .o_maqsam_workspace {
+        padding: 10px;
+        gap: 10px;
+    }
+
+    .o_maqsam_agent_card {
+        border-radius: 14px;
+    }
+
+    .o_maqsam_agent_ready {
+        font-size: 10px;
+    }
+
+    .o_maqsam_frame_shell {
+        min-height: 610px;
+        border-radius: 14px;
+    }
+
+    .o_maqsam_frame {
+        min-height: 560px;
+    }
+
+    .o_maqsam_frame_top {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 10px 12px;
+    }
+
+    .o_maqsam_frame-meta {
+        flex-wrap: wrap;
+    }
+}
+
+@media (min-width: 1400px) {
+    .o_maqsam_workspace {
+        max-width: 1040px;
+    }
 }
