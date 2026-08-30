@@ -1,4 +1,5 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_wati_conversation_user,wati.conversation user,model_wati_conversation,base.group_user,1,1,0,0
+access_wati_reply_wizard_user,wati.reply.wizard user,model_wati_reply_wizard,base.group_user,1,1,1,1
 access_wati_message_user,wati.message user,model_wati_message,base.group_user,1,0,0,0
 access_wati_webhook_event_admin,wati.webhook.event admin,model_wati_webhook_event,base.group_system,1,0,0,0
