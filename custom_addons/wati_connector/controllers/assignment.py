@@ -32,10 +32,11 @@ class WatiAssignmentController(http.Controller):
                 "assigned_user_name": assigned.name if assigned else "",
                 "assigned_to_me": bool(assigned and assigned == current_user),
                 "is_unassigned": not bool(assigned),
+                "can_takeover": bool(assigned and assigned != current_user),
                 "current_user_id": current_user.id,
                 "current_user_name": current_user.name,
                 "wati_email": current_user._wati_email(),
-                "can_force": current_user.has_group("base.group_system"),
+                "is_admin": current_user.has_group("base.group_system"),
             },
             status=200,
         )
@@ -57,18 +58,26 @@ class WatiAssignmentController(http.Controller):
             return request.make_json_response({"ok": False, "message": "المحادثة غير موجودة."}, status=404)
 
         current_user = request.env.user
-        allow_force = str(force or "").lower() in ("1", "true", "yes") and current_user.has_group("base.group_system")
+        previous_user = conversation.assigned_user_id
+        takeover_requested = str(force or "").lower() in ("1", "true", "yes")
         try:
-            conversation.assign_to_odoo_user(current_user, force=allow_force)
+            conversation.assign_to_odoo_user(current_user, force=takeover_requested)
         except UserError as exc:
             return request.make_json_response({"ok": False, "message": str(exc)}, status=409)
+
+        if previous_user and previous_user != current_user:
+            message = f"تم نقل المحادثة من {previous_user.name} إلى {current_user.name} ✅"
+        else:
+            message = f"تم إسناد المحادثة إلى {current_user.name} ✅"
 
         return request.make_json_response(
             {
                 "ok": True,
-                "message": f"تم إسناد المحادثة إلى {current_user.name} ✅",
+                "message": message,
                 "assigned_user_id": current_user.id,
                 "assigned_user_name": current_user.name,
+                "previous_user_id": previous_user.id if previous_user else False,
+                "previous_user_name": previous_user.name if previous_user else "",
             },
             status=200,
         )
