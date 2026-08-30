@@ -40,30 +40,15 @@ class WatiConversation(models.Model):
             "context": {"default_conversation_id": self.id},
         }
 
+    def send_session_message(self, text):
+        """Send a free-form WhatsApp message through the active WATI session.
 
-class WatiReplyWizard(models.TransientModel):
-    _name = "wati.reply.wizard"
-    _description = "WATI WhatsApp Reply"
-
-    conversation_id = fields.Many2one(
-        "wati.conversation",
-        string="المحادثة",
-        required=True,
-        readonly=True,
-        ondelete="cascade",
-    )
-    wa_id = fields.Char(
-        string="رقم WhatsApp",
-        related="conversation_id.wa_id",
-        readonly=True,
-    )
-    message = fields.Text(string="الرسالة", required=True)
-
-    def action_send(self):
+        This is deliberately kept on the model so the classic Odoo reply
+        wizard and the isolated WhatsApp Inbox use exactly the same API path.
+        """
         self.ensure_one()
-        conversation = self.conversation_id
-        target = (conversation.wa_id or "").strip()
-        text = (self.message or "").strip()
+        target = (self.wa_id or "").strip()
+        text = (text or "").strip()
         if not target:
             raise UserError(_("لا يوجد رقم WhatsApp لهذه المحادثة."))
         if not text:
@@ -96,13 +81,42 @@ class WatiReplyWizard(models.TransientModel):
         if not response.ok:
             detail = (response.text or response.reason or "").strip()[:500]
             if response.status_code in (400, 409) and "session" in detail.lower():
-                raise UserError(_("لا يمكن إرسال رسالة عادية لأن جلسة WhatsApp غير مفتوحة. سنستخدم Template لهذه الحالة لاحقًا.\n\n%s") % detail)
+                raise UserError(
+                    _(
+                        "لا يمكن إرسال رسالة عادية لأن جلسة WhatsApp غير مفتوحة. "
+                        "سنستخدم Template لهذه الحالة لاحقًا.\n\n%s"
+                    )
+                    % detail
+                )
             raise UserError(_("WATI رفض إرسال الرسالة (%s): %s") % (response.status_code, detail))
 
-        # The authoritative outbound message/status arrives back through WATI webhook.
-        # Only clear the local unread counter immediately for agent UX.
-        conversation.write({"unread_count": 0})
+        # WATI webhook remains the authoritative source for the outbound
+        # message and its SENT/DELIVERED/READ lifecycle.
+        self.write({"unread_count": 0})
+        return True
 
+
+class WatiReplyWizard(models.TransientModel):
+    _name = "wati.reply.wizard"
+    _description = "WATI WhatsApp Reply"
+
+    conversation_id = fields.Many2one(
+        "wati.conversation",
+        string="المحادثة",
+        required=True,
+        readonly=True,
+        ondelete="cascade",
+    )
+    wa_id = fields.Char(
+        string="رقم WhatsApp",
+        related="conversation_id.wa_id",
+        readonly=True,
+    )
+    message = fields.Text(string="الرسالة", required=True)
+
+    def action_send(self):
+        self.ensure_one()
+        self.conversation_id.send_session_message(self.message)
         return {
             "type": "ir.actions.client",
             "tag": "display_notification",
@@ -169,20 +183,27 @@ class WatiWebhookEvent(models.Model):
 
         duplicate = False
         if external_id:
-            duplicate = bool(self.sudo().search_count([
-                ("external_id", "=", external_id),
-                ("event_type", "=", event_type),
-                ("status", "=", status),
-            ], limit=1))
+            duplicate = bool(
+                self.sudo().search_count(
+                    [
+                        ("external_id", "=", external_id),
+                        ("event_type", "=", event_type),
+                        ("status", "=", status),
+                    ],
+                    limit=1,
+                )
+            )
         if not duplicate:
-            self.sudo().create({
-                "event_type": event_type,
-                "external_id": external_id,
-                "wa_id": wa_id,
-                "conversation_uid": conversation_uid,
-                "status": status,
-                "payload": json.dumps(payload, ensure_ascii=False, default=str),
-            })
+            self.sudo().create(
+                {
+                    "event_type": event_type,
+                    "external_id": external_id,
+                    "wa_id": wa_id,
+                    "conversation_uid": conversation_uid,
+                    "status": status,
+                    "payload": json.dumps(payload, ensure_ascii=False, default=str),
+                }
+            )
 
         message_id = external_id
         if not message_id:
@@ -216,46 +237,52 @@ class WatiWebhookEvent(models.Model):
         sender_name = str(payload.get("senderName") or wa_id or "WhatsApp").strip()
         text = payload.get("text") or ""
         if not conversation:
-            conversation = conversation_model.create({
-                "name": sender_name,
+            conversation = conversation_model.create(
+                {
+                    "name": sender_name,
+                    "conversation_uid": conversation_uid,
+                    "ticket_uid": str(payload.get("ticketId") or "").strip(),
+                    "wa_id": wa_id,
+                    "bsuid": str(payload.get("bsuid") or "").strip(),
+                    "sender_name": sender_name,
+                    "operator_name": payload.get("operatorName") or "",
+                    "operator_email": payload.get("operatorEmail") or "",
+                    "status": status,
+                    "last_message": text,
+                    "last_message_at": fields.Datetime.now(),
+                    "unread_count": 0 if payload.get("owner") else 1,
+                }
+            )
+        else:
+            conversation.write(
+                {
+                    "ticket_uid": str(payload.get("ticketId") or conversation.ticket_uid or "").strip(),
+                    "sender_name": sender_name or conversation.sender_name,
+                    "operator_name": payload.get("operatorName") or conversation.operator_name,
+                    "operator_email": payload.get("operatorEmail") or conversation.operator_email,
+                    "status": status or conversation.status,
+                    "last_message": text or conversation.last_message,
+                    "last_message_at": fields.Datetime.now(),
+                    "unread_count": conversation.unread_count + (0 if payload.get("owner") else 1),
+                }
+            )
+
+        message_model.create(
+            {
+                "name": message_id,
+                "whatsapp_message_id": str(payload.get("whatsappMessageId") or "").strip(),
+                "conversation_id": conversation.id,
                 "conversation_uid": conversation_uid,
                 "ticket_uid": str(payload.get("ticketId") or "").strip(),
                 "wa_id": wa_id,
-                "bsuid": str(payload.get("bsuid") or "").strip(),
                 "sender_name": sender_name,
+                "direction": "outbound" if payload.get("owner") else "inbound",
+                "message_type": str(payload.get("type") or "text"),
+                "text": text,
+                "status": status,
                 "operator_name": payload.get("operatorName") or "",
                 "operator_email": payload.get("operatorEmail") or "",
-                "status": status,
-                "last_message": text,
-                "last_message_at": fields.Datetime.now(),
-                "unread_count": 0 if payload.get("owner") else 1,
-            })
-        else:
-            conversation.write({
-                "ticket_uid": str(payload.get("ticketId") or conversation.ticket_uid or "").strip(),
-                "sender_name": sender_name or conversation.sender_name,
-                "operator_name": payload.get("operatorName") or conversation.operator_name,
-                "operator_email": payload.get("operatorEmail") or conversation.operator_email,
-                "status": status or conversation.status,
-                "last_message": text or conversation.last_message,
-                "last_message_at": fields.Datetime.now(),
-                "unread_count": conversation.unread_count + (0 if payload.get("owner") else 1),
-            })
-
-        message_model.create({
-            "name": message_id,
-            "whatsapp_message_id": str(payload.get("whatsappMessageId") or "").strip(),
-            "conversation_id": conversation.id,
-            "conversation_uid": conversation_uid,
-            "ticket_uid": str(payload.get("ticketId") or "").strip(),
-            "wa_id": wa_id,
-            "sender_name": sender_name,
-            "direction": "outbound" if payload.get("owner") else "inbound",
-            "message_type": str(payload.get("type") or "text"),
-            "text": text,
-            "status": status,
-            "operator_name": payload.get("operatorName") or "",
-            "operator_email": payload.get("operatorEmail") or "",
-            "raw_payload": json.dumps(payload, ensure_ascii=False, default=str),
-        })
+                "raw_payload": json.dumps(payload, ensure_ascii=False, default=str),
+            }
+        )
         return True
