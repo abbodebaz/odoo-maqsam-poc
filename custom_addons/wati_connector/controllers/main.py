@@ -207,6 +207,7 @@ class WatiWebhookController(http.Controller):
     def inbox_data(self, conversation_id=None, **kwargs):
         conversation_model = request.env["wati.conversation"]
         conversations = conversation_model.search([], order="last_message_at desc, id desc", limit=150)
+        current_user = request.env.user
 
         selected = conversation_model.browse()
         try:
@@ -221,8 +222,6 @@ class WatiWebhookController(http.Controller):
         if not selected and conversations:
             selected = conversations[0]
 
-        # Keep this GET endpoint strictly read-only. Writing unread_count here
-        # races with WATI webhooks and can trigger Odoo transaction retries.
         messages = request.env["wati.message"].browse()
         if selected:
             latest = request.env["wati.message"].search(
@@ -237,6 +236,7 @@ class WatiWebhookController(http.Controller):
             wati_name = conversation.name or conversation.sender_name or conversation.wa_id or "WhatsApp"
             partner = conversation.partner_id or _find_partner_by_wa_id(conversation.wa_id)
             display_name = partner.display_name if partner else wati_name
+            assigned = conversation.assigned_user_id
             conversation_rows.append(
                 {
                     "id": conversation.id,
@@ -252,6 +252,10 @@ class WatiWebhookController(http.Controller):
                     "partner_name": partner.display_name if partner else "",
                     "partner_phone": _partner_phone_value(partner),
                     "partner_url": _partner_url(partner),
+                    "assigned_user_id": assigned.id if assigned else False,
+                    "assigned_user_name": assigned.name if assigned else "",
+                    "assigned_to_me": bool(assigned and assigned == current_user),
+                    "is_unassigned": not bool(assigned),
                 }
             )
 
@@ -275,6 +279,8 @@ class WatiWebhookController(http.Controller):
             {
                 "ok": True,
                 "selected_id": selected.id if selected else False,
+                "current_user_id": current_user.id,
+                "current_user_name": current_user.name,
                 "conversations": conversation_rows,
                 "messages": message_rows,
             },
