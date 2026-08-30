@@ -1,0 +1,677 @@
+:root {
+    --bg: #f5f7f9;
+    --panel: #ffffff;
+    --panel-soft: #f7f9fa;
+    --border: #e4e8ec;
+    --text: #17212b;
+    --muted: #6c7885;
+    --accent: #1fa855;
+    --accent-dark: #168742;
+    --accent-soft: #eaf8ef;
+    --incoming: #ffffff;
+    --outgoing: #dcf8e7;
+    --shadow: 0 12px 32px rgba(23, 33, 43, 0.08);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    min-height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, Arial, sans-serif;
+}
+
+body {
+    overflow: hidden;
+}
+
+button,
+input,
+textarea {
+    font: inherit;
+}
+
+button,
+a {
+    -webkit-tap-highlight-color: transparent;
+}
+
+.wati-app {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.wati-topbar {
+    height: 68px;
+    flex: 0 0 68px;
+    padding: 0 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    background: #ffffff;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    z-index: 10;
+}
+
+.wati-brand,
+.wati-topbar-actions,
+.wati-chat-person,
+.wati-chat-meta,
+.wati-chat-actions,
+.wati-agent {
+    display: flex;
+    align-items: center;
+}
+
+.wati-brand {
+    gap: 12px;
+}
+
+.wati-logo {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    color: #ffffff;
+    background: linear-gradient(145deg, #26bd63, #138d45);
+    font-weight: 800;
+    font-size: 19px;
+    box-shadow: 0 6px 16px rgba(31, 168, 85, 0.24);
+}
+
+.wati-brand strong {
+    display: block;
+    font-size: 16px;
+    line-height: 1.15;
+}
+
+.wati-brand span {
+    display: block;
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 3px;
+}
+
+.wati-topbar-actions {
+    gap: 14px;
+}
+
+.wati-agent {
+    gap: 7px;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.wati-online-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+.wati-odoo-link {
+    color: var(--text);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 9px 13px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: 0.18s ease;
+}
+
+.wati-odoo-link:hover {
+    border-color: #cdd5dc;
+    background: var(--panel-soft);
+}
+
+.wati-workspace {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 370px minmax(0, 1fr);
+    direction: rtl;
+}
+
+.wati-sidebar {
+    min-width: 0;
+    background: var(--panel);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+}
+
+.wati-sidebar-head {
+    padding: 22px 20px 13px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.wati-sidebar-head h1 {
+    margin: 0;
+    font-size: 20px;
+}
+
+.wati-sidebar-head p {
+    margin: 5px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.wati-icon-button {
+    width: 38px;
+    height: 38px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 21px;
+    line-height: 1;
+}
+
+.wati-icon-button:hover {
+    background: var(--panel-soft);
+}
+
+.wati-search {
+    margin: 0 20px;
+    height: 42px;
+    border: 1px solid var(--border);
+    background: var(--panel-soft);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 12px;
+}
+
+.wati-search span {
+    color: var(--muted);
+    font-size: 18px;
+}
+
+.wati-search input {
+    width: 100%;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--text);
+    font-size: 13px;
+}
+
+.wati-filters {
+    display: flex;
+    gap: 7px;
+    padding: 13px 20px 11px;
+    border-bottom: 1px solid var(--border);
+}
+
+.wati-filter {
+    border: 0;
+    border-radius: 999px;
+    padding: 7px 12px;
+    background: #eef2f4;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.wati-filter.active {
+    background: var(--accent-soft);
+    color: var(--accent-dark);
+}
+
+.wati-conversation-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.wati-conversation {
+    width: 100%;
+    min-height: 82px;
+    border: 0;
+    border-bottom: 1px solid #edf0f2;
+    background: #fff;
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 11px;
+    padding: 12px 17px;
+    text-align: right;
+    cursor: pointer;
+    color: inherit;
+}
+
+.wati-conversation:hover {
+    background: #fafcfc;
+}
+
+.wati-conversation.active {
+    background: #effaf3;
+}
+
+.wati-avatar {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    flex: 0 0 46px;
+    background: #e9eef2;
+    color: #40505d;
+    font-weight: 800;
+    font-size: 16px;
+}
+
+.wati-conversation.active .wati-avatar {
+    background: #d7f3e1;
+    color: var(--accent-dark);
+}
+
+.wati-conversation-main {
+    min-width: 0;
+}
+
+.wati-conversation-title,
+.wati-conversation-preview {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.wati-conversation-title {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.wati-conversation-preview {
+    margin-top: 5px;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.wati-conversation-side {
+    align-self: stretch;
+    min-width: 54px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 8px;
+}
+
+.wati-conversation-time {
+    color: #8b96a0;
+    font-size: 10px;
+    direction: ltr;
+}
+
+.wati-unread {
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.wati-chat {
+    min-width: 0;
+    min-height: 0;
+    position: relative;
+    background:
+        radial-gradient(circle at 25px 25px, rgba(74, 96, 114, 0.035) 2px, transparent 2.5px) 0 0 / 50px 50px,
+        #eef2f4;
+}
+
+.wati-empty {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    padding: 30px;
+    color: var(--muted);
+}
+
+.wati-empty-icon {
+    width: 84px;
+    height: 84px;
+    display: grid;
+    place-items: center;
+    border-radius: 26px;
+    background: #fff;
+    box-shadow: var(--shadow);
+    font-size: 38px;
+}
+
+.wati-empty h2 {
+    color: var(--text);
+    margin: 22px 0 7px;
+    font-size: 20px;
+}
+
+.wati-empty p {
+    margin: 0;
+    max-width: 360px;
+    line-height: 1.7;
+    font-size: 13px;
+}
+
+.wati-chat-content {
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+}
+
+.is-hidden {
+    display: none !important;
+}
+
+.wati-chat-head {
+    min-height: 72px;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    background: rgba(255, 255, 255, 0.96);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(8px);
+}
+
+.wati-chat-person {
+    gap: 12px;
+    min-width: 0;
+}
+
+.wati-chat-person h2 {
+    margin: 0;
+    font-size: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.wati-chat-meta {
+    gap: 8px;
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.wati-status-badge {
+    display: none;
+    border-radius: 999px;
+    padding: 3px 7px;
+    background: #eef2f4;
+    color: #63717c;
+}
+
+.wati-status-badge:not(:empty) {
+    display: inline-flex;
+}
+
+.wati-operator {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.wati-mobile-back {
+    display: none;
+    width: 35px;
+    height: 35px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: #fff;
+    font-size: 25px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.wati-message-list {
+    min-height: 0;
+    overflow-y: auto;
+    padding: 26px clamp(22px, 5vw, 74px);
+    scroll-behavior: smooth;
+}
+
+.wati-message-row {
+    display: flex;
+    margin: 7px 0;
+}
+
+.wati-message-row.inbound {
+    justify-content: flex-start;
+}
+
+.wati-message-row.outbound {
+    justify-content: flex-end;
+}
+
+.wati-bubble {
+    max-width: min(680px, 78%);
+    border-radius: 15px;
+    padding: 9px 11px 7px;
+    box-shadow: 0 1px 2px rgba(23, 33, 43, 0.07);
+    line-height: 1.55;
+    font-size: 13px;
+    word-break: break-word;
+    white-space: pre-wrap;
+}
+
+.inbound .wati-bubble {
+    background: var(--incoming);
+    border-bottom-right-radius: 5px;
+}
+
+.outbound .wati-bubble {
+    background: var(--outgoing);
+    border-bottom-left-radius: 5px;
+}
+
+.wati-bubble-meta {
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 5px;
+    color: #7f8b94;
+    font-size: 10px;
+    direction: ltr;
+}
+
+.wati-check.read {
+    color: #1589d1;
+}
+
+.wati-message-placeholder {
+    color: var(--muted);
+    font-style: italic;
+}
+
+.wati-composer {
+    margin: 0;
+    padding: 12px 20px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: end;
+    background: #f8fafb;
+    border-top: 1px solid var(--border);
+}
+
+.wati-composer textarea {
+    width: 100%;
+    min-height: 46px;
+    max-height: 140px;
+    resize: none;
+    outline: 0;
+    border: 1px solid #dce2e7;
+    border-radius: 14px;
+    background: #fff;
+    color: var(--text);
+    padding: 12px 14px;
+    line-height: 1.55;
+}
+
+.wati-composer textarea:focus {
+    border-color: #8dd6a9;
+    box-shadow: 0 0 0 3px rgba(31, 168, 85, 0.08);
+}
+
+.wati-composer button {
+    height: 46px;
+    border: 0;
+    border-radius: 13px;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+    padding: 0 20px;
+    cursor: pointer;
+    transition: 0.18s ease;
+}
+
+.wati-composer button:hover {
+    background: var(--accent-dark);
+}
+
+.wati-composer button:disabled {
+    opacity: 0.55;
+    cursor: wait;
+}
+
+.wati-composer-note {
+    background: #f8fafb;
+    color: #8a959e;
+    padding: 0 20px 10px;
+    font-size: 10px;
+}
+
+.wati-toast {
+    position: fixed;
+    left: 24px;
+    bottom: 24px;
+    max-width: min(430px, calc(100vw - 48px));
+    padding: 12px 15px;
+    border-radius: 12px;
+    background: #17212b;
+    color: #fff;
+    box-shadow: var(--shadow);
+    font-size: 12px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(8px);
+    transition: 0.2s ease;
+    z-index: 50;
+}
+
+.wati-toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.wati-toast.error {
+    background: #a82e35;
+}
+
+.wati-list-empty {
+    padding: 44px 22px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+@media (max-width: 820px) {
+    body {
+        overflow: auto;
+    }
+
+    .wati-topbar {
+        height: 60px;
+        flex-basis: 60px;
+        padding: 0 13px;
+    }
+
+    .wati-agent {
+        display: none;
+    }
+
+    .wati-brand span {
+        display: none;
+    }
+
+    .wati-workspace {
+        display: block;
+        min-height: calc(100vh - 60px);
+        position: relative;
+    }
+
+    .wati-sidebar,
+    .wati-chat {
+        position: absolute;
+        inset: 0;
+    }
+
+    .wati-sidebar {
+        border-left: 0;
+        z-index: 2;
+    }
+
+    .wati-chat {
+        z-index: 3;
+        transform: translateX(-100%);
+        transition: transform 0.2s ease;
+    }
+
+    .wati-app.mobile-chat-open .wati-chat {
+        transform: translateX(0);
+    }
+
+    .wati-mobile-back {
+        display: inline-grid;
+        place-items: center;
+    }
+
+    .wati-message-list {
+        padding: 20px 12px;
+    }
+
+    .wati-bubble {
+        max-width: 88%;
+    }
+
+    .wati-composer {
+        padding: 10px;
+    }
+
+    .wati-composer button {
+        padding: 0 14px;
+    }
+
+    .wati-composer-note {
+        padding: 0 10px 8px;
+    }
+}
