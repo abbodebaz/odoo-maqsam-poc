@@ -28,6 +28,7 @@
         conversations: [],
         messages: [],
         selectedId: Number(localStorage.getItem("watiInboxSelected") || 0),
+        currentUserId: 0,
         filter: "all",
         query: "",
         loading: false,
@@ -105,12 +106,15 @@
         const query = state.query.trim().toLowerCase();
         return state.conversations.filter((conversation) => {
             if (state.filter === "unread" && !(Number(conversation.unread_count) > 0)) return false;
+            if (state.filter === "mine" && !conversation.assigned_to_me) return false;
+            if (state.filter === "unassigned" && !conversation.is_unassigned) return false;
             if (!query) return true;
             const haystack = [
                 conversation.name,
                 conversation.wa_id,
                 conversation.last_message,
                 conversation.partner_name,
+                conversation.assigned_user_name,
             ]
                 .filter(Boolean)
                 .join(" ")
@@ -122,12 +126,12 @@
     function renderConversations() {
         const rows = filteredConversations();
         conversationList.replaceChildren();
-        conversationCount.textContent = `${state.conversations.length} محادثة`;
+        conversationCount.textContent = `${rows.length} من ${state.conversations.length} محادثة`;
 
         if (!rows.length) {
             const empty = document.createElement("div");
             empty.className = "wati-list-empty";
-            empty.textContent = state.query || state.filter === "unread"
+            empty.textContent = state.query || state.filter !== "all"
                 ? "لا توجد محادثات مطابقة."
                 : "لا توجد محادثات WhatsApp حتى الآن.";
             conversationList.appendChild(empty);
@@ -138,6 +142,7 @@
             const button = document.createElement("button");
             button.type = "button";
             button.className = "wati-conversation";
+            button.dataset.conversationId = String(conversation.id);
             if (Number(conversation.id) === Number(state.selectedId)) button.classList.add("active");
 
             const avatar = document.createElement("div");
@@ -187,7 +192,9 @@
         chatName.textContent = conversation.name || conversation.wa_id || "WhatsApp";
         chatNumber.textContent = conversation.wa_id || "";
         chatStatus.textContent = conversation.status || "";
-        chatOperator.textContent = conversation.operator_name ? `الموظف: ${conversation.operator_name}` : "";
+        chatOperator.textContent = conversation.assigned_user_name
+            ? `الموظف: ${conversation.assigned_user_name}`
+            : (conversation.operator_name ? `الموظف: ${conversation.operator_name}` : "");
     }
 
     function renderMessages(force = false) {
@@ -272,6 +279,7 @@
 
             state.conversations = Array.isArray(payload.conversations) ? payload.conversations : [];
             state.messages = Array.isArray(payload.messages) ? payload.messages : [];
+            state.currentUserId = Number(payload.current_user_id || 0);
             state.selectedId = Number(payload.selected_id || 0);
             if (state.selectedId) localStorage.setItem("watiInboxSelected", String(state.selectedId));
 
