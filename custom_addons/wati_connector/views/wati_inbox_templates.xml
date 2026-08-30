@@ -8,6 +8,7 @@
                 <meta name="robots" content="noindex,nofollow"/>
                 <title>WhatsApp Inbox | Odoo</title>
                 <link rel="stylesheet" href="/wati_connector/static/src/inbox/inbox.css"/>
+                <link rel="stylesheet" href="/wati_connector/static/src/inbox/inbox_fix.css"/>
             </head>
             <body>
                 <div id="watiInboxApp" class="wati-app" t-att-data-csrf="csrf_token">
