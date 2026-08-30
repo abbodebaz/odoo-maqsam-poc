@@ -37,14 +37,22 @@ if [ "${TABLE_EXISTS}" != "ir_module_module" ]; then
   odoo "${COMMON_ARGS[@]}" -d "${PGDATABASE}" -i base --without-demo --stop-after-init
 fi
 
-MODULE_STATE="$(psql -h "${PGHOST}" -p "${PGPORT}" -U "${PGUSER}" -d "${PGDATABASE}" -tAc "SELECT state FROM ir_module_module WHERE name='maqsam_connector' LIMIT 1" || true)"
-if [ "${MODULE_STATE}" = "installed" ]; then
-  echo "Upgrading Maqsam Connector module..."
-  odoo "${COMMON_ARGS[@]}" -d "${PGDATABASE}" -u maqsam_connector --without-demo --stop-after-init
-else
-  echo "Installing Maqsam Connector module..."
-  odoo "${COMMON_ARGS[@]}" -d "${PGDATABASE}" -i maqsam_connector --without-demo --stop-after-init
-fi
+install_or_upgrade_module() {
+  local module_name="$1"
+  local label="$2"
+  local module_state
+  module_state="$(psql -h "${PGHOST}" -p "${PGPORT}" -U "${PGUSER}" -d "${PGDATABASE}" -tAc "SELECT state FROM ir_module_module WHERE name='${module_name}' LIMIT 1" || true)"
+  if [ "${module_state}" = "installed" ]; then
+    echo "Upgrading ${label} module..."
+    odoo "${COMMON_ARGS[@]}" -d "${PGDATABASE}" -u "${module_name}" --without-demo --stop-after-init
+  else
+    echo "Installing ${label} module..."
+    odoo "${COMMON_ARGS[@]}" -d "${PGDATABASE}" -i "${module_name}" --without-demo --stop-after-init
+  fi
+}
+
+install_or_upgrade_module "maqsam_connector" "Maqsam Connector"
+install_or_upgrade_module "wati_connector" "WATI WhatsApp Connector"
 
 # A newly attached Railway volume starts with an empty filestore while the
 # database can still contain references to asset files from a previous
