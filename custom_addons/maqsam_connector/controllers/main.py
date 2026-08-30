@@ -28,10 +28,22 @@ class MaqsamController(http.Controller):
         user = request.env.user
         user_agent_email = (user.maqsam_agent_email or "").strip().lower()
         odoo_email = (user.email or "").strip().lower()
+        odoo_login = (user.login or "").strip().lower()
 
-        agent_email = user_agent_email or default_agent_email
-        if not agent_email and "@" in odoo_email:
-            agent_email = odoo_email
+        # Multi-user rule:
+        # 1) Explicit Maqsam mapping on the Odoo user always wins.
+        # 2) Otherwise use the employee's own Odoo email/login when it is an email.
+        # 3) The global default is only a legacy/admin fallback. Never use it for
+        #    regular employees, otherwise multiple Odoo users can silently log in
+        #    as the same Maqsam agent.
+        agent_email = user_agent_email
+        if not agent_email:
+            for candidate in (odoo_email, odoo_login):
+                if "@" in candidate:
+                    agent_email = candidate
+                    break
+        if not agent_email and user.has_group("base.group_system"):
+            agent_email = default_agent_email
 
         return {
             "base_url": base_url,
@@ -97,7 +109,8 @@ class MaqsamController(http.Controller):
             )
             if not match:
                 raise ValueError(
-                    f"تم الاتصال بـMaqsam بنجاح، لكن Agent Email ({requested}) غير موجود في الحساب."
+                    f"تم الاتصال بـMaqsam بنجاح، لكن Agent Email ({requested}) غير موجود في الحساب. "
+                    "افتح بطاقة مستخدم Odoo وحدد Maqsam Agent Email الصحيح لهذا الموظف."
                 )
             if match.get("active") is False:
                 raise ValueError(f"Agent {requested} موجود لكنه غير نشط في Maqsam")
@@ -110,7 +123,10 @@ class MaqsamController(http.Controller):
         ]
         if len(dialer_agents) == 1:
             return dialer_agents[0]
-        raise ValueError("حدد Maqsam Agent Email لهذا المستخدم أو من Settings → Maqsam")
+        raise ValueError(
+            "لم يتم تحديد حساب Maqsam لهذا المستخدم. افتح Settings → Users → المستخدم → Maqsam "
+            "ثم أدخل Maqsam Agent Email الخاص به."
+        )
 
     def _error_page(self, exc):
         message = html.escape(str(exc))
