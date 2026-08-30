@@ -3,3 +3,4 @@ from . import wati_models
 from . import wati_send_fix
 from . import wati_assignment
 from . import wati_support_ticket
+from . import crm_wati_trigger
