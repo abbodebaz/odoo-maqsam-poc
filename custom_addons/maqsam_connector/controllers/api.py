@@ -30,6 +30,51 @@ class MaqsamApiController(MaqsamController):
         except Exception as exc:
             raise ValueError("استجابة Maqsam ليست JSON صالح") from exc
 
+    def _call_details(self, cfg, lookup, value):
+        response = requests.get(
+            f"https://api.{cfg['base_url']}/v3/calls/{lookup}/{value}",
+            auth=self._auth(cfg),
+            timeout=25,
+        )
+        payload = self._maqsam_json(response)
+        call = payload.get("message") or {}
+        return call if isinstance(call, dict) else {}
+
+    @staticmethod
+    def _agent_markers(agent):
+        if not isinstance(agent, dict):
+            return set()
+        markers = set()
+        for key in ("email", "agentEmail", "agent_email", "userEmail"):
+            value = str(agent.get(key) or "").strip().lower()
+            if value:
+                markers.add(f"email:{value}")
+        for key in ("id", "identifier", "agentId", "agent_id", "userId"):
+            value = str(agent.get(key) or "").strip()
+            if value:
+                markers.add(f"id:{value}")
+        return markers
+
+    def _call_agent_markers(self, call):
+        markers = self._agent_markers(call)
+        agents = call.get("agents") if isinstance(call, dict) else None
+        if isinstance(agents, list):
+            for agent in agents:
+                markers.update(self._agent_markers(agent))
+        agent = call.get("agent") if isinstance(call, dict) else None
+        if isinstance(agent, dict):
+            markers.update(self._agent_markers(agent))
+        return markers
+
+    def _ensure_call_access(self, cfg, call):
+        if self._can_view_team():
+            return
+        current_agent = self._resolve_agent(cfg)
+        current_markers = self._agent_markers(current_agent)
+        call_markers = self._call_agent_markers(call)
+        if not current_markers or not call_markers or current_markers.isdisjoint(call_markers):
+            raise PermissionError("هذه المكالمة تخص موظفًا آخر في Maqsam")
+
     @http.route(
         "/maqsam/api/agents",
         type="http",
@@ -40,6 +85,18 @@ class MaqsamApiController(MaqsamController):
     def agents_index(self, **kwargs):
         try:
             cfg = self._config()
+            can_view_team = self._can_view_team()
+            if not can_view_team:
+                agent = self._resolve_agent(cfg)
+                return self._json(
+                    {
+                        "ok": True,
+                        "page": 1,
+                        "agents": [agent],
+                        "can_view_team": False,
+                    }
+                )
+
             page = max(int(kwargs.get("page") or 1), 1)
             path = "/v1/agents" if page == 1 else f"/v1/agents/page/{page}"
             response = requests.get(
@@ -49,7 +106,14 @@ class MaqsamApiController(MaqsamController):
             )
             payload = self._maqsam_json(response)
             agents = payload.get("message") if isinstance(payload.get("message"), list) else []
-            return self._json({"ok": True, "page": page, "agents": agents})
+            return self._json(
+                {
+                    "ok": True,
+                    "page": page,
+                    "agents": agents,
+                    "can_view_team": True,
+                }
+            )
         except Exception as exc:
             return self._json({"ok": False, "message": str(exc)}, status=500)
 
@@ -63,8 +127,9 @@ class MaqsamApiController(MaqsamController):
     def calls_index(self, **kwargs):
         try:
             cfg = self._config()
+            can_view_team = self._can_view_team()
             params = {}
-            for key in ("phone", "email", "start_time", "end_time"):
+            for key in ("phone", "start_time", "end_time"):
                 value = str(kwargs.get(key) or "").strip()
                 if value:
                     params[key] = value
@@ -72,9 +137,15 @@ class MaqsamApiController(MaqsamController):
             page = max(int(kwargs.get("page") or 1), 1)
             params["page"] = page
 
-            if str(kwargs.get("mine") or "").lower() in ("1", "true", "yes"):
+            mine_requested = str(kwargs.get("mine") or "").lower() in ("1", "true", "yes")
+            mine = (not can_view_team) or mine_requested
+            if mine:
                 agent = self._resolve_agent(cfg)
                 params["email"] = str(agent.get("email") or "").strip().lower()
+            elif can_view_team:
+                requested_email = str(kwargs.get("email") or "").strip().lower()
+                if requested_email:
+                    params["email"] = requested_email
 
             response = requests.get(
                 f"https://api.{cfg['base_url']}/v3/calls",
@@ -84,7 +155,15 @@ class MaqsamApiController(MaqsamController):
             )
             payload = self._maqsam_json(response)
             calls = payload.get("message") if isinstance(payload.get("message"), list) else []
-            return self._json({"ok": True, "page": page, "calls": calls})
+            return self._json(
+                {
+                    "ok": True,
+                    "page": page,
+                    "calls": calls,
+                    "mine": mine,
+                    "can_view_team": can_view_team,
+                }
+            )
         except Exception as exc:
             return self._json({"ok": False, "message": str(exc)}, status=500)
 
@@ -101,13 +180,17 @@ class MaqsamApiController(MaqsamController):
                 raise ValueError("نوع البحث يجب أن يكون id أو reference_id")
             value = self._safe_identifier(value)
             cfg = self._config()
-            response = requests.get(
-                f"https://api.{cfg['base_url']}/v3/calls/{lookup}/{value}",
-                auth=self._auth(cfg),
-                timeout=25,
+            call = self._call_details(cfg, lookup, value)
+            self._ensure_call_access(cfg, call)
+            return self._json(
+                {
+                    "ok": True,
+                    "call": call,
+                    "can_view_team": self._can_view_team(),
+                }
             )
-            payload = self._maqsam_json(response)
-            return self._json({"ok": True, "call": payload.get("message") or {}})
+        except PermissionError as exc:
+            return self._json({"ok": False, "message": str(exc)}, status=403)
         except Exception as exc:
             return self._json({"ok": False, "message": str(exc)}, status=500)
 
@@ -166,6 +249,10 @@ class MaqsamApiController(MaqsamController):
                 raise ValueError("نوع البحث يجب أن يكون id أو reference_id")
             value = self._safe_identifier(value)
             cfg = self._config()
+
+            call = self._call_details(cfg, lookup, value)
+            self._ensure_call_access(cfg, call)
+
             response = requests.get(
                 f"https://api.{cfg['base_url']}/v3/recording/{lookup}/{value}",
                 auth=self._auth(cfg),
@@ -193,6 +280,8 @@ class MaqsamApiController(MaqsamController):
                 ],
                 status=200,
             )
+        except PermissionError as exc:
+            return self._json({"ok": False, "message": str(exc)}, status=403)
         except Exception as exc:
             return self._json({"ok": False, "message": str(exc)}, status=500)
 
