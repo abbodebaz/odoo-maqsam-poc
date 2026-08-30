@@ -24,7 +24,7 @@
                                 <span class="wati-online-dot"></span>
                                 <t t-esc="user_name"/>
                             </span>
-                            <a class="wati-odoo-link" href="/odoo">العودة إلى Odoo</a>
+                            <a class="wati-odoo-link" t-att-href="odoo_return_url">العودة إلى WhatsApp في Odoo</a>
                         </div>
                     </header>
 
