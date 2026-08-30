@@ -91,7 +91,7 @@
                 </div>
                 <script src="/wati_connector/static/src/inbox/inbox.js" defer="defer"></script>
                 <script src="/wati_connector/static/src/inbox/partner_enhance.js" defer="defer"></script>
-                <script src="/wati_connector/static/src/inbox/assignment_enhance.js" defer="defer"></script>
+                <script src="/wati_connector/static/src/inbox/assignment_takeover.js" defer="defer"></script>
             </body>
         </html>
     </template>
