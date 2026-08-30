@@ -8,7 +8,7 @@
             <xpath expr="//form" position="inside">
                 <app string="WATI WhatsApp" name="wati_connector" data-string="WATI WhatsApp">
                     <block title="WATI API" name="wati_api_settings">
-                        <setting string="API Connection" help="بيانات الربط مع WATI API V3. الـToken يبقى في Backend Odoo ولا يتم كشفه للمتصفح.">
+                        <setting string="API Connection" help="بيانات الربط مع WATI API. الـToken يبقى في Backend Odoo ولا يتم كشفه للمتصفح.">
                             <div class="content-group">
                                 <div class="row mt16">
                                     <label for="wati_api_endpoint" class="col-lg-3 o_light_label"/>
@@ -32,8 +32,12 @@
                                     <label for="wati_webhook_token" class="col-lg-3 o_light_label"/>
                                     <field name="wati_webhook_token" password="True" placeholder="ضع نصًا سريًا طويلًا" class="col-lg-7"/>
                                 </div>
+                                <div class="row mt16">
+                                    <label for="wati_webhook_url" class="col-lg-3 o_light_label"/>
+                                    <field name="wati_webhook_url" readonly="1" class="col-lg-7"/>
+                                </div>
                                 <div class="text-muted mt8">
-                                    رابط Webhook: /wati/webhook/&lt;token&gt; — بعد حفظ الإعدادات سنضع الرابط الكامل داخل WATI.
+                                    انسخ Webhook URL كاملًا كما هو إلى WATI. لا تستخدم WATI API Token في رابط الـWebhook.
                                 </div>
                             </div>
                         </setting>
