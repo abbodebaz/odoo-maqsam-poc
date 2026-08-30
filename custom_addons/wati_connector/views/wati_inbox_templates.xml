@@ -11,6 +11,7 @@
                 <link rel="stylesheet" href="/wati_connector/static/src/inbox/inbox_fix.css"/>
                 <link rel="stylesheet" href="/wati_connector/static/src/inbox/media_enhance.css"/>
                 <link rel="stylesheet" href="/wati_connector/static/src/inbox/attachment_send_v1.css"/>
+                <link rel="stylesheet" href="/wati_connector/static/src/inbox/composer_v2.css"/>
             </head>
             <body>
                 <div id="watiInboxApp" class="wati-app" t-att-data-csrf="csrf_token">
