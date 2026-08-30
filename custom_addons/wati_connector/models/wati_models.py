@@ -1,6 +1,10 @@
 import json
+from urllib.parse import quote
 
-from odoo import api, fields, models
+import requests
+
+from odoo import _, api, fields, models
+from odoo.exceptions import UserError
 
 
 class WatiConversation(models.Model):
@@ -22,6 +26,94 @@ class WatiConversation(models.Model):
     unread_count = fields.Integer(string="غير مقروء", default=0)
     partner_id = fields.Many2one("res.partner", string="عميل Odoo", ondelete="set null", index=True)
     message_ids = fields.One2many("wati.message", "conversation_id", string="الرسائل")
+
+    def action_open_reply_wizard(self):
+        self.ensure_one()
+        if not self.wa_id:
+            raise UserError(_("لا يوجد WhatsApp ID لهذه المحادثة."))
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("رد عبر WhatsApp"),
+            "res_model": "wati.reply.wizard",
+            "view_mode": "form",
+            "target": "new",
+            "context": {"default_conversation_id": self.id},
+        }
+
+
+class WatiReplyWizard(models.TransientModel):
+    _name = "wati.reply.wizard"
+    _description = "WATI WhatsApp Reply"
+
+    conversation_id = fields.Many2one(
+        "wati.conversation",
+        string="المحادثة",
+        required=True,
+        readonly=True,
+        ondelete="cascade",
+    )
+    wa_id = fields.Char(
+        string="رقم WhatsApp",
+        related="conversation_id.wa_id",
+        readonly=True,
+    )
+    message = fields.Text(string="الرسالة", required=True)
+
+    def action_send(self):
+        self.ensure_one()
+        conversation = self.conversation_id
+        target = (conversation.wa_id or "").strip()
+        text = (self.message or "").strip()
+        if not target:
+            raise UserError(_("لا يوجد رقم WhatsApp لهذه المحادثة."))
+        if not text:
+            raise UserError(_("اكتب الرسالة أولًا."))
+        if len(text) > 4096:
+            raise UserError(_("الرسالة أطول من الحد المسموح في WhatsApp (4096 حرفًا)."))
+
+        params = self.env["ir.config_parameter"].sudo()
+        endpoint = (params.get_param("wati_connector.api_endpoint") or "").strip().rstrip("/")
+        token = (params.get_param("wati_connector.api_token") or "").strip()
+        if token.lower().startswith("bearer "):
+            token = token[7:].strip()
+        if not endpoint or not token:
+            raise UserError(_("إعدادات WATI API غير مكتملة. راجع Settings → WATI WhatsApp."))
+
+        url = f"{endpoint}/api/v1/sendSessionMessage/{quote(target, safe='')}"
+        try:
+            response = requests.post(
+                url,
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Accept": "application/json",
+                },
+                params={"messageText": text},
+                timeout=20,
+            )
+        except requests.RequestException as exc:
+            raise UserError(_("تعذر إرسال رسالة WhatsApp: %s") % exc) from exc
+
+        if not response.ok:
+            detail = (response.text or response.reason or "").strip()[:500]
+            if response.status_code in (400, 409) and "session" in detail.lower():
+                raise UserError(_("لا يمكن إرسال رسالة عادية لأن جلسة WhatsApp غير مفتوحة. سنستخدم Template لهذه الحالة لاحقًا.\n\n%s") % detail)
+            raise UserError(_("WATI رفض إرسال الرسالة (%s): %s") % (response.status_code, detail))
+
+        # The authoritative outbound message/status arrives back through WATI webhook.
+        # Only clear the local unread counter immediately for agent UX.
+        conversation.write({"unread_count": 0})
+
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": _("WhatsApp"),
+                "message": _("تم إرسال الرسالة إلى WATI ✅"),
+                "type": "success",
+                "sticky": False,
+                "next": {"type": "ir.actions.act_window_close"},
+            },
+        }
 
 
 class WatiMessage(models.Model):
@@ -75,8 +167,6 @@ class WatiWebhookEvent(models.Model):
         conversation_uid = str(payload.get("conversationId") or "").strip()
         status = str(payload.get("statusString") or payload.get("status") or "").strip()
 
-        # Keep every webhook event for diagnostics, but avoid exact duplicate event records
-        # when WATI retries the same callback.
         duplicate = False
         if external_id:
             duplicate = bool(self.sudo().search_count([
@@ -101,7 +191,6 @@ class WatiWebhookEvent(models.Model):
         message_model = self.env["wati.message"].sudo()
         existing = message_model.search([("name", "=", message_id)], limit=1)
 
-        # Status callbacks may reference a message already stored earlier.
         if existing:
             values = {}
             if status:
@@ -114,7 +203,6 @@ class WatiWebhookEvent(models.Model):
                 existing.write(values)
             return True
 
-        # Create a message record only when the callback carries message/conversation data.
         if not (conversation_uid or wa_id or payload.get("text") is not None):
             return True
 
