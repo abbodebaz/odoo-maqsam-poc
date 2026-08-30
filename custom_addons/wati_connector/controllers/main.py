@@ -1,8 +1,42 @@
+import hashlib
 import hmac
+import threading
+import time
 
 from odoo import fields, http
 from odoo.exceptions import UserError
 from odoo.http import request
+
+
+_SEND_GUARD = {}
+_SEND_GUARD_LOCK = threading.Lock()
+_SEND_GUARD_TTL = 120.0
+
+
+def _reserve_send_guard(user_id, conversation_id, request_id, message):
+    now = time.monotonic()
+    request_id = (request_id or "").strip()
+    if request_id:
+        key = f"{user_id}:{request_id}"
+    else:
+        digest = hashlib.sha256((message or "").encode("utf-8")).hexdigest()
+        key = f"{user_id}:{conversation_id}:{digest}"
+
+    with _SEND_GUARD_LOCK:
+        expired = [item for item, created_at in _SEND_GUARD.items() if now - created_at > _SEND_GUARD_TTL]
+        for item in expired:
+            _SEND_GUARD.pop(item, None)
+
+        if key in _SEND_GUARD:
+            return key, False
+
+        _SEND_GUARD[key] = now
+        return key, True
+
+
+def _release_send_guard(key):
+    with _SEND_GUARD_LOCK:
+        _SEND_GUARD.pop(key, None)
 
 
 class WatiWebhookController(http.Controller):
@@ -31,7 +65,6 @@ class WatiWebhookController(http.Controller):
                 request.env["wati.webhook.event"].sudo().ingest(event)
                 accepted += 1
 
-        # WATI expects HTTP 200 to acknowledge successful receipt.
         return request.make_json_response({"ok": True, "accepted": accepted}, status=200)
 
     @http.route(
@@ -41,11 +74,6 @@ class WatiWebhookController(http.Controller):
         methods=["GET"],
     )
     def inbox(self, **kwargs):
-        """Standalone authenticated inbox.
-
-        The page intentionally does not register anything in web.assets_web,
-        so a UI error here cannot break the Odoo backend shell.
-        """
         conversations_action = request.env.ref(
             "wati_connector.action_wati_conversations",
             raise_if_not_found=False,
@@ -88,9 +116,8 @@ class WatiWebhookController(http.Controller):
         if not selected and conversations:
             selected = conversations[0]
 
-        if selected and selected.unread_count:
-            selected.write({"unread_count": 0})
-
+        # Keep this GET endpoint strictly read-only. Writing unread_count here
+        # races with WATI webhooks and can trigger Odoo transaction retries.
         messages = request.env["wati.message"].browse()
         if selected:
             latest = request.env["wati.message"].search(
@@ -149,7 +176,7 @@ class WatiWebhookController(http.Controller):
         auth="user",
         methods=["POST"],
     )
-    def inbox_send(self, conversation_id=None, message=None, **kwargs):
+    def inbox_send(self, conversation_id=None, message=None, request_id=None, **kwargs):
         try:
             conversation_id = int(conversation_id or 0)
         except (TypeError, ValueError):
@@ -159,9 +186,25 @@ class WatiWebhookController(http.Controller):
         if not conversation:
             return request.make_json_response({"ok": False, "message": "المحادثة غير موجودة."}, status=404)
 
+        guard_key, reserved = _reserve_send_guard(
+            request.env.user.id,
+            conversation_id,
+            request_id,
+            message or "",
+        )
+        if not reserved:
+            return request.make_json_response(
+                {"ok": True, "message": "تم تجاهل إعادة إرسال مكررة.", "duplicate_suppressed": True},
+                status=200,
+            )
+
         try:
             conversation.send_session_message(message or "")
         except UserError as exc:
+            _release_send_guard(guard_key)
             return request.make_json_response({"ok": False, "message": str(exc)}, status=400)
+        except Exception:
+            _release_send_guard(guard_key)
+            raise
 
         return request.make_json_response({"ok": True, "message": "تم الإرسال إلى WATI."}, status=200)
