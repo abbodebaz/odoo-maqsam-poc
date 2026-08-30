@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_wati" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.wati</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app string="WATI WhatsApp" name="wati_connector" data-string="WATI WhatsApp">
+                    <block title="WATI API" name="wati_api_settings">
+                        <setting string="API Connection" help="بيانات الربط مع WATI API V3. الـToken يبقى في Backend Odoo ولا يتم كشفه للمتصفح.">
+                            <div class="content-group">
+                                <div class="row mt16">
+                                    <label for="wati_api_endpoint" class="col-lg-3 o_light_label"/>
+                                    <field name="wati_api_endpoint" placeholder="https://live-mt-server.wati.io/xxxxxx" class="col-lg-7"/>
+                                </div>
+                                <div class="row mt16">
+                                    <label for="wati_api_token" class="col-lg-3 o_light_label"/>
+                                    <field name="wati_api_token" password="True" class="col-lg-7"/>
+                                </div>
+                                <div class="row mt16">
+                                    <div class="col-lg-3"/>
+                                    <div class="col-lg-7">
+                                        <button name="action_wati_test_connection" type="object" string="اختبار الاتصال بـ WATI" class="btn btn-primary"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </setting>
+                        <setting string="Incoming Webhook" help="يستقبل رسائل العملاء وحالات الرسائل من WATI داخل Odoo.">
+                            <div class="content-group">
+                                <div class="row mt16">
+                                    <label for="wati_webhook_token" class="col-lg-3 o_light_label"/>
+                                    <field name="wati_webhook_token" password="True" placeholder="ضع نصًا سريًا طويلًا" class="col-lg-7"/>
+                                </div>
+                                <div class="text-muted mt8">
+                                    رابط Webhook: /wati/webhook/&lt;token&gt; — بعد حفظ الإعدادات سنضع الرابط الكامل داخل WATI.
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>
