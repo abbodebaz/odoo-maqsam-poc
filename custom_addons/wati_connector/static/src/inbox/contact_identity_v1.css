@@ -1,0 +1,44 @@
+.wati-conversation {
+    min-height: 94px;
+}
+
+.wati-conversation-phone {
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #7a8792;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.015em;
+    direction: ltr;
+    text-align: right;
+    unicode-bidi: plaintext;
+}
+
+.wati-conversation-preview {
+    margin-top: 3px;
+}
+
+.wati-chat-meta #chatNumber {
+    display: inline-flex;
+    align-items: center;
+    min-height: 22px;
+    direction: ltr;
+    unicode-bidi: plaintext;
+    color: #667582;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.015em;
+}
+
+.wati-chat-meta #chatNumber:not(:empty)::before {
+    content: "☎";
+    margin-right: 5px;
+    color: #9aa5ae;
+    font-size: 11px;
+}
+
+.wati-chat-person h2 {
+    margin-bottom: 2px;
+}
