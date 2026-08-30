@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="wati_inbox_page" name="WATI WhatsApp Inbox">
+        <html lang="ar" dir="rtl">
+            <head>
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <meta name="robots" content="noindex,nofollow"/>
+                <title>WhatsApp Inbox | Odoo</title>
+                <link rel="stylesheet" href="/wati_connector/static/src/inbox/inbox.css"/>
+            </head>
+            <body>
+                <div id="watiInboxApp" class="wati-app" t-att-data-csrf="csrf_token">
+                    <header class="wati-topbar">
+                        <div class="wati-brand">
+                            <div class="wati-logo">W</div>
+                            <div>
+                                <strong>WhatsApp Inbox</strong>
+                                <span>WATI × Odoo</span>
+                            </div>
+                        </div>
+                        <div class="wati-topbar-actions">
+                            <span class="wati-agent">
+                                <span class="wati-online-dot"></span>
+                                <t t-esc="user_name"/>
+                            </span>
+                            <a class="wati-odoo-link" href="/odoo">العودة إلى Odoo</a>
+                        </div>
+                    </header>
+
+                    <main class="wati-workspace">
+                        <aside id="watiSidebar" class="wati-sidebar">
+                            <div class="wati-sidebar-head">
+                                <div>
+                                    <h1>المحادثات</h1>
+                                    <p id="conversationCount">جاري التحميل...</p>
+                                </div>
+                                <button id="refreshButton" class="wati-icon-button" type="button" title="تحديث">↻</button>
+                            </div>
+                            <label class="wati-search">
+                                <span>⌕</span>
+                                <input id="conversationSearch" type="search" placeholder="ابحث بالاسم أو الرقم..." autocomplete="off"/>
+                            </label>
+                            <div class="wati-filters">
+                                <button class="wati-filter active" type="button" data-filter="all">الكل</button>
+                                <button class="wati-filter" type="button" data-filter="unread">غير مقروء</button>
+                            </div>
+                            <div id="conversationList" class="wati-conversation-list"></div>
+                        </aside>
+
+                        <section id="watiChat" class="wati-chat">
+                            <div id="chatEmpty" class="wati-empty">
+                                <div class="wati-empty-icon">💬</div>
+                                <h2>اختر محادثة</h2>
+                                <p>اختر عميلًا من القائمة لعرض المحادثة والرد عليه.</p>
+                            </div>
+
+                            <div id="chatContent" class="wati-chat-content is-hidden">
+                                <header class="wati-chat-head">
+                                    <div class="wati-chat-person">
+                                        <button id="mobileBack" class="wati-mobile-back" type="button">‹</button>
+                                        <div id="chatAvatar" class="wati-avatar">W</div>
+                                        <div>
+                                            <h2 id="chatName">WhatsApp</h2>
+                                            <div class="wati-chat-meta">
+                                                <span id="chatNumber"></span>
+                                                <span id="chatStatus" class="wati-status-badge"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="wati-chat-actions">
+                                        <span id="chatOperator" class="wati-operator"></span>
+                                    </div>
+                                </header>
+
+                                <div id="messageList" class="wati-message-list"></div>
+
+                                <form id="messageForm" class="wati-composer">
+                                    <textarea id="messageInput" name="message" rows="1" maxlength="4096" placeholder="اكتب رسالة..." required="required"></textarea>
+                                    <button id="sendButton" type="submit">إرسال <span>➤</span></button>
+                                </form>
+                                <div class="wati-composer-note">الرسائل الحرة تعمل داخل جلسة WhatsApp المفتوحة. القوالب خارج الجلسة سنضيفها في المرحلة التالية.</div>
+                            </div>
+                        </section>
+                    </main>
+
+                    <div id="watiToast" class="wati-toast" role="status"></div>
+                </div>
+                <script src="/wati_connector/static/src/inbox/inbox.js" defer="defer"></script>
+            </body>
+        </html>
+    </template>
+</odoo>
