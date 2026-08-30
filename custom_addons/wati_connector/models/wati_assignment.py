@@ -35,8 +35,9 @@ class WatiConversation(models.Model):
     def assign_to_odoo_user(self, user, force=False):
         self.ensure_one()
         user.ensure_one()
-        if self.assigned_user_id and self.assigned_user_id != user and not force:
-            raise UserError(_("هذه المحادثة مستلمة بواسطة %s.") % self.assigned_user_id.name)
+        previous_user = self.assigned_user_id
+        if previous_user and previous_user != user and not force:
+            raise UserError(_("هذه المحادثة مستلمة بواسطة %s.") % previous_user.name)
 
         email = user._wati_email()
         if not email:
@@ -62,12 +63,22 @@ class WatiConversation(models.Model):
             detail = (response.text or response.reason or "").strip()[:500]
             raise UserError(_("WATI رفض تعيين الموظف (%s): %s") % (response.status_code, detail))
 
+        now = fields.Datetime.now()
         self.write({
             "assigned_user_id": user.id,
-            "assigned_at": fields.Datetime.now(),
+            "assigned_at": now,
             "operator_name": user.name,
             "operator_email": email,
         })
+
+        if previous_user != user:
+            self.env["wati.assignment.log"].sudo().create({
+                "conversation_id": self.id,
+                "from_user_id": previous_user.id if previous_user else False,
+                "to_user_id": user.id,
+                "moved_by_user_id": self.env.user.id,
+                "moved_at": now,
+            })
         return True
 
     def send_session_message(self, text):
@@ -76,5 +87,17 @@ class WatiConversation(models.Model):
         if not self.assigned_user_id:
             self.assign_to_odoo_user(current_user)
         elif self.assigned_user_id != current_user and not current_user.has_group("base.group_system"):
-            raise UserError(_("هذه المحادثة مستلمة بواسطة %s. لا يمكنك الرد عليها قبل تحويلها لك.") % self.assigned_user_id.name)
+            raise UserError(_("هذه المحادثة مستلمة بواسطة %s. استخدم أخذ المحادثة أولًا.") % self.assigned_user_id.name)
         return super().send_session_message(text)
+
+
+class WatiAssignmentLog(models.Model):
+    _name = "wati.assignment.log"
+    _description = "WATI Conversation Assignment History"
+    _order = "moved_at desc, id desc"
+
+    conversation_id = fields.Many2one("wati.conversation", required=True, ondelete="cascade", index=True)
+    from_user_id = fields.Many2one("res.users", string="من الموظف", ondelete="set null")
+    to_user_id = fields.Many2one("res.users", string="إلى الموظف", required=True, ondelete="restrict")
+    moved_by_user_id = fields.Many2one("res.users", string="نفذ النقل", required=True, ondelete="restrict")
+    moved_at = fields.Datetime(string="وقت النقل", required=True, default=fields.Datetime.now, index=True)
