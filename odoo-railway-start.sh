@@ -51,8 +51,11 @@ install_or_upgrade_module() {
   fi
 }
 
-install_or_upgrade_module "maqsam_connector" "Maqsam Connector"
+# WATI owns schema extensions on res.users / wati.conversation. Upgrade it
+# before Maqsam so new WATI columns exist before another module initializes
+# the shared registry.
 install_or_upgrade_module "wati_connector" "WATI WhatsApp Connector"
+install_or_upgrade_module "maqsam_connector" "Maqsam Connector"
 
 mkdir -p "${FILESTORE_DIR}"
 
