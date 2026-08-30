@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+import re
 import threading
 import time
 
@@ -11,6 +12,10 @@ from odoo.http import request
 _SEND_GUARD = {}
 _SEND_GUARD_LOCK = threading.Lock()
 _SEND_GUARD_TTL = 120.0
+
+_PARTNER_CACHE = {}
+_PARTNER_CACHE_LOCK = threading.Lock()
+_PARTNER_CACHE_TTL = 300.0
 
 
 def _reserve_send_guard(user_id, conversation_id, request_id, message):
@@ -37,6 +42,89 @@ def _reserve_send_guard(user_id, conversation_id, request_id, message):
 def _release_send_guard(key):
     with _SEND_GUARD_LOCK:
         _SEND_GUARD.pop(key, None)
+
+
+def _phone_identity(value):
+    digits = re.sub(r"\D+", "", str(value or ""))
+    if digits.startswith("00"):
+        digits = digits[2:]
+    if not digits:
+        return {"digits": "", "e164": "", "local": "", "suffix": ""}
+
+    if digits.startswith("966"):
+        international = digits
+        local = "0" + digits[3:] if len(digits) > 3 else digits
+    elif digits.startswith("0") and len(digits) >= 9:
+        local = digits
+        international = "966" + digits[1:]
+    elif len(digits) == 9 and digits.startswith("5"):
+        local = "0" + digits
+        international = "966" + digits
+    else:
+        local = digits
+        international = digits
+
+    return {
+        "digits": digits,
+        "e164": f"+{international}" if international else "",
+        "local": local,
+        "suffix": international[-9:] if international else digits[-9:],
+    }
+
+
+def _find_partner_by_wa_id(wa_id):
+    identity = _phone_identity(wa_id)
+    cache_key = identity["digits"]
+    if not cache_key:
+        return request.env["res.partner"].browse()
+
+    now = time.monotonic()
+    with _PARTNER_CACHE_LOCK:
+        cached = _PARTNER_CACHE.get(cache_key)
+        if cached and now - cached[0] <= _PARTNER_CACHE_TTL:
+            partner_id = cached[1]
+            return request.env["res.partner"].sudo().browse(partner_id).exists() if partner_id else request.env["res.partner"].browse()
+
+    partner_model = request.env["res.partner"].sudo()
+    partner = partner_model.browse()
+
+    if "phone_sanitized" in partner_model._fields and identity["e164"]:
+        partner = partner_model.search(
+            [("phone_sanitized", "=", identity["e164"])],
+            order="id asc",
+            limit=1,
+        )
+
+    if not partner and identity["suffix"]:
+        hint = identity["suffix"][-4:]
+        candidates = partner_model.search(
+            ["|", ("mobile", "ilike", hint), ("phone", "ilike", hint)],
+            order="id asc",
+            limit=100,
+        )
+        for candidate in candidates:
+            for candidate_number in (candidate.mobile, candidate.phone):
+                candidate_identity = _phone_identity(candidate_number)
+                if candidate_identity["suffix"] and candidate_identity["suffix"] == identity["suffix"]:
+                    partner = candidate
+                    break
+            if partner:
+                break
+
+    with _PARTNER_CACHE_LOCK:
+        _PARTNER_CACHE[cache_key] = (now, partner.id if partner else 0)
+
+    return partner
+
+
+def _partner_url(partner):
+    if not partner:
+        return ""
+    action = request.env.ref("contacts.action_contacts", raise_if_not_found=False)
+    url = f"/web#id={partner.id}&model=res.partner&view_type=form"
+    if action:
+        url += f"&action={action.id}"
+    return url
 
 
 class WatiWebhookController(http.Controller):
@@ -129,18 +217,24 @@ class WatiWebhookController(http.Controller):
 
         conversation_rows = []
         for conversation in conversations:
+            wati_name = conversation.name or conversation.sender_name or conversation.wa_id or "WhatsApp"
+            partner = conversation.partner_id or _find_partner_by_wa_id(conversation.wa_id)
+            display_name = partner.display_name if partner else wati_name
             conversation_rows.append(
                 {
                     "id": conversation.id,
-                    "name": conversation.name or conversation.sender_name or conversation.wa_id or "WhatsApp",
+                    "name": display_name,
+                    "wati_name": wati_name,
                     "wa_id": conversation.wa_id or "",
                     "operator_name": conversation.operator_name or "",
                     "status": conversation.status or "",
                     "last_message": conversation.last_message or "",
                     "last_message_at": fields.Datetime.to_string(conversation.last_message_at) if conversation.last_message_at else "",
                     "unread_count": conversation.unread_count or 0,
-                    "partner_id": conversation.partner_id.id if conversation.partner_id else False,
-                    "partner_name": conversation.partner_id.display_name if conversation.partner_id else "",
+                    "partner_id": partner.id if partner else False,
+                    "partner_name": partner.display_name if partner else "",
+                    "partner_phone": (partner.mobile or partner.phone or "") if partner else "",
+                    "partner_url": _partner_url(partner),
                 }
             )
 
