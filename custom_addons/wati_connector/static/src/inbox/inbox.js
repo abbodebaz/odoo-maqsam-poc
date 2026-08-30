@@ -47,9 +47,27 @@
         toastTimer = window.setTimeout(() => toast.classList.remove("show"), 3200);
     }
 
+    function phoneLabel(conversation) {
+        return String(conversation?.wa_id || conversation?.partner_phone || "").trim();
+    }
+
+    function conversationTitle(conversation) {
+        const phone = phoneLabel(conversation);
+        const name = String(conversation?.name || "").trim();
+        if (!name || ["whatsapp", "wati", "عميل واتساب"].includes(name.toLowerCase())) {
+            return phone || "رقم غير متوفر";
+        }
+        return name;
+    }
+
     function initials(name) {
-        const clean = String(name || "W").trim();
-        if (!clean) return "W";
+        const clean = String(name || "").trim();
+        if (!clean) return "—";
+        const digits = clean.replace(/\D/g, "");
+        const compact = clean.replace(/\s+/g, "");
+        if (digits.length >= 7 && digits.length >= compact.length - 2) {
+            return digits.slice(-2);
+        }
         const words = clean.split(/\s+/).filter(Boolean);
         return words.slice(0, 2).map((word) => word.charAt(0)).join("").toUpperCase();
     }
@@ -145,19 +163,28 @@
             button.dataset.conversationId = String(conversation.id);
             if (Number(conversation.id) === Number(state.selectedId)) button.classList.add("active");
 
+            const titleText = conversationTitle(conversation);
+            const phone = phoneLabel(conversation);
+
             const avatar = document.createElement("div");
             avatar.className = "wati-avatar";
-            avatar.textContent = initials(conversation.name);
+            avatar.textContent = initials(titleText);
 
             const main = document.createElement("div");
             main.className = "wati-conversation-main";
             const title = document.createElement("div");
             title.className = "wati-conversation-title";
-            title.textContent = conversation.name || conversation.wa_id || "WhatsApp";
+            title.textContent = titleText;
+
+            const phoneLine = document.createElement("div");
+            phoneLine.className = "wati-conversation-phone";
+            phoneLine.textContent = phone || "رقم غير متوفر";
+            phoneLine.dir = "ltr";
+
             const preview = document.createElement("div");
             preview.className = "wati-conversation-preview";
-            preview.textContent = conversation.last_message || conversation.wa_id || "بدون رسائل";
-            main.append(title, preview);
+            preview.textContent = conversation.last_message || "بدون رسائل";
+            main.append(title, phoneLine, preview);
 
             const side = document.createElement("div");
             side.className = "wati-conversation-side";
@@ -186,11 +213,15 @@
             return;
         }
 
+        const title = conversationTitle(conversation);
+        const phone = phoneLabel(conversation);
+
         chatEmpty.classList.add("is-hidden");
         chatContent.classList.remove("is-hidden");
-        chatAvatar.textContent = initials(conversation.name);
-        chatName.textContent = conversation.name || conversation.wa_id || "WhatsApp";
-        chatNumber.textContent = conversation.wa_id || "";
+        chatAvatar.textContent = initials(title);
+        chatName.textContent = title;
+        chatNumber.textContent = phone || "رقم غير متوفر";
+        chatNumber.dir = "ltr";
         chatStatus.textContent = conversation.status || "";
         chatOperator.textContent = conversation.assigned_user_name
             ? `الموظف: ${conversation.assigned_user_name}`
