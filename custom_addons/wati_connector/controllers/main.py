@@ -72,6 +72,20 @@ def _phone_identity(value):
     }
 
 
+def _partner_phone_fields(partner_model):
+    return [field_name for field_name in ("mobile", "phone") if field_name in partner_model._fields]
+
+
+def _partner_phone_value(partner):
+    if not partner:
+        return ""
+    for field_name in _partner_phone_fields(partner):
+        value = partner[field_name]
+        if value:
+            return value
+    return ""
+
+
 def _find_partner_by_wa_id(wa_id):
     identity = _phone_identity(wa_id)
     cache_key = identity["digits"]
@@ -95,16 +109,19 @@ def _find_partner_by_wa_id(wa_id):
             limit=1,
         )
 
-    if not partner and identity["suffix"]:
+    phone_fields = _partner_phone_fields(partner_model)
+    if not partner and identity["suffix"] and phone_fields:
         hint = identity["suffix"][-4:]
-        candidates = partner_model.search(
-            ["|", ("mobile", "ilike", hint), ("phone", "ilike", hint)],
-            order="id asc",
-            limit=100,
-        )
+        domain = []
+        for index, field_name in enumerate(phone_fields):
+            if index:
+                domain.insert(0, "|")
+            domain.append((field_name, "ilike", hint))
+
+        candidates = partner_model.search(domain, order="id asc", limit=100)
         for candidate in candidates:
-            for candidate_number in (candidate.mobile, candidate.phone):
-                candidate_identity = _phone_identity(candidate_number)
+            for field_name in phone_fields:
+                candidate_identity = _phone_identity(candidate[field_name])
                 if candidate_identity["suffix"] and candidate_identity["suffix"] == identity["suffix"]:
                     partner = candidate
                     break
@@ -233,7 +250,7 @@ class WatiWebhookController(http.Controller):
                     "unread_count": conversation.unread_count or 0,
                     "partner_id": partner.id if partner else False,
                     "partner_name": partner.display_name if partner else "",
-                    "partner_phone": (partner.mobile or partner.phone or "") if partner else "",
+                    "partner_phone": _partner_phone_value(partner),
                     "partner_url": _partner_url(partner),
                 }
             )
