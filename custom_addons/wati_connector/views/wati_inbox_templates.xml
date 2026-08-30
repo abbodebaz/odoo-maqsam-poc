@@ -100,7 +100,8 @@
                 <script src="/wati_connector/static/src/inbox/attachment_send_v1.js" defer="defer"></script>
                 <script src="/wati_connector/static/src/inbox/templates_v1.js" defer="defer"></script>
                 <script src="/wati_connector/static/src/inbox/ui_polish_v4.js" defer="defer"></script>
-                <script src="/wati_connector/static/src/inbox/filters_fix_v1.js" defer="defer"></script>
+                <script src="/wati_connector/static/src/inbox/filters_fix_v2.js" defer="defer"></script>
+                <script src="/wati_connector/static/src/inbox/scroll_stability_v1.js" defer="defer"></script>
             </body>
         </html>
     </template>
