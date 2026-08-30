@@ -5,8 +5,22 @@
         <field name="model">res.users</field>
         <field name="inherit_id" ref="base.view_users_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='email']" position="after">
-                <field name="wati_operator_email" placeholder="agent@example.com"/>
+            <xpath expr="//notebook" position="inside">
+                <page string="WhatsApp / WATI" name="wati_user_integration">
+                    <group>
+                        <group string="ربط حساب الموظف">
+                            <field name="wati_operator_email" string="WATI Operator Email" placeholder="employee@company.com"/>
+                            <div class="text-muted">
+                                أدخل إيميل الموظف كما هو مسجل داخل WATI Team Inbox. سيتم استخدامه عند استلام أو أخذ محادثات WhatsApp.
+                            </div>
+                        </group>
+                        <group string="طريقة العمل">
+                            <div class="text-muted">
+                                المحادثات تبقى غير مسندة حتى يستلمها الموظف يدويًا. بعد الاستلام تصبح المحادثة مرتبطة بهذا المستخدم داخل Odoo وWATI.
+                            </div>
+                        </group>
+                    </group>
+                </page>
             </xpath>
         </field>
     </record>
