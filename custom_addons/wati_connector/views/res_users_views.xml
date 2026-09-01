@@ -10,13 +10,14 @@
                     <group>
                         <group string="ربط حساب الموظف">
                             <field name="wati_operator_email" string="WATI Operator Email" placeholder="employee@company.com"/>
+                            <field name="wati_is_supervisor" string="مشرف WATI"/>
                             <div class="text-muted">
-                                أدخل إيميل الموظف كما هو مسجل داخل WATI Team Inbox. سيتم استخدامه عند استلام أو أخذ محادثات WhatsApp.
+                                أدخل إيميل الموظف كما هو مسجل داخل WATI Team Inbox. فعّل «مشرف WATI» فقط لمن يحق له نقل محادثة من موظف إلى موظف آخر.
                             </div>
                         </group>
                         <group string="طريقة العمل">
                             <div class="text-muted">
-                                المحادثات تبقى غير مسندة حتى يستلمها الموظف يدويًا. بعد الاستلام تصبح المحادثة مرتبطة بهذا المستخدم داخل Odoo وWATI.
+                                المحادثة غير المسندة يستطيع الموظف استلامها. بعد الاستلام لا يستطيع موظف آخر أخذها أو الرد عليها. النقل القسري متاح فقط لمشرف WATI أو Administrator، وجميع عمليات النقل تُحفظ في سجل الإسناد.
                             </div>
                         </group>
                     </group>
