@@ -13,7 +13,7 @@
                         class="btn-secondary"/>
             </xpath>
 
-            <xpath expr="//separator[@string='4. ربط متغيرات WATI ببيانات Odoo']" position="after">
+            <xpath expr="//field[@name='parameter_ids']" position="before">
                 <div class="alert alert-info" role="alert">
                     <strong>بدون كتابة Variables يدويًا:</strong>
                     بعد حفظ اسم القالب اضغط «جلب متغيرات القالب من WATI»، ثم اربط كل متغير بحقل Odoo المناسب.
