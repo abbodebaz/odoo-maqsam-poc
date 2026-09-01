@@ -60,8 +60,6 @@ class CrmLeadWati(models.Model):
             digits = digits[2:]
         if not digits:
             return ""
-        # Saudi local mobile normalization. Already-international numbers are
-        # preserved, while unknown international formats remain untouched.
         if digits.startswith("966"):
             return digits
         if len(digits) == 10 and digits.startswith("05"):
@@ -183,7 +181,7 @@ class CrmLeadWati(models.Model):
             }
         )
 
-    @api.depends("partner_id", "phone", "mobile")
+    @api.depends("partner_id", "phone", "partner_id.phone", "partner_id.mobile")
     def _compute_wati_summary(self):
         Message = self.env["wati.message"].sudo()
         for lead in self:
@@ -233,8 +231,6 @@ class CrmLeadWati(models.Model):
 
     def action_open_wati_conversations(self):
         self.ensure_one()
-        # Link the most relevant existing conversation first, so the list is
-        # deterministic and never mixes another opportunity's WhatsApp history.
         self._wati_get_or_create_conversation()
         return {
             "type": "ir.actions.act_window",
