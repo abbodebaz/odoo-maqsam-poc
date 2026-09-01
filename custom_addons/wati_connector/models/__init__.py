@@ -16,3 +16,4 @@ from . import wati_automation_dedup_fix
 from . import wati_automation_response_fix
 from . import wati_automation_log_repair
 from . import wati_automation_lifecycle
+from . import wati_media_hardening
