@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="wati_automation_demo_crm_qualified" model="wati.automation.rule">
+        <field name="name">CRM · إرسال عند Qualified</field>
+        <field name="sequence">10</field>
+        <field name="active">True</field>
+        <field name="model_id" ref="crm.model_crm_lead"/>
+        <field name="trigger_field_id" ref="crm.field_crm_lead__stage_id"/>
+        <field name="condition_operator">eq</field>
+        <field name="target_value">Qualified</field>
+        <field name="recipient_field_id" ref="crm.field_crm_lead__phone"/>
+        <field name="template_name">cr27_3</field>
+        <field name="once_per_record">True</field>
+    </record>
+
+    <record id="wati_automation_demo_param_client" model="wati.automation.parameter">
+        <field name="rule_id" ref="wati_automation_demo_crm_qualified"/>
+        <field name="sequence">10</field>
+        <field name="param_name">cr_clint2</field>
+        <field name="source_type">field</field>
+        <field name="source_field_id" ref="crm.field_crm_lead__partner_id"/>
+        <field name="source_path">partner_id.name</field>
+    </record>
+
+    <record id="wati_automation_demo_param_id" model="wati.automation.parameter">
+        <field name="rule_id" ref="wati_automation_demo_crm_qualified"/>
+        <field name="sequence">20</field>
+        <field name="param_name">cr_id2</field>
+        <field name="source_type">record_id</field>
+    </record>
+
+    <record id="wati_automation_demo_param_type" model="wati.automation.parameter">
+        <field name="rule_id" ref="wati_automation_demo_crm_qualified"/>
+        <field name="sequence">30</field>
+        <field name="param_name">cr_type</field>
+        <field name="source_type">static</field>
+        <field name="static_value">فرصة مبيعات مؤهلة</field>
+    </record>
+
+    <record id="wati_automation_demo_param_dep" model="wati.automation.parameter">
+        <field name="rule_id" ref="wati_automation_demo_crm_qualified"/>
+        <field name="sequence">40</field>
+        <field name="param_name">cr_dep</field>
+        <field name="source_type">field</field>
+        <field name="source_field_id" ref="crm.field_crm_lead__team_id"/>
+    </record>
+
+    <record id="wati_automation_demo_param_sap" model="wati.automation.parameter">
+        <field name="rule_id" ref="wati_automation_demo_crm_qualified"/>
+        <field name="sequence">50</field>
+        <field name="param_name">cr_sap</field>
+        <field name="source_type">field</field>
+        <field name="source_field_id" ref="crm.field_crm_lead__name"/>
+    </record>
+</odoo>
