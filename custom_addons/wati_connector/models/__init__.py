@@ -4,4 +4,4 @@ from . import wati_name_guard
 from . import wati_send_fix
 from . import wati_assignment
 from . import wati_support_ticket
-from . import crm_wati_trigger
+from . import wati_automation
