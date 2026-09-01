@@ -72,6 +72,8 @@ class CrmLeadWati(models.Model):
         self.ensure_one()
         raw_values = []
         if self.partner_id:
+            # Keep this runtime-compatible with Odoo editions/modules where
+            # res.partner may or may not expose a separate mobile field.
             for field_name in ("mobile", "phone"):
                 if field_name in self.partner_id._fields and self.partner_id[field_name]:
                     raw_values.append(self.partner_id[field_name])
@@ -181,7 +183,10 @@ class CrmLeadWati(models.Model):
             }
         )
 
-    @api.depends("partner_id", "phone", "partner_id.phone", "partner_id.mobile")
+    # Only declare fields guaranteed by the Odoo 19 CRM/Contacts models.
+    # Optional fields such as res.partner.mobile are read dynamically above,
+    # but must not appear in @api.depends or they can crash the registry.
+    @api.depends("partner_id", "phone", "partner_id.phone")
     def _compute_wati_summary(self):
         Message = self.env["wati.message"].sudo()
         for lead in self:
