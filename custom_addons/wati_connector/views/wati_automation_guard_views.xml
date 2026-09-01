@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_automation_rule_form_guard" model="ir.ui.view">
+        <field name="name">wati.automation.rule.form.guard</field>
+        <field name="model">wati.automation.rule</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_automation_rule_form_builder"/>
+        <field name="priority">140</field>
+        <field name="arch" type="xml">
+            <xpath expr="//div[contains(@class, 'wati_template_picker_box')]" position="after">
+                <div class="alert alert-light border mt-3" role="status" invisible="not template_name">
+                    <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                        <div>
+                            <strong>تحقق القالب</strong>
+                            <field name="template_validation_state" widget="badge" readonly="1"
+                                   decoration-success="template_validation_state == 'valid'"
+                                   decoration-warning="template_validation_state == 'unverified'"
+                                   decoration-danger="template_validation_state == 'invalid'"/>
+                        </div>
+                        <button name="action_validate_template" type="object"
+                                string="فحص Live من WATI" icon="fa-shield"
+                                class="btn-secondary"/>
+                    </div>
+                    <field name="template_validation_message" nolabel="1" readonly="1"
+                           invisible="not template_validation_message"/>
+                    <div class="d-flex gap-3 flex-wrap mt-2" invisible="template_validation_state != 'valid'">
+                        <span><strong>الحالة:</strong> <field name="template_status" nolabel="1" readonly="1"/></span>
+                        <span><strong>اللغة:</strong> <field name="template_language" nolabel="1" readonly="1"/></span>
+                        <span><strong>القناة:</strong> <field name="template_channel_number" nolabel="1" readonly="1"/></span>
+                    </div>
+                </div>
+            </xpath>
+
+            <xpath expr="//div[contains(@class, 'wati_readiness_card')]" position="inside">
+                <div class="mt-3 pt-3 border-top" invisible="not template_name">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <strong>فحص WATI الحقيقي:</strong>
+                        <field name="template_validation_state" widget="badge" readonly="1"
+                               decoration-success="template_validation_state == 'valid'"
+                               decoration-warning="template_validation_state == 'unverified'"
+                               decoration-danger="template_validation_state == 'invalid'"/>
+                        <span invisible="not template_verified_at">
+                            آخر فحص: <field name="template_verified_at" nolabel="1" readonly="1"/>
+                        </span>
+                    </div>
+                    <field name="template_validation_message" nolabel="1" readonly="1"
+                           invisible="not template_validation_message"/>
+                </div>
+            </xpath>
+
+            <xpath expr="//page[@string='تفاصيل تقنية']//group" position="inside">
+                <field name="template_status" readonly="1"/>
+                <field name="template_language" readonly="1"/>
+                <field name="template_channel_number" readonly="1"/>
+                <field name="template_validation_state" readonly="1"/>
+                <field name="template_verified_at" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_wati_automation_rule_list_guard" model="ir.ui.view">
+        <field name="name">wati.automation.rule.list.guard</field>
+        <field name="model">wati.automation.rule</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_automation_rule_list_ux"/>
+        <field name="priority">140</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='success_count']" position="before">
+                <field name="accepted_count" string="قيد الإرسال"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_wati_automation_log_list_guard" model="ir.ui.view">
+        <field name="name">wati.automation.log.list.guard</field>
+        <field name="model">wati.automation.log</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_automation_log_list_ux"/>
+        <field name="priority">140</field>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="attributes">
+                <attribute name="decoration-success">status == 'delivered'</attribute>
+                <attribute name="decoration-info">status == 'accepted'</attribute>
+                <attribute name="decoration-danger">status == 'failed'</attribute>
+            </xpath>
+            <xpath expr="//field[@name='status']" position="after">
+                <field name="delivery_status" string="حالة WATI" optional="show"/>
+                <field name="external_message_id" string="Message ID" optional="hide"/>
+                <field name="broadcast_name" string="Broadcast" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_wati_automation_log_form_guard" model="ir.ui.view">
+        <field name="name">wati.automation.log.form.guard</field>
+        <field name="model">wati.automation.log</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_automation_log_form_ux"/>
+        <field name="priority">140</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='status']" position="after">
+                <field name="delivery_status"/>
+                <field name="external_message_id"/>
+                <field name="broadcast_name"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_wati_automation_template_choice_list_guard" model="ir.ui.view">
+        <field name="name">wati.automation.template.choice.list.guard</field>
+        <field name="model">wati.automation.template.choice</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_automation_template_choice_list"/>
+        <field name="priority">140</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='status']" position="after">
+                <field name="language" string="اللغة"/>
+                <field name="channel_number" string="القناة"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
