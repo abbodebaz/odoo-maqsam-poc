@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_automation_rule_list" model="ir.ui.view">
+        <field name="name">wati.automation.rule.list</field>
+        <field name="model">wati.automation.rule</field>
+        <field name="arch" type="xml">
+            <list string="قواعد WhatsApp Automation" decoration-success="active" decoration-muted="not active">
+                <field name="sequence" widget="handle"/>
+                <field name="active" widget="boolean_toggle"/>
+                <field name="name"/>
+                <field name="model_id"/>
+                <field name="trigger_field_id"/>
+                <field name="condition_operator"/>
+                <field name="target_value"/>
+                <field name="template_name"/>
+                <field name="once_per_record"/>
+                <field name="success_count"/>
+                <field name="failure_count"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_wati_automation_rule_form" model="ir.ui.view">
+        <field name="name">wati.automation.rule.form</field>
+        <field name="model">wati.automation.rule</field>
+        <field name="arch" type="xml">
+            <form string="قاعدة WhatsApp Automation">
+                <header>
+                    <button name="action_sync" type="object" string="مزامنة مع Odoo" class="btn-primary" icon="fa-refresh"/>
+                    <field name="active" widget="boolean_toggle"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_logs" type="object" class="oe_stat_button" icon="fa-list-alt">
+                            <field name="run_count" widget="statinfo" string="التشغيلات"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="مثال: إرسال عند تأهيل فرصة"/></h1>
+                    </div>
+
+                    <group string="1. متى ترسل الرسالة؟">
+                        <group>
+                            <field name="model_id" options="{'no_create': True}"/>
+                            <field name="trigger_field_id" options="{'no_create': True}"/>
+                        </group>
+                        <group>
+                            <field name="condition_operator"/>
+                            <field name="target_value" placeholder="مثال: Qualified"/>
+                        </group>
+                    </group>
+
+                    <group string="2. لمن نرسل؟">
+                        <group>
+                            <field name="recipient_field_id" options="{'no_create': True}"/>
+                            <field name="recipient_path" placeholder="مثال: partner_id.mobile"/>
+                        </group>
+                        <group>
+                            <field name="once_per_record"/>
+                            <field name="channel_number" placeholder="اختياري"/>
+                        </group>
+                    </group>
+
+                    <group string="3. ماذا نرسل؟">
+                        <group>
+                            <field name="template_name" placeholder="مثال: cr27_3"/>
+                        </group>
+                    </group>
+
+                    <separator string="4. ربط متغيرات WATI ببيانات Odoo"/>
+                    <field name="parameter_ids" nolabel="1">
+                        <list editable="bottom" string="متغيرات القالب">
+                            <field name="sequence" widget="handle"/>
+                            <field name="param_name" placeholder="cr_clint2"/>
+                            <field name="source_type"/>
+                            <field name="model_id" column_invisible="True"/>
+                            <field name="source_field_id" options="{'no_create': True}"/>
+                            <field name="source_path" placeholder="partner_id.name"/>
+                            <field name="static_value" placeholder="قيمة ثابتة"/>
+                        </list>
+                    </field>
+
+                    <notebook>
+                        <page string="المتابعة">
+                            <group>
+                                <group>
+                                    <field name="run_count" readonly="1"/>
+                                    <field name="success_count" readonly="1"/>
+                                    <field name="failure_count" readonly="1"/>
+                                </group>
+                                <group string="المحرك الداخلي" groups="base.group_system">
+                                    <field name="model_name" readonly="1"/>
+                                    <field name="base_automation_id" readonly="1"/>
+                                    <field name="server_action_id" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_wati_automation_rules" model="ir.actions.act_window">
+        <field name="name">أتمتة WhatsApp</field>
+        <field name="res_model">wati.automation.rule</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">أنشئ أول قاعدة WhatsApp بدون كتابة كود</p>
+            <p>اختر التطبيق، الحقل، الشرط، قالب WATI واربط متغيراته ببيانات Odoo.</p>
+        </field>
+    </record>
+
+    <record id="view_wati_automation_log_list" model="ir.ui.view">
+        <field name="name">wati.automation.log.list</field>
+        <field name="model">wati.automation.log</field>
+        <field name="arch" type="xml">
+            <list string="سجل WhatsApp Automation" create="false" edit="false" delete="false" decoration-success="status == 'sent'" decoration-danger="status == 'failed'">
+                <field name="create_date"/>
+                <field name="status"/>
+                <field name="rule_id"/>
+                <field name="res_name"/>
+                <field name="phone"/>
+                <field name="template_name"/>
+                <field name="triggered_by_id"/>
+                <field name="error_message" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_wati_automation_log_form" model="ir.ui.view">
+        <field name="name">wati.automation.log.form</field>
+        <field name="model">wati.automation.log</field>
+        <field name="arch" type="xml">
+            <form string="تفاصيل تشغيل WhatsApp" create="false" edit="false" delete="false">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="status"/>
+                            <field name="rule_id"/>
+                            <field name="template_name"/>
+                            <field name="phone"/>
+                        </group>
+                        <group>
+                            <field name="model_name"/>
+                            <field name="res_id"/>
+                            <field name="res_name"/>
+                            <field name="triggered_by_id"/>
+                            <field name="create_date"/>
+                        </group>
+                    </group>
+                    <group string="الخطأ" invisible="not error_message">
+                        <field name="error_message" nolabel="1"/>
+                    </group>
+                    <group string="استجابة WATI" invisible="not response_excerpt">
+                        <field name="response_excerpt" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_wati_automation_logs" model="ir.actions.act_window">
+        <field name="name">سجل الأتمتة</field>
+        <field name="res_model">wati.automation.log</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_wati_automation_rules" name="⚡ الأتمتة" parent="menu_wati_root" action="action_wati_automation_rules" sequence="30"/>
+    <menuitem id="menu_wati_automation_logs" name="سجل الأتمتة" parent="menu_wati_root" action="action_wati_automation_logs" sequence="35"/>
+</odoo>
