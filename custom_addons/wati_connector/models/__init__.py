@@ -14,3 +14,4 @@ from . import wati_automation_guard
 from . import wati_automation_channel_auto
 from . import wati_automation_dedup_fix
 from . import wati_automation_response_fix
+from . import wati_automation_log_repair
