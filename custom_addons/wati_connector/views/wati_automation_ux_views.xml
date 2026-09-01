@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_automation_rule_form_ux" model="ir.ui.view">
+        <field name="name">wati.automation.rule.form.ux</field>
+        <field name="model">wati.automation.rule</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_automation_rule_form"/>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <xpath expr="//form/header" position="replace">
+                <header>
+                    <button name="action_previous_step" type="object" string="السابق" icon="fa-arrow-right"
+                            class="btn-secondary" invisible="setup_step == 'trigger'"/>
+                    <field name="setup_step" widget="statusbar" statusbar_visible="trigger,recipient,message,review"/>
+                    <button name="action_next_step" type="object" string="التالي" icon="fa-arrow-left"
+                            class="btn-primary" invisible="setup_step == 'review'"/>
+                    <button name="action_activate_rule" type="object" string="تفعيل القاعدة" icon="fa-check-circle"
+                            class="btn-success" invisible="setup_step != 'review' or active"/>
+                    <button name="action_deactivate_rule" type="object" string="إيقاف" icon="fa-pause"
+                            class="btn-secondary" invisible="not active"/>
+                </header>
+            </xpath>
+
+            <xpath expr="//form/sheet" position="replace">
+                <sheet class="wati_auto_wizard">
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_logs" type="object" class="oe_stat_button" icon="fa-list-alt">
+                            <field name="run_count" widget="statinfo" string="التشغيلات"/>
+                        </button>
+                        <button name="action_duplicate_rule" type="object" class="oe_stat_button" icon="fa-copy">
+                            <div class="o_stat_info"><span class="o_stat_text">نسخ القاعدة</span></div>
+                        </button>
+                    </div>
+
+                    <div class="oe_title wati_auto_title">
+                        <label for="name" string="اسم القاعدة"/>
+                        <h1><field name="name" placeholder="مثال: إشعار العميل عند تأهيل الفرصة"/></h1>
+                    </div>
+
+                    <div class="alert alert-primary wati_auto_summary" role="status">
+                        <span class="fa fa-bolt me-2"/>
+                        <field name="human_summary" readonly="1" nolabel="1"/>
+                    </div>
+
+                    <div class="wati_auto_step" invisible="setup_step != 'trigger'">
+                        <div class="wati_auto_step_heading">
+                            <span class="wati_auto_step_number">1</span>
+                            <div>
+                                <h2>متى نرسل الرسالة؟</h2>
+                                <p>اختر التطبيق والحدث. لا تحتاج لأي اسم تقني أو كود.</p>
+                            </div>
+                        </div>
+
+                        <group string="ابدأ بسرعة" col="2">
+                            <field name="preset_key" placeholder="اختياري: اختر إعدادًا جاهزًا"/>
+                            <button name="action_apply_preset" type="object" string="تطبيق الإعداد الجاهز"
+                                    icon="fa-magic" class="btn-secondary"/>
+                        </group>
+
+                        <group string="الحدث" col="2">
+                            <group>
+                                <field name="model_id" string="التطبيق / نوع السجل" options="{'no_create': True}"/>
+                                <field name="trigger_field_id" string="ما الذي نراقبه؟" options="{'no_create': True}"/>
+                            </group>
+                            <group>
+                                <field name="condition_operator" string="الشرط"/>
+                                <field name="target_value" string="القيمة" placeholder="مثال: Qualified"
+                                       invisible="condition_operator in ('is_set', 'is_not_set')"/>
+                                <button name="action_pick_target_value" type="object" string="اختيار من القيم الموجودة"
+                                        icon="fa-list" class="btn-link"
+                                        invisible="condition_operator in ('is_set', 'is_not_set') or not trigger_field_id"/>
+                            </group>
+                        </group>
+
+                        <div class="alert alert-light border" role="note">
+                            <strong>مثال:</strong> اختر CRM ← Stage ← يساوي ← Qualified. النظام يراقب التغيير بنفسه بعد التفعيل.
+                        </div>
+                    </div>
+
+                    <div class="wati_auto_step" invisible="setup_step != 'recipient'">
+                        <div class="wati_auto_step_heading">
+                            <span class="wati_auto_step_number">2</span>
+                            <div>
+                                <h2>لمن نرسل؟</h2>
+                                <p>حدد مصدر رقم واتساب، أو اتركه تلقائيًا ليبحث Odoo عن رقم العميل.</p>
+                            </div>
+                        </div>
+
+                        <group col="2">
+                            <group string="رقم المستلم">
+                                <field name="recipient_field_id" string="حقل الهاتف" options="{'no_create': True}"/>
+                                <field name="recipient_path" string="مسار مرتبط" placeholder="مثال: partner_id.mobile"/>
+                            </group>
+                            <group string="سياسة الإرسال">
+                                <field name="once_per_record" string="إرسال مرة واحدة لكل سجل"/>
+                                <field name="channel_number" string="رقم قناة WATI" placeholder="اختياري؛ يستخدم إعدادات WATI افتراضيًا"/>
+                            </group>
+                        </group>
+
+                        <div class="alert alert-info" role="note">
+                            إذا تركت حقول الرقم فارغة، سيجرب النظام تلقائيًا mobile ثم phone ثم رقم العميل المرتبط.
+                        </div>
+                    </div>
+
+                    <div class="wati_auto_step" invisible="setup_step != 'message'">
+                        <div class="wati_auto_step_heading">
+                            <span class="wati_auto_step_number">3</span>
+                            <div>
+                                <h2>ماذا نرسل؟</h2>
+                                <p>اختر قالب WATI ثم دع النظام يجلب متغيراته ويربط ما يستطيع تلقائيًا.</p>
+                            </div>
+                        </div>
+
+                        <group col="2">
+                            <group string="القالب">
+                                <field name="template_name" string="WATI Template" placeholder="اختر من WATI أو اكتب الاسم"/>
+                                <button name="action_pick_template" type="object" string="اختيار قالب من WATI"
+                                        icon="fa-whatsapp" class="btn-primary"/>
+                                <button name="action_fetch_template_params" type="object" string="تحديث متغيرات القالب"
+                                        icon="fa-refresh" class="btn-secondary" invisible="not template_name"/>
+                            </group>
+                            <group string="معاينة القالب">
+                                <field name="template_body" nolabel="1" readonly="1" placeholder="بعد اختيار القالب سيظهر نصه هنا إن كان WATI يعيده عبر API."/>
+                            </group>
+                        </group>
+
+                        <div class="d-flex align-items-center justify-content-between mt-3 mb-2">
+                            <h3 class="mb-0">ربط متغيرات القالب ببيانات Odoo</h3>
+                            <button name="action_auto_map_parameters" type="object" string="ربط ذكي تلقائي"
+                                    icon="fa-magic" class="btn-secondary" invisible="not parameter_ids"/>
+                        </div>
+                        <field name="parameter_ids" nolabel="1">
+                            <list editable="bottom" string="متغيرات القالب">
+                                <field name="sequence" widget="handle"/>
+                                <field name="param_name" string="متغير WATI"/>
+                                <field name="source_type" string="مصدر القيمة"/>
+                                <field name="model_id" column_invisible="True"/>
+                                <field name="source_field_id" string="حقل Odoo" options="{'no_create': True}"
+                                       invisible="source_type != 'field'"/>
+                                <field name="source_path" string="مسار متقدم" placeholder="partner_id.name"
+                                       invisible="source_type != 'field'" optional="hide"/>
+                                <field name="static_value" string="قيمة احتياطية" placeholder="تستخدم إذا كانت قيمة الحقل فارغة"
+                                       invisible="source_type in ('record_id', 'record_name')"/>
+                                <field name="mapping_summary" string="الحالة" readonly="1"/>
+                            </list>
+                        </field>
+
+                        <div class="alert alert-light border mt-3" role="note">
+                            <strong>الربط الذكي</strong> يقترح فقط الربط الواضح مثل اسم العميل، رقم السجل، الفريق واسم السجل. راجع أي سطر عليه ⚠️ قبل التفعيل.
+                        </div>
+                    </div>
+
+                    <div class="wati_auto_step" invisible="setup_step != 'review'">
+                        <div class="wati_auto_step_heading">
+                            <span class="wati_auto_step_number">4</span>
+                            <div>
+                                <h2>راجع ثم فعّل</h2>
+                                <p>النظام يفحص الاتصال والقالب والمتغيرات قبل السماح بالتفعيل.</p>
+                            </div>
+                        </div>
+
+                        <group col="2">
+                            <group string="فحص الجاهزية">
+                                <field name="readiness_state" widget="badge" readonly="1"
+                                       decoration-success="readiness_state == 'ready'"
+                                       decoration-warning="readiness_state == 'warning'"
+                                       decoration-danger="readiness_state == 'incomplete'"/>
+                                <field name="readiness_message" nolabel="1" readonly="1"/>
+                            </group>
+                            <group string="الحالة">
+                                <field name="active" readonly="1" widget="boolean_toggle"/>
+                                <field name="success_count" readonly="1"/>
+                                <field name="failure_count" readonly="1"/>
+                            </group>
+                        </group>
+
+                        <separator string="معاينة على بيانات حقيقية"/>
+                        <div class="d-flex gap-2 mb-3">
+                            <button name="action_preview_latest_record" type="object" string="إنشاء معاينة"
+                                    icon="fa-eye" class="btn-secondary"/>
+                        </div>
+                        <group col="2" invisible="not preview_text">
+                            <group>
+                                <field name="preview_record_name" string="السجل المستخدم" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="preview_text" string="شكل الرسالة" readonly="1"/>
+                            </group>
+                        </group>
+
+                        <separator string="إرسال تجريبي آمن"/>
+                        <div class="alert alert-warning" role="note">
+                            الإرسال التجريبي يستخدم بيانات سجل حقيقي لملء المتغيرات، لكنه يرسل الرسالة إلى رقم الاختبار أدناه وليس إلى العميل.
+                        </div>
+                        <group col="2">
+                            <field name="test_phone" string="رقم الاختبار" placeholder="9665XXXXXXXX"/>
+                            <button name="action_send_test" type="object" string="إرسال تجربة الآن"
+                                    icon="fa-paper-plane" class="btn-secondary" invisible="not test_phone"/>
+                        </group>
+
+                        <notebook>
+                            <page string="تفاصيل تقنية" groups="base.group_system">
+                                <group>
+                                    <field name="model_name" readonly="1"/>
+                                    <field name="base_automation_id" readonly="1"/>
+                                    <field name="server_action_id" readonly="1"/>
+                                </group>
+                            </page>
+                        </notebook>
+                    </div>
+                </sheet>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_wati_automation_rule_list_ux" model="ir.ui.view">
+        <field name="name">wati.automation.rule.list.ux</field>
+        <field name="model">wati.automation.rule</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_automation_rule_list"/>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="replace">
+                <list string="قواعد WhatsApp" decoration-success="active" decoration-muted="not active">
+                    <field name="sequence" widget="handle"/>
+                    <field name="active" widget="boolean_toggle"/>
+                    <field name="name" string="القاعدة"/>
+                    <field name="human_summary" string="ماذا تفعل؟"/>
+                    <field name="template_name" string="القالب"/>
+                    <field name="readiness_state" string="الجاهزية" widget="badge"
+                           decoration-success="readiness_state == 'ready'"
+                           decoration-warning="readiness_state == 'warning'"
+                           decoration-danger="readiness_state == 'incomplete'"/>
+                    <field name="success_count" string="ناجحة"/>
+                    <field name="failure_count" string="فاشلة"/>
+                </list>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_wati_automation_log_list_ux" model="ir.ui.view">
+        <field name="name">wati.automation.log.list.ux</field>
+        <field name="model">wati.automation.log</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_automation_log_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='status']" position="after">
+                <field name="is_test" string="تجريبي" widget="boolean" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_wati_automation_log_form_ux" model="ir.ui.view">
+        <field name="name">wati.automation.log.form.ux</field>
+        <field name="model">wati.automation.log</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_automation_log_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='status']" position="after">
+                <field name="is_test" string="إرسال تجريبي"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_wati_automation_value_choice_list" model="ir.ui.view">
+        <field name="name">wati.automation.value.choice.list</field>
+        <field name="model">wati.automation.value.choice</field>
+        <field name="arch" type="xml">
+            <list string="اختر قيمة" create="false" edit="false" delete="false">
+                <field name="label" string="القيمة"/>
+                <field name="value" string="القيمة الداخلية" optional="hide"/>
+                <button name="action_select" type="object" string="اختيار" icon="fa-check" class="btn-primary"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_wati_automation_template_choice_list" model="ir.ui.view">
+        <field name="name">wati.automation.template.choice.list</field>
+        <field name="model">wati.automation.template.choice</field>
+        <field name="arch" type="xml">
+            <list string="قوالب WATI" create="false" edit="false" delete="false">
+                <field name="name" string="القالب"/>
+                <field name="status" string="الحالة"/>
+                <field name="category" string="التصنيف" optional="show"/>
+                <field name="body" string="المعاينة" optional="show"/>
+                <button name="action_select" type="object" string="استخدام القالب" icon="fa-check" class="btn-primary"/>
+            </list>
+        </field>
+    </record>
+</odoo>
