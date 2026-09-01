@@ -21,7 +21,6 @@
         "views/wati_automation_views.xml",
         "views/wati_automation_improvements_views.xml",
         "views/wati_automation_ux_views.xml",
-        "views/wati_automation_draft_views.xml",
         "views/wati_automation_builder_views.xml",
         "views/wati_automation_guard_views.xml",
         "data/wati_automation_demo.xml",
