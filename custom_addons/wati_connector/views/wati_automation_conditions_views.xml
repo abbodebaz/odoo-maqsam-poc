@@ -6,23 +6,21 @@
         <field name="inherit_id" ref="wati_connector.view_wati_automation_rule_form_ux"/>
         <field name="priority">110</field>
         <field name="arch" type="xml">
-            <xpath expr="//group[@string='الحدث']" position="after">
-                <group string="شروط إضافية (اختياري)">
-                    <field name="condition_ids" nolabel="1">
-                        <list editable="bottom" string="شروط إضافية">
-                            <field name="sequence" widget="handle"/>
-                            <field name="model_id" column_invisible="True"/>
-                            <field name="field_id" string="وبشرط أن" options="{'no_create': True}"/>
-                            <field name="operator" string="الشرط"/>
-                            <field name="target_value" string="القيمة"
-                                   invisible="operator in ('is_set', 'is_not_set')"
-                                   placeholder="مثال: نعم أو اسم المرحلة"/>
-                        </list>
-                    </field>
-                    <div class="text-muted">
-                        كل الشروط الإضافية يجب أن تتحقق مع الحدث الأساسي قبل إرسال الرسالة. مثال: المرحلة = تم الإنجاز + مهمة خدمة ميدانية = نعم.
-                    </div>
-                </group>
+            <xpath expr="//field[@name='target_value']" position="after">
+                <field name="condition_ids" string="شروط إضافية (اختياري)" colspan="2">
+                    <list editable="bottom" string="شروط إضافية">
+                        <field name="sequence" widget="handle"/>
+                        <field name="model_id" column_invisible="True"/>
+                        <field name="field_id" string="وبشرط أن" options="{'no_create': True}"/>
+                        <field name="operator" string="الشرط"/>
+                        <field name="target_value" string="القيمة"
+                               invisible="operator in ('is_set', 'is_not_set')"
+                               placeholder="مثال: نعم أو اسم المرحلة"/>
+                    </list>
+                </field>
+                <div class="text-muted" colspan="2">
+                    كل الشروط الإضافية يجب أن تتحقق مع الحدث الأساسي قبل إرسال الرسالة. مثال: المرحلة = تم الإنجاز + مهمة خدمة ميدانية = نعم.
+                </div>
             </xpath>
         </field>
     </record>
