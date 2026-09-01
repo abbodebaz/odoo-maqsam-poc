@@ -120,8 +120,8 @@ class WatiConversation(models.Model):
         current_user = self.env.user
         if not self.assigned_user_id:
             self.assign_to_odoo_user(current_user)
-        elif self.assigned_user_id != current_user and not current_user._wati_can_supervise():
-            raise UserError(_("هذه المحادثة مستلمة بواسطة %s. استخدم مشرف WATI لنقلها أولًا.") % self.assigned_user_id.name)
+        elif self.assigned_user_id != current_user:
+            raise UserError(_("هذه المحادثة مستلمة بواسطة %s. يجب نقلها إليك أولًا قبل الإرسال.") % self.assigned_user_id.name)
         return super().send_session_message(text)
 
 
