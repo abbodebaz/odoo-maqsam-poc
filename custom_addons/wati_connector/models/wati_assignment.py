@@ -11,6 +11,11 @@ class ResUsers(models.Model):
         string="WATI Operator Email",
         help="إيميل الموظف كما هو مسجل داخل WATI Team Inbox.",
     )
+    wati_is_supervisor = fields.Boolean(
+        string="مشرف WATI",
+        help="يسمح للمستخدم بنقل محادثات WhatsApp بين الموظفين واستلام محادثة مسندة لموظف آخر.",
+        default=False,
+    )
 
     def _wati_email(self):
         self.ensure_one()
@@ -19,6 +24,10 @@ class ResUsers(models.Model):
             if "@" in value:
                 return value
         return ""
+
+    def _wati_can_supervise(self):
+        self.ensure_one()
+        return bool(self.wati_is_supervisor or self.has_group("base.group_system"))
 
 
 class WatiConversation(models.Model):
@@ -32,12 +41,33 @@ class WatiConversation(models.Model):
     )
     assigned_at = fields.Datetime(string="وقت الاستلام")
 
+    def _lock_assignment_row(self):
+        """Serialize assignment changes for this conversation.
+
+        Two employees can click "استلام المحادثة" at almost the same moment.
+        Locking the row means the second request re-reads the committed owner and
+        cannot silently overwrite the first employee's assignment.
+        """
+        self.ensure_one()
+        self.flush_recordset(["assigned_user_id"])
+        self.env.cr.execute(
+            "SELECT id FROM wati_conversation WHERE id = %s FOR UPDATE",
+            [self.id],
+        )
+        self.invalidate_recordset(["assigned_user_id", "assigned_at", "operator_name", "operator_email"])
+
     def assign_to_odoo_user(self, user, force=False):
         self.ensure_one()
         user.ensure_one()
+        self._lock_assignment_row()
+
         previous_user = self.assigned_user_id
-        if previous_user and previous_user != user and not force:
-            raise UserError(_("هذه المحادثة مستلمة بواسطة %s.") % previous_user.name)
+        actor = self.env.user
+        if previous_user and previous_user != user:
+            if not force:
+                raise UserError(_("هذه المحادثة مستلمة بواسطة %s.") % previous_user.name)
+            if not actor._wati_can_supervise():
+                raise UserError(_("لا تملك صلاحية نقل محادثة مستلمة بواسطة موظف آخر. اطلب من مشرف WATI تنفيذ النقل."))
 
         email = user._wati_email()
         if not email:
@@ -53,12 +83,16 @@ class WatiConversation(models.Model):
         if not endpoint or not token:
             raise UserError(_("إعدادات WATI API غير مكتملة."))
 
-        response = requests.post(
-            f"{endpoint}/api/v1/assignOperator",
-            headers={"Authorization": f"Bearer {token}", "Accept": "application/json"},
-            params={"email": email, "whatsappNumber": self.wa_id},
-            timeout=20,
-        )
+        try:
+            response = requests.post(
+                f"{endpoint}/api/v1/assignOperator",
+                headers={"Authorization": f"Bearer {token}", "Accept": "application/json"},
+                params={"email": email, "whatsappNumber": self.wa_id},
+                timeout=20,
+            )
+        except requests.RequestException as exc:
+            raise UserError(_("تعذر الاتصال بـ WATI لتعيين الموظف: %s") % exc) from exc
+
         if not response.ok:
             detail = (response.text or response.reason or "").strip()[:500]
             raise UserError(_("WATI رفض تعيين الموظف (%s): %s") % (response.status_code, detail))
@@ -76,7 +110,7 @@ class WatiConversation(models.Model):
                 "conversation_id": self.id,
                 "from_user_id": previous_user.id if previous_user else False,
                 "to_user_id": user.id,
-                "moved_by_user_id": self.env.user.id,
+                "moved_by_user_id": actor.id,
                 "moved_at": now,
             })
         return True
@@ -86,8 +120,8 @@ class WatiConversation(models.Model):
         current_user = self.env.user
         if not self.assigned_user_id:
             self.assign_to_odoo_user(current_user)
-        elif self.assigned_user_id != current_user and not current_user.has_group("base.group_system"):
-            raise UserError(_("هذه المحادثة مستلمة بواسطة %s. استخدم أخذ المحادثة أولًا.") % self.assigned_user_id.name)
+        elif self.assigned_user_id != current_user and not current_user._wati_can_supervise():
+            raise UserError(_("هذه المحادثة مستلمة بواسطة %s. استخدم مشرف WATI لنقلها أولًا.") % self.assigned_user_id.name)
         return super().send_session_message(text)
 
 
