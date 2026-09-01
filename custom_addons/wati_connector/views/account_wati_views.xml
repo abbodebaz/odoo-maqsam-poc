@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_account_move_form_wati" model="ir.ui.view">
+        <field name="name">account.move.form.wati</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_open_wati_inbox"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-comments"
+                        invisible="move_type not in ['out_invoice', 'out_refund', 'out_receipt']"
+                        help="فتح محادثة WhatsApp الخاصة بعميل الفاتورة">
+                    <field name="wati_conversation_count" widget="statinfo" string="WhatsApp"/>
+                </button>
+            </xpath>
+
+            <xpath expr="//notebook" position="inside">
+                <page string="WhatsApp"
+                      name="wati_whatsapp"
+                      invisible="move_type not in ['out_invoice', 'out_refund', 'out_receipt']">
+                    <group>
+                        <group string="المحادثة">
+                            <field name="wati_conversation_count" readonly="1"/>
+                            <field name="wati_message_count" readonly="1"/>
+                            <field name="wati_last_message_at" readonly="1"/>
+                            <field name="wati_last_status" readonly="1"/>
+                        </group>
+                        <group string="الفاتورة">
+                            <field name="payment_state" readonly="1"/>
+                            <field name="amount_total" readonly="1"/>
+                            <field name="amount_residual" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="إجراءات">
+                        <button name="action_open_wati_inbox"
+                                type="object"
+                                string="فتح صندوق WhatsApp"
+                                class="btn-primary"
+                                icon="fa-comments"/>
+                        <button name="action_open_wati_conversations"
+                                type="object"
+                                string="عرض سجل المحادثات"
+                                class="btn-secondary"
+                                icon="fa-list"/>
+                    </group>
+                    <group string="آخر رسالة">
+                        <field name="wati_last_message"
+                               readonly="1"
+                               nolabel="1"
+                               placeholder="لا توجد رسائل WhatsApp حتى الآن."/>
+                    </group>
+                    <div class="text-muted">
+                        أتمتة الفواتير مثل Posted وPaid تتم من WhatsApp ← الأتمتة؛ لا توجد حالة أو Template ثابتة داخل الفاتورة.
+                    </div>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_wati_conversation_form_account" model="ir.ui.view">
+        <field name="name">wati.conversation.form.account</field>
+        <field name="model">wati.conversation</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_conversation_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_open_account_moves"
+                        type="object"
+                        string="فواتير العميل"
+                        class="btn-secondary"
+                        icon="fa-file-text-o"
+                        invisible="not account_move_ids"/>
+            </xpath>
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="account_move_ids" widget="many2many_tags" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
