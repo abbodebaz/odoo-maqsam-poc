@@ -7,3 +7,4 @@ from . import wati_support_ticket
 from . import wati_automation
 from . import wati_automation_improvements
 from . import wati_automation_ux
+from . import wati_automation_draft
