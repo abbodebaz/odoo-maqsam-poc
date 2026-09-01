@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_crm_lead_form_wati" model="ir.ui.view">
+        <field name="name">crm.lead.form.wati</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_open_wati_inbox"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-comments"
+                        help="فتح محادثة WhatsApp المرتبطة بهذه الفرصة">
+                    <field name="wati_conversation_count" widget="statinfo" string="WhatsApp"/>
+                </button>
+            </xpath>
+
+            <xpath expr="//notebook" position="inside">
+                <page string="WhatsApp" name="wati_whatsapp">
+                    <group>
+                        <group string="المحادثة">
+                            <field name="wati_conversation_count" readonly="1"/>
+                            <field name="wati_message_count" readonly="1"/>
+                            <field name="wati_last_message_at" readonly="1"/>
+                            <field name="wati_last_status" readonly="1"/>
+                        </group>
+                        <group string="إجراءات">
+                            <button name="action_open_wati_inbox"
+                                    type="object"
+                                    string="فتح صندوق WhatsApp"
+                                    class="btn-primary"
+                                    icon="fa-comments"/>
+                            <button name="action_open_wati_conversations"
+                                    type="object"
+                                    string="عرض سجل المحادثات"
+                                    class="btn-secondary"
+                                    icon="fa-list"/>
+                        </group>
+                    </group>
+                    <group string="آخر رسالة">
+                        <field name="wati_last_message" readonly="1" nolabel="1" placeholder="لا توجد رسائل WhatsApp حتى الآن."/>
+                    </group>
+                    <div class="text-muted">
+                        الإرسال الآلي حسب مراحل CRM تتم إدارته من WhatsApp ← الأتمتة، بدون أي قالب أو مرحلة ثابتة داخل CRM.
+                    </div>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_wati_conversation_form_crm" model="ir.ui.view">
+        <field name="name">wati.conversation.form.crm</field>
+        <field name="model">wati.conversation</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_conversation_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_open_crm_lead"
+                        type="object"
+                        string="فتح CRM"
+                        class="btn-secondary"
+                        icon="fa-external-link"
+                        invisible="not crm_lead_id"/>
+            </xpath>
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="crm_lead_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_wati_conversation_list_crm" model="ir.ui.view">
+        <field name="name">wati.conversation.list.crm</field>
+        <field name="model">wati.conversation</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_conversation_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="crm_lead_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
