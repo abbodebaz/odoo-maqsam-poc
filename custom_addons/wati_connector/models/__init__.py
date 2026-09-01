@@ -5,6 +5,7 @@ from . import wati_support_ticket
 from . import wati_crm_integration
 from . import wati_sale_integration
 from . import wati_account_integration
+from . import wati_project_integration
 from . import wati_send_fix
 from . import wati_automation
 from . import wati_automation_improvements
