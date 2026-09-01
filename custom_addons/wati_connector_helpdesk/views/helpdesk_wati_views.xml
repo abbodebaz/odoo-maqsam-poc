@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="helpdesk_ticket_view_form_wati" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.form.wati</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_open_wati_inbox"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-comments"
+                        string="WhatsApp">
+                    <field name="wati_conversation_count" widget="statinfo" string="WhatsApp"/>
+                </button>
+            </xpath>
+
+            <xpath expr="//notebook" position="inside">
+                <page string="WhatsApp" name="wati_helpdesk_tab">
+                    <group col="2">
+                        <group string="المحادثة">
+                            <field name="wati_conversation_count" readonly="1" string="عدد محادثات WhatsApp"/>
+                            <field name="wati_message_count" readonly="1"/>
+                            <field name="wati_last_message_at" readonly="1"/>
+                            <field name="wati_last_status" readonly="1"/>
+                        </group>
+                        <group string="إجراءات">
+                            <button name="action_open_wati_inbox"
+                                    type="object"
+                                    string="فتح صندوق WhatsApp"
+                                    icon="fa-comments"
+                                    class="btn-primary"/>
+                            <button name="action_open_wati_conversations"
+                                    type="object"
+                                    string="عرض سجل المحادثات"
+                                    icon="fa-list"/>
+                        </group>
+                    </group>
+                    <separator string="آخر رسالة"/>
+                    <field name="wati_last_message" readonly="1" nolabel="1"/>
+                    <div class="text-muted mt-3">
+                        أتمتة مراحل Helpdesk تتم من WhatsApp ← الأتمتة باستخدام نموذج helpdesk.ticket وحقل Stage (stage_id)، بدون أي مرحلة أو قالب ثابت داخل الإضافة.
+                    </div>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>
