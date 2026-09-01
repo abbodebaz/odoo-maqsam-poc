@@ -76,12 +76,19 @@
         <field name="priority">140</field>
         <field name="arch" type="xml">
             <xpath expr="//list" position="attributes">
-                <attribute name="decoration-success">status == 'delivered'</attribute>
-                <attribute name="decoration-info">status == 'accepted'</attribute>
+                <attribute name="decoration-success">status in ('delivered', 'read')</attribute>
+                <attribute name="decoration-info">status in ('accepted', 'sent')</attribute>
                 <attribute name="decoration-danger">status == 'failed'</attribute>
             </xpath>
             <xpath expr="//field[@name='status']" position="after">
                 <field name="delivery_status" string="حالة WATI" optional="show"/>
+                <field name="accepted_at" string="قُبل" optional="hide"/>
+                <field name="sent_at" string="أُرسل" optional="hide"/>
+                <field name="delivered_at" string="تم التسليم" optional="hide"/>
+                <field name="read_at" string="تمت القراءة" optional="hide"/>
+                <field name="failed_at" string="وقت الفشل" optional="hide"/>
+                <field name="last_webhook_at" string="آخر Webhook" optional="hide"/>
+                <field name="last_webhook_status" string="آخر حدث" optional="hide"/>
                 <field name="external_message_id" string="Message ID" optional="hide"/>
                 <field name="broadcast_name" string="Broadcast" optional="hide"/>
             </xpath>
@@ -96,6 +103,13 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='status']" position="after">
                 <field name="delivery_status"/>
+                <field name="accepted_at"/>
+                <field name="sent_at"/>
+                <field name="delivered_at"/>
+                <field name="read_at"/>
+                <field name="failed_at"/>
+                <field name="last_webhook_at"/>
+                <field name="last_webhook_status"/>
                 <field name="external_message_id"/>
                 <field name="broadcast_name"/>
             </xpath>
