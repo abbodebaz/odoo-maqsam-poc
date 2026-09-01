@@ -8,3 +8,5 @@ access_wati_support_ticket_user,wati.support.ticket user,model_wati_support_tick
 access_wati_automation_rule_user,wati.automation.rule user,model_wati_automation_rule,base.group_user,1,1,1,1
 access_wati_automation_parameter_user,wati.automation.parameter user,model_wati_automation_parameter,base.group_user,1,1,1,1
 access_wati_automation_log_user,wati.automation.log user,model_wati_automation_log,base.group_user,1,0,0,0
+access_wati_automation_value_choice_user,wati.automation.value.choice user,model_wati_automation_value_choice,base.group_user,1,1,1,1
+access_wati_automation_template_choice_user,wati.automation.template.choice user,model_wati_automation_template_choice,base.group_user,1,1,1,1
