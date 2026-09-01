@@ -12,11 +12,11 @@ class WatiConversationSale(models.Model):
         "wati_sale_order_conversation_rel",
         "conversation_id",
         "sale_order_id",
-        string="عروض / أوامر البيع",
+        string="عروض وأوامر البيع المرتبطة",
         copy=False,
     )
     sale_order_count = fields.Integer(
-        string="عروض / أوامر البيع",
+        string="عدد عروض وأوامر البيع",
         compute="_compute_sale_order_count",
     )
 
@@ -55,11 +55,11 @@ class SaleOrderWati(models.Model):
         "wati_sale_order_conversation_rel",
         "sale_order_id",
         "conversation_id",
-        string="محادثات WhatsApp",
+        string="سجل محادثات WhatsApp",
         copy=False,
     )
     wati_conversation_count = fields.Integer(
-        string="محادثات WhatsApp",
+        string="عدد محادثات WhatsApp",
         compute="_compute_wati_summary",
     )
     wati_message_count = fields.Integer(
