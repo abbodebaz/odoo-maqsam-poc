@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_automation_rule_form_improvements" model="ir.ui.view">
+        <field name="name">wati.automation.rule.form.improvements</field>
+        <field name="model">wati.automation.rule</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_automation_rule_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='template_name']" position="after">
+                <button name="action_fetch_template_params"
+                        type="object"
+                        string="جلب متغيرات القالب من WATI"
+                        icon="fa-download"
+                        class="btn-secondary"/>
+            </xpath>
+
+            <xpath expr="//separator[@string='4. ربط متغيرات WATI ببيانات Odoo']" position="after">
+                <div class="alert alert-info" role="alert">
+                    <strong>بدون كتابة Variables يدويًا:</strong>
+                    بعد حفظ اسم القالب اضغط «جلب متغيرات القالب من WATI»، ثم اربط كل متغير بحقل Odoo المناسب.
+                    ويمكن استخدام «قيمة ثابتة / احتياطية» إذا كان الحقل قد يكون فارغًا.
+                </div>
+            </xpath>
+
+            <xpath expr="//field[@name='static_value']" position="attributes">
+                <attribute name="string">قيمة ثابتة / احتياطية</attribute>
+                <attribute name="placeholder">قيمة ثابتة أو بديلة عند فراغ حقل Odoo</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>
