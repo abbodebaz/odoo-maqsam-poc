@@ -8,6 +8,7 @@ from . import wati_account_integration
 from . import wati_project_integration
 from . import wati_send_fix
 from . import wati_automation
+from . import wati_automation_conditions
 from . import wati_automation_improvements
 from . import wati_automation_ux
 from . import wati_automation_draft
