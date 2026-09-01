@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sale_order_form_wati" model="ir.ui.view">
+        <field name="name">sale.order.form.wati</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_open_wati_inbox"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-comments"
+                        help="فتح محادثة WhatsApp الخاصة بعميل هذا العرض أو الطلب">
+                    <field name="wati_conversation_count" widget="statinfo" string="WhatsApp"/>
+                </button>
+            </xpath>
+
+            <xpath expr="//notebook" position="inside">
+                <page string="WhatsApp" name="wati_whatsapp_sale">
+                    <group>
+                        <group string="المحادثة">
+                            <field name="wati_conversation_count" readonly="1"/>
+                            <field name="wati_message_count" readonly="1"/>
+                            <field name="wati_last_message_at" readonly="1"/>
+                            <field name="wati_last_status" readonly="1"/>
+                        </group>
+                        <group string="إجراءات">
+                            <button name="action_open_wati_inbox"
+                                    type="object"
+                                    string="فتح صندوق WhatsApp"
+                                    class="btn-primary"
+                                    icon="fa-comments"/>
+                            <button name="action_open_wati_conversations"
+                                    type="object"
+                                    string="عرض سجل المحادثات"
+                                    class="btn-secondary"
+                                    icon="fa-list"/>
+                        </group>
+                    </group>
+                    <group string="آخر رسالة">
+                        <field name="wati_last_message"
+                               readonly="1"
+                               nolabel="1"
+                               placeholder="لا توجد رسائل WhatsApp حتى الآن."/>
+                    </group>
+                    <div class="text-muted">
+                        أتمتة عروض الأسعار وأوامر البيع تتم إدارتها من WhatsApp ← الأتمتة. يمكن استخدام حالة الطلب مثل Quotation Sent أو Sales Order بدون أي حالة ثابتة داخل هذا النموذج.
+                    </div>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_wati_conversation_form_sale" model="ir.ui.view">
+        <field name="name">wati.conversation.form.sale</field>
+        <field name="model">wati.conversation</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_conversation_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_open_sale_orders"
+                        type="object"
+                        string="فتح المبيعات"
+                        class="btn-secondary"
+                        icon="fa-external-link"
+                        invisible="sale_order_count == 0"/>
+            </xpath>
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="sale_order_ids" widget="many2many_tags"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_wati_conversation_list_sale" model="ir.ui.view">
+        <field name="name">wati.conversation.list.sale</field>
+        <field name="model">wati.conversation</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_conversation_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="sale_order_ids" widget="many2many_tags" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
