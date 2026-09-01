@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_automation_rule_form_builder" model="ir.ui.view">
+        <field name="name">wati.automation.rule.form.builder</field>
+        <field name="model">wati.automation.rule</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_automation_rule_form_ux"/>
+        <field name="priority">120</field>
+        <field name="arch" type="xml">
+            <xpath expr="//form/header" position="replace">
+                <header class="wati_builder_header">
+                    <field name="setup_step" widget="statusbar" statusbar_visible="trigger,recipient,message,review"/>
+                    <button name="action_activate_rule" type="object" string="تفعيل القاعدة" icon="fa-check-circle"
+                            class="btn-success" invisible="setup_step != 'review' or active"/>
+                    <button name="action_deactivate_rule" type="object" string="إيقاف القاعدة" icon="fa-pause"
+                            class="btn-secondary" invisible="not active"/>
+                </header>
+            </xpath>
+
+            <xpath expr="//form/sheet" position="replace">
+                <sheet class="wati_builder_sheet">
+                    <div class="wati_builder_topbar">
+                        <div class="wati_builder_title">
+                            <span class="wati_builder_eyebrow">WhatsApp Automation</span>
+                            <h1><field name="name" placeholder="سمِّ الأتمتة، مثال: رسالة بعد تأهيل الفرصة"/></h1>
+                        </div>
+                        <div class="wati_builder_top_actions">
+                            <field name="readiness_state" widget="badge" readonly="1"
+                                   decoration-success="readiness_state == 'ready'"
+                                   decoration-warning="readiness_state == 'warning'"
+                                   decoration-danger="readiness_state == 'incomplete'"/>
+                            <button name="action_view_logs" type="object" string="التشغيلات" icon="fa-list-alt" class="btn-secondary"/>
+                            <button name="action_duplicate_rule" type="object" string="نسخ" icon="fa-copy" class="btn-secondary"/>
+                        </div>
+                    </div>
+
+                    <div class="wati_builder_layout">
+                        <div class="wati_builder_main">
+                            <div class="wati_builder_step" invisible="setup_step != 'trigger'">
+                                <div class="wati_builder_step_head">
+                                    <span class="wati_builder_step_no">1</span>
+                                    <div>
+                                        <h2>متى يبدأ الإرسال؟</h2>
+                                        <p>اختر سيناريو جاهزًا أو ابنِ الحدث بجملة واحدة واضحة.</p>
+                                    </div>
+                                </div>
+
+                                <div class="wati_presets_section">
+                                    <div class="wati_section_label">ابدأ بسرعة</div>
+                                    <div class="wati_preset_grid">
+                                        <button name="action_apply_named_preset" type="object"
+                                                context="{'wati_preset_key': 'crm_qualified'}"
+                                                class="wati_preset_card">
+                                            <span class="wati_preset_app">CRM</span>
+                                            <span class="wati_preset_text"><strong>تأهيل فرصة</strong><small>Stage → Qualified</small></span>
+                                        </button>
+                                        <button name="action_apply_named_preset" type="object"
+                                                context="{'wati_preset_key': 'crm_won'}"
+                                                class="wati_preset_card">
+                                            <span class="wati_preset_app">CRM</span>
+                                            <span class="wati_preset_text"><strong>فوز بالفرصة</strong><small>Stage → Won</small></span>
+                                        </button>
+                                        <button name="action_apply_named_preset" type="object"
+                                                context="{'wati_preset_key': 'sale_confirmed'}"
+                                                class="wati_preset_card">
+                                            <span class="wati_preset_app">Sales</span>
+                                            <span class="wati_preset_text"><strong>تأكيد الطلب</strong><small>Order → Confirmed</small></span>
+                                        </button>
+                                        <button name="action_apply_named_preset" type="object"
+                                                context="{'wati_preset_key': 'invoice_paid'}"
+                                                class="wati_preset_card">
+                                            <span class="wati_preset_app">Invoice</span>
+                                            <span class="wati_preset_text"><strong>سداد الفاتورة</strong><small>Payment → Paid</small></span>
+                                        </button>
+                                        <button name="action_start_custom_builder" type="object" class="wati_preset_card wati_preset_custom">
+                                            <span class="wati_preset_app">+</span>
+                                            <span class="wati_preset_text"><strong>إعداد مخصص</strong><small>ابنه بالطريقة التي تريدها</small></span>
+                                        </button>
+                                    </div>
+                                    <field name="preset_key" invisible="1"/>
+                                </div>
+
+                                <div class="wati_trigger_builder">
+                                    <div class="wati_section_label">ابنِ الحدث</div>
+                                    <div class="wati_trigger_sentence">
+                                        <span class="wati_sentence_word">عندما</span>
+                                        <div class="wati_sentence_field wati_sentence_model">
+                                            <field name="model_id" nolabel="1" options="{'no_create': True, 'no_open': True}" placeholder="اختر التطبيق"/>
+                                        </div>
+                                        <span class="wati_sentence_arrow">←</span>
+                                        <div class="wati_sentence_field">
+                                            <field name="trigger_field_id" nolabel="1" options="{'no_create': True, 'no_open': True}" placeholder="اختر الحقل"/>
+                                        </div>
+                                        <div class="wati_sentence_field wati_sentence_operator">
+                                            <field name="condition_operator" nolabel="1"/>
+                                        </div>
+                                        <div class="wati_sentence_field wati_sentence_value"
+                                             invisible="condition_operator in ('is_set', 'is_not_set')">
+                                            <field name="target_value" nolabel="1" placeholder="القيمة"/>
+                                        </div>
+                                        <button name="action_pick_target_value" type="object" string="اختيار قيمة"
+                                                icon="fa-chevron-down" class="wati_value_picker"
+                                                invisible="condition_operator in ('is_set', 'is_not_set') or not trigger_field_id"/>
+                                    </div>
+                                </div>
+
+                                <div class="wati_builder_hint">
+                                    مثال: <strong>CRM ← Stage ← يساوي ← Qualified</strong>. بعد التفعيل يراقب Odoo هذا التغيير تلقائيًا.
+                                </div>
+
+                                <div class="wati_builder_nav wati_builder_nav_single">
+                                    <button name="action_next_step" type="object" string="التالي: المستلم" icon="fa-arrow-left" class="btn-primary wati_builder_next"/>
+                                </div>
+                            </div>
+
+                            <div class="wati_builder_step" invisible="setup_step != 'recipient'">
+                                <div class="wati_builder_step_head">
+                                    <span class="wati_builder_step_no">2</span>
+                                    <div>
+                                        <h2>لمن نرسل الرسالة؟</h2>
+                                        <p>في أغلب الحالات لا تحتاج إعداد شيء؛ النظام يستطيع العثور على رقم العميل تلقائيًا.</p>
+                                    </div>
+                                </div>
+
+                                <div class="wati_recipient_cards">
+                                    <div class="wati_recipient_card wati_recipient_card_active">
+                                        <span class="wati_recipient_icon">✓</span>
+                                        <div><strong>رقم العميل تلقائيًا</strong><small>Mobile → Phone → العميل المرتبط</small></div>
+                                    </div>
+                                    <div class="wati_recipient_card">
+                                        <div class="wati_recipient_field_wrap">
+                                            <span>أو اختر حقل هاتف محدد</span>
+                                            <field name="recipient_field_id" nolabel="1" options="{'no_create': True, 'no_open': True}"/>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="wati_policy_box">
+                                    <field name="once_per_record" string="إرسال مرة واحدة لكل سجل"/>
+                                    <p>يحمي العميل من تكرار نفس الرسالة إذا عاد السجل لنفس المرحلة مرة أخرى.</p>
+                                </div>
+
+                                <group string="إعدادات متقدمة" groups="base.group_system" class="wati_advanced_group">
+                                    <field name="recipient_path" string="مسار رقم مرتبط" placeholder="partner_id.mobile"/>
+                                    <field name="channel_number" string="رقم قناة WATI" placeholder="اختياري"/>
+                                </group>
+
+                                <div class="wati_builder_nav">
+                                    <button name="action_previous_step" type="object" string="السابق" icon="fa-arrow-right" class="btn-secondary"/>
+                                    <button name="action_next_step" type="object" string="التالي: الرسالة" icon="fa-arrow-left" class="btn-primary wati_builder_next"/>
+                                </div>
+                            </div>
+
+                            <div class="wati_builder_step" invisible="setup_step != 'message'">
+                                <div class="wati_builder_step_head">
+                                    <span class="wati_builder_step_no">3</span>
+                                    <div>
+                                        <h2>ما الرسالة التي سنرسلها؟</h2>
+                                        <p>اختر القالب من WATI ثم خلِّ النظام يجلب متغيراته ويربط البيانات تلقائيًا.</p>
+                                    </div>
+                                </div>
+
+                                <div class="wati_template_picker_box">
+                                    <div class="wati_template_field">
+                                        <span class="wati_section_label">قالب WATI</span>
+                                        <field name="template_name" nolabel="1" placeholder="اختر قالبًا"/>
+                                    </div>
+                                    <button name="action_pick_template" type="object" string="اختيار من WATI" icon="fa-whatsapp" class="btn-primary"/>
+                                    <button name="action_fetch_template_params" type="object" string="تحديث المتغيرات" icon="fa-refresh"
+                                            class="btn-secondary" invisible="not template_name"/>
+                                </div>
+
+                                <div class="wati_template_preview" invisible="not template_body">
+                                    <span class="wati_section_label">معاينة القالب</span>
+                                    <field name="template_body" nolabel="1" readonly="1"/>
+                                </div>
+
+                                <div class="wati_mapping_head">
+                                    <div><h3>ربط بيانات Odoo بالقالب</h3><p>نربط المتغيرات الواضحة تلقائيًا ويمكنك تعديل أي سطر.</p></div>
+                                    <button name="action_auto_map_parameters" type="object" string="ربط ذكي" icon="fa-magic"
+                                            class="btn-secondary" invisible="not parameter_ids"/>
+                                </div>
+                                <field name="parameter_ids" nolabel="1">
+                                    <list editable="bottom" string="متغيرات القالب">
+                                        <field name="sequence" widget="handle"/>
+                                        <field name="param_name" string="متغير WATI"/>
+                                        <field name="source_type" string="مصدر القيمة"/>
+                                        <field name="model_id" column_invisible="True"/>
+                                        <field name="source_field_id" string="بيانات Odoo" options="{'no_create': True}"
+                                               invisible="source_type != 'field'"/>
+                                        <field name="source_path" string="مسار متقدم" optional="hide" invisible="source_type != 'field'"/>
+                                        <field name="static_value" string="قيمة احتياطية" invisible="source_type in ('record_id', 'record_name')"/>
+                                        <field name="mapping_summary" string="الحالة" readonly="1"/>
+                                    </list>
+                                </field>
+
+                                <div class="wati_builder_nav">
+                                    <button name="action_previous_step" type="object" string="السابق" icon="fa-arrow-right" class="btn-secondary"/>
+                                    <button name="action_next_step" type="object" string="التالي: المراجعة" icon="fa-arrow-left" class="btn-primary wati_builder_next"/>
+                                </div>
+                            </div>
+
+                            <div class="wati_builder_step" invisible="setup_step != 'review'">
+                                <div class="wati_builder_step_head">
+                                    <span class="wati_builder_step_no">4</span>
+                                    <div>
+                                        <h2>راجعها ثم فعّلها</h2>
+                                        <p>قبل التشغيل الحقيقي نراجع الاتصال والقالب والمتغيرات ونقدر نجرب على رقم آمن.</p>
+                                    </div>
+                                </div>
+
+                                <div class="wati_readiness_card">
+                                    <div class="wati_readiness_title">
+                                        <strong>فحص الجاهزية</strong>
+                                        <field name="readiness_state" widget="badge" readonly="1"
+                                               decoration-success="readiness_state == 'ready'"
+                                               decoration-warning="readiness_state == 'warning'"
+                                               decoration-danger="readiness_state == 'incomplete'"/>
+                                    </div>
+                                    <field name="readiness_message" nolabel="1" readonly="1"/>
+                                </div>
+
+                                <div class="wati_review_grid">
+                                    <div class="wati_review_card">
+                                        <span class="wati_section_label">معاينة على بيانات حقيقية</span>
+                                        <button name="action_preview_latest_record" type="object" string="إنشاء معاينة" icon="fa-eye" class="btn-secondary"/>
+                                        <field name="preview_record_name" string="السجل" readonly="1" invisible="not preview_text"/>
+                                        <field name="preview_text" string="الرسالة" readonly="1" invisible="not preview_text"/>
+                                    </div>
+                                    <div class="wati_review_card">
+                                        <span class="wati_section_label">إرسال تجريبي آمن</span>
+                                        <p>يستخدم بيانات حقيقية لكن يرسل إلى رقم الاختبار فقط.</p>
+                                        <field name="test_phone" nolabel="1" placeholder="9665XXXXXXXX"/>
+                                        <button name="action_send_test" type="object" string="إرسال تجربة" icon="fa-paper-plane"
+                                                class="btn-secondary" invisible="not test_phone"/>
+                                    </div>
+                                </div>
+
+                                <notebook groups="base.group_system" class="wati_technical_notebook">
+                                    <page string="تفاصيل تقنية">
+                                        <group>
+                                            <field name="model_name" readonly="1"/>
+                                            <field name="base_automation_id" readonly="1"/>
+                                            <field name="server_action_id" readonly="1"/>
+                                        </group>
+                                    </page>
+                                </notebook>
+
+                                <div class="wati_builder_nav">
+                                    <button name="action_previous_step" type="object" string="السابق" icon="fa-arrow-right" class="btn-secondary"/>
+                                    <button name="action_activate_rule" type="object" string="تفعيل الأتمتة" icon="fa-bolt"
+                                            class="btn-success wati_builder_activate" invisible="active"/>
+                                    <button name="action_deactivate_rule" type="object" string="إيقاف الأتمتة" icon="fa-pause"
+                                            class="btn-secondary" invisible="not active"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="wati_builder_sidebar">
+                            <div class="wati_workflow_card">
+                                <div class="wati_workflow_card_head">
+                                    <span>ملخص الأتمتة</span>
+                                    <field name="active" widget="boolean_toggle" readonly="1"/>
+                                </div>
+
+                                <div class="wati_flow_node">
+                                    <span class="wati_flow_kicker">عندما يحدث</span>
+                                    <strong><field name="model_id" nolabel="1" readonly="1" options="{'no_open': True}"/></strong>
+                                    <small><field name="trigger_field_id" nolabel="1" readonly="1" options="{'no_open': True}"/></small>
+                                </div>
+                                <div class="wati_flow_arrow">↓</div>
+                                <div class="wati_flow_node wati_flow_whatsapp">
+                                    <span class="wati_flow_kicker">نفّذ</span>
+                                    <strong>إرسال WhatsApp</strong>
+                                    <small><field name="template_name" nolabel="1" readonly="1"/></small>
+                                </div>
+                                <div class="wati_flow_arrow">↓</div>
+                                <div class="wati_flow_node">
+                                    <span class="wati_flow_kicker">إلى</span>
+                                    <strong>رقم العميل</strong>
+                                    <small invisible="not once_per_record">مرة واحدة لكل سجل</small>
+                                </div>
+
+                                <div class="wati_workflow_sentence">
+                                    <field name="human_summary" nolabel="1" readonly="1"/>
+                                </div>
+                            </div>
+
+                            <div class="wati_sidebar_tip">
+                                <strong>بدون كود</strong>
+                                <p>بعد تفعيل القاعدة، Odoo يراقب الحدث ويرسل القالب من WATI تلقائيًا.</p>
+                            </div>
+                        </div>
+                    </div>
+                </sheet>
+            </xpath>
+        </field>
+    </record>
+</odoo>
