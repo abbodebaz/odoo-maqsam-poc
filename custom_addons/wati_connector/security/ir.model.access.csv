@@ -5,3 +5,6 @@ access_wati_message_user,wati.message user,model_wati_message,base.group_user,1,
 access_wati_webhook_event_admin,wati.webhook.event admin,model_wati_webhook_event,base.group_system,1,0,0,0
 access_wati_assignment_log_user,wati.assignment.log user,model_wati_assignment_log,base.group_user,1,0,0,0
 access_wati_support_ticket_user,wati.support.ticket user,model_wati_support_ticket,base.group_user,1,1,1,0
+access_wati_automation_rule_user,wati.automation.rule user,model_wati_automation_rule,base.group_user,1,1,1,1
+access_wati_automation_parameter_user,wati.automation.parameter user,model_wati_automation_parameter,base.group_user,1,1,1,1
+access_wati_automation_log_user,wati.automation.log user,model_wati_automation_log,base.group_user,1,0,0,0
