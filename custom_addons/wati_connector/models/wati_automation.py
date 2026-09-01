@@ -33,6 +33,7 @@ class WatiAutomationRule(models.Model):
         "ir.model.fields",
         string="الحقل المراقَب",
         required=True,
+        ondelete="cascade",
         domain="[('model_id', '=', model_id), ('store', '=', True)]",
         help="لن تعمل القاعدة إلا عندما يتغير هذا الحقل.",
     )
@@ -60,6 +61,7 @@ class WatiAutomationRule(models.Model):
     recipient_field_id = fields.Many2one(
         "ir.model.fields",
         string="حقل رقم WhatsApp",
+        ondelete="set null",
         domain="[('model_id', '=', model_id)]",
         help="اختر حقل الهاتف مباشرة إذا كان موجودًا في نفس السجل.",
     )
@@ -434,6 +436,7 @@ class WatiAutomationParameter(models.Model):
     source_field_id = fields.Many2one(
         "ir.model.fields",
         string="حقل Odoo",
+        ondelete="set null",
         domain="[('model_id', '=', model_id)]",
     )
     source_path = fields.Char(string="مسار حقل متقدم", help="اختياري، مثال: partner_id.name")
