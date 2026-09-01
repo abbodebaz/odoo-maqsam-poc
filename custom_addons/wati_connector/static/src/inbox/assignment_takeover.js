@@ -5,14 +5,12 @@
     const actions = document.querySelector(".wati-chat-actions");
     const messageInput = document.getElementById("messageInput");
     const sendButton = document.getElementById("sendButton");
+    const refreshButton = document.getElementById("refreshButton");
     if (!app || !actions) return;
 
     const csrfToken = app.dataset.csrf || "";
     const box = document.createElement("div");
-    box.style.display = "flex";
-    box.style.alignItems = "center";
-    box.style.gap = "8px";
-    box.style.flexWrap = "wrap";
+    box.className = "wati-assignment-box";
     actions.prepend(box);
 
     let lastConversationId = 0;
@@ -26,8 +24,12 @@
         if (messageInput) {
             messageInput.disabled = !enabled;
             messageInput.placeholder = enabled ? "اكتب رسالة..." : (note || "استلم المحادثة أولًا...");
+            messageInput.setAttribute("aria-disabled", enabled ? "false" : "true");
         }
-        if (sendButton) sendButton.disabled = !enabled;
+        if (sendButton) {
+            sendButton.disabled = !enabled;
+            sendButton.setAttribute("aria-disabled", enabled ? "false" : "true");
+        }
     }
 
     function makeButton(text, disabled = false, variant = "primary") {
@@ -35,14 +37,17 @@
         button.type = "button";
         button.textContent = text;
         button.disabled = disabled;
-        button.style.border = variant === "takeover" ? "1px solid #f59e0b" : "1px solid #d9e2e8";
-        button.style.background = disabled ? "#f3f6f8" : (variant === "takeover" ? "#fff7ed" : "#16a34a");
-        button.style.color = disabled ? "#52606d" : (variant === "takeover" ? "#b45309" : "white");
-        button.style.borderRadius = "10px";
-        button.style.padding = "8px 12px";
-        button.style.fontWeight = "700";
-        button.style.cursor = disabled ? "default" : "pointer";
+        button.className = `wati-assignment-button ${variant === "takeover" ? "is-takeover" : "is-primary"}${disabled ? " is-disabled" : ""}`;
         return button;
+    }
+
+    function refreshInboxData() {
+        // Reuse the Inbox's own refresh pipeline instead of reloading the page.
+        // A full reload used to race with the toolbar enhancement scripts and
+        // could leave the composer disabled or wider than the chat viewport.
+        if (refreshButton && !refreshButton.disabled) {
+            refreshButton.click();
+        }
     }
 
     async function assignMe(force = false, previousUserName = "") {
@@ -57,6 +62,7 @@
         }
 
         busy = true;
+        box.classList.add("is-busy");
         try {
             const body = new URLSearchParams({
                 csrf_token: csrfToken,
@@ -74,12 +80,19 @@
             });
             const payload = await response.json().catch(() => ({}));
             if (!response.ok || !payload.ok) throw new Error(payload.message || "تعذر استلام المحادثة");
+
+            // Update ownership and composer in-place. No window.location.reload().
             await refreshAssignment(true);
-            window.setTimeout(() => window.location.reload(), 250);
+            setComposerEnabled(true);
+            refreshInboxData();
+            window.setTimeout(refreshInboxData, 500);
+            if (messageInput) window.setTimeout(() => messageInput.focus(), 80);
         } catch (error) {
             window.alert(error.message || "تعذر استلام المحادثة.");
+            await refreshAssignment(true);
         } finally {
             busy = false;
+            box.classList.remove("is-busy");
         }
     }
 
@@ -106,6 +119,8 @@
                 data.assigned_to_me,
                 data.wati_email,
                 data.can_takeover,
+                data.assigned_user_name,
+                data.current_user_name,
             ]);
             if (forceRender || lastConversationId !== id || box.dataset.state !== signature) {
                 lastConversationId = id;
@@ -119,7 +134,9 @@
                 }
 
                 if (data.assigned_to_me) {
-                    box.appendChild(makeButton(`✓ عندي — ${data.current_user_name}`, true));
+                    const mine = makeButton(`✓ عندي — ${data.current_user_name}`, true);
+                    mine.title = `المحادثة مسندة إلى ${data.current_user_name}`;
+                    box.appendChild(mine);
                     setComposerEnabled(true);
                 } else if (data.is_unassigned) {
                     const button = makeButton("استلام المحادثة");
@@ -127,7 +144,9 @@
                     box.appendChild(button);
                     setComposerEnabled(false, "استلم المحادثة أولًا...");
                 } else {
-                    box.appendChild(makeButton(`عند ${data.assigned_user_name}`, true));
+                    const owner = makeButton(`عند ${data.assigned_user_name}`, true);
+                    owner.title = `المحادثة مسندة إلى ${data.assigned_user_name}`;
+                    box.appendChild(owner);
                     if (data.can_takeover) {
                         const button = makeButton("أخذ المحادثة", false, "takeover");
                         button.title = `نقل المحادثة من ${data.assigned_user_name} إليك`;
