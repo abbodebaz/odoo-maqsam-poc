@@ -98,6 +98,11 @@ def _stream_size(upload):
         return int(upload.content_length or 0)
 
 
+def _safe_filename(value):
+    name = os.path.basename(value or "").replace('"', "").replace("\r", "").replace("\n", "").replace("\x00", "").strip()
+    return name[:180] or "attachment"
+
+
 class WatiFileSendController(http.Controller):
 
     @http.route(
@@ -134,18 +139,20 @@ class WatiFileSendController(http.Controller):
         if not upload or not upload.filename:
             return request.make_json_response({"ok": False, "message": "اختر ملفًا أولًا."}, status=400)
 
-        filename = os.path.basename(upload.filename).replace('"', "").strip() or "attachment"
-        mimetype = (upload.mimetype or "application/octet-stream").strip().lower()
+        filename = _safe_filename(upload.filename)
+        mimetype = (upload.mimetype or "application/octet-stream").split(";", 1)[0].strip().lower()
         category = _file_category(filename, mimetype)
         if not category:
             return request.make_json_response(
-                {"ok": False, "message": "نوع الملف غير مدعوم في WATI. استخدم صورة JPG/PNG، فيديو MP4/3GP، صوت مدعوم، أو مستند PDF/Office/TXT."},
+                {"ok": False, "message": "نوع الملف غير مدعوم في WhatsApp. استخدم صورة JPG/PNG، فيديو MP4/3GP، صوت مدعوم، أو مستند PDF/Office/TXT."},
                 status=400,
             )
 
         size = _stream_size(upload)
+        if size == 0:
+            return request.make_json_response({"ok": False, "message": "الملف فارغ ولا يمكن إرساله."}, status=400)
         limit = _LIMITS[category]
-        if size and size > limit:
+        if size > limit:
             return request.make_json_response(
                 {"ok": False, "message": f"حجم الملف أكبر من الحد المسموح لهذا النوع ({limit // (1024 * 1024)} MB)."},
                 status=400,
@@ -186,13 +193,19 @@ class WatiFileSendController(http.Controller):
             _release_guard(guard_key)
             detail = (response.text or response.reason or "").strip()[:600]
             return request.make_json_response(
-                {"ok": False, "message": f"WATI رفض إرسال المرفق ({response.status_code}): {detail}"},
+                {"ok": False, "message": f"WATI رفض قبول المرفق ({response.status_code}): {detail}"},
                 status=400,
             )
 
-        # No database writes after the external API call. The WATI webhook is
-        # the authoritative source for the sent file and delivery/read status.
+        # HTTP 2xx means WATI accepted the file request. The authoritative
+        # SENT/DELIVERED/READ/FAILED lifecycle comes from WATI webhooks.
         return request.make_json_response(
-            {"ok": True, "message": "تم إرسال المرفق إلى WATI ✅", "filename": filename, "category": category},
+            {
+                "ok": True,
+                "message": "تم قبول المرفق في WATI ✅",
+                "filename": filename,
+                "category": category,
+                "accepted": True,
+            },
             status=200,
         )
