@@ -17,12 +17,14 @@
         "views/wati_automation_views.xml",
         "views/wati_automation_improvements_views.xml",
         "views/wati_automation_ux_views.xml",
+        "views/wati_automation_builder_views.xml",
         "data/wati_automation_demo.xml",
         "data/wati_automation_upgrade.xml"
     ],
     "assets": {
         "web.assets_backend": [
-            "wati_connector/static/src/css/wati_automation_ux.css"
+            "wati_connector/static/src/css/wati_automation_ux.css",
+            "wati_connector/static/src/css/wati_automation_builder.css"
         ]
     },
     "installable": True,
