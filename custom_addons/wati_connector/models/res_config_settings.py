@@ -41,6 +41,12 @@ class ResConfigSettings(models.TransientModel):
         default=False,
         help="عند التفعيل يظهر زر «قائمة» لموظفي خدمة العملاء لإرسال Interactive Lists من صندوق الوارد.",
     )
+    wati_enable_mini_inbox = fields.Boolean(
+        string="المحادثات السريعة داخل Odoo",
+        config_parameter="wati_connector.enable_mini_inbox",
+        default=False,
+        help="إظهار زر WhatsApp في شريط Odoo لفتح نافذة محادثات سريعة بدون مغادرة الشاشة الحالية.",
+    )
 
     @api.depends("wati_webhook_token")
     def _compute_wati_webhook_url(self):
