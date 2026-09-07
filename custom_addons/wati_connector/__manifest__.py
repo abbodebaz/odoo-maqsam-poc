@@ -7,6 +7,7 @@
     "license": "LGPL-3",
     "depends": ["base", "base_setup", "web", "contacts", "base_automation"],
     "data": [
+        "security/wati_security.xml",
         "security/ir.model.access.csv",
         "data/wati_ticket_sequence.xml",
         "views/res_config_settings_views.xml",
