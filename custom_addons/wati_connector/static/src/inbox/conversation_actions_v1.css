@@ -1,1 +1,314 @@
 /* Conversation header and drawer: compact daily-use controls, detailed actions on demand. */
+.wati-chat-head {
+    min-height: 64px !important;
+    padding: 8px 18px !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 12px !important;
+}
+
+.wati-chat-person {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+}
+
+.wati-chat-actions {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    max-width: 46% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    overflow: visible !important;
+}
+
+.wati-assignment-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    max-width: 150px;
+    padding: 5px 10px;
+    border: 1px solid #dce5e1;
+    border-radius: 999px;
+    background: #f6f9f7;
+    color: #5e6d66;
+    font-size: 11px;
+    font-weight: 750;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.wati-assignment-badge.is-mine {
+    border-color: #cdebd9;
+    background: #ecf9f1;
+    color: #137a43;
+}
+
+.wati-assignment-badge.is-unassigned {
+    border-color: #e4e9ec;
+    background: #f7f8f9;
+    color: #6c7881;
+}
+
+.wati-assignment-badge.is-other {
+    border-color: #f3dfba;
+    background: #fff8eb;
+    color: #9a681c;
+}
+
+.wati-assignment-badge.is-warning {
+    border-color: #f1c7c7;
+    background: #fff2f2;
+    color: #a33a3a;
+}
+
+.wati-conversation-actions-button {
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border: 1px solid #dbe3e7;
+    border-radius: 11px;
+    background: #fff;
+    color: #26333b;
+    font: inherit;
+    font-size: 11.5px;
+    font-weight: 750;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .03);
+    transition: background .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+
+.wati-conversation-actions-button:hover {
+    background: #f7faf8;
+    border-color: #cbd8d1;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, .06);
+}
+
+.wati-conversation-actions-button .wati-actions-dots {
+    font-size: 18px;
+    line-height: 10px;
+    color: #66747d;
+    transform: translateY(-2px);
+}
+
+.wati-actions-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9200;
+    display: flex;
+    align-items: stretch;
+    justify-content: flex-start;
+    background: rgba(19, 31, 38, .28);
+    backdrop-filter: blur(1.5px);
+}
+
+.wati-actions-overlay.is-hidden {
+    display: none !important;
+}
+
+.wati-actions-drawer {
+    width: min(390px, 92vw);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border-inline-end: 1px solid #e3e8eb;
+    box-shadow: 10px 0 34px rgba(15, 23, 42, .14);
+    direction: rtl;
+    overflow: hidden;
+}
+
+.wati-actions-drawer-head {
+    min-height: 68px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid #edf0f2;
+}
+
+.wati-actions-drawer-head strong {
+    display: block;
+    color: #17212b;
+    font-size: 15px;
+}
+
+.wati-actions-drawer-head span {
+    display: block;
+    margin-top: 3px;
+    color: #82909a;
+    font-size: 10.5px;
+}
+
+.wati-actions-drawer-close {
+    width: 34px;
+    height: 34px;
+    border: 1px solid #e1e7ea;
+    border-radius: 10px;
+    background: #fff;
+    color: #53616a;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.wati-actions-drawer-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 14px;
+}
+
+.wati-actions-section {
+    padding: 14px;
+    border: 1px solid #e8edef;
+    border-radius: 14px;
+    background: #fff;
+}
+
+.wati-actions-section + .wati-actions-section {
+    margin-top: 10px;
+}
+
+.wati-actions-section h3 {
+    margin: 0 0 10px;
+    color: #2c3941;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.wati-actions-info-row {
+    min-height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: #697780;
+    font-size: 10.5px;
+}
+
+.wati-actions-info-row + .wati-actions-info-row {
+    border-top: 1px solid #f0f3f4;
+}
+
+.wati-actions-info-row strong,
+.wati-actions-info-row span:last-child {
+    max-width: 65%;
+    color: #27353d;
+    font-weight: 750;
+    text-align: left;
+    overflow-wrap: anywhere;
+}
+
+.wati-actions-inline-link,
+.wati-actions-primary,
+.wati-actions-secondary,
+.wati-actions-tool {
+    width: 100%;
+    min-height: 38px;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 10px;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 750;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.wati-actions-inline-link,
+.wati-actions-secondary,
+.wati-actions-tool {
+    border: 1px solid #dfe6e9;
+    background: #fff;
+    color: #34434c;
+}
+
+.wati-actions-primary {
+    border: 1px solid #168d4c;
+    background: #18a957;
+    color: #fff;
+}
+
+.wati-actions-secondary.is-takeover {
+    border-color: #f1d5a6;
+    background: #fff8eb;
+    color: #98641b;
+}
+
+.wati-actions-primary:disabled,
+.wati-actions-secondary:disabled {
+    opacity: .55;
+    cursor: default;
+}
+
+.wati-actions-tools {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.wati-actions-tools .wati-actions-tool {
+    margin-top: 0;
+    min-height: 42px;
+}
+
+.wati-actions-tool:hover,
+.wati-actions-inline-link:hover,
+.wati-actions-secondary:hover {
+    background: #f7faf8;
+}
+
+.wati-actions-empty {
+    color: #89949c;
+    font-size: 10.5px;
+    line-height: 1.7;
+}
+
+body.wati-actions-open {
+    overflow: hidden;
+}
+
+@media (max-width: 720px) {
+    .wati-chat-head {
+        min-height: 62px !important;
+        padding: 7px 10px !important;
+    }
+
+    .wati-chat-actions {
+        max-width: 52% !important;
+        gap: 6px !important;
+    }
+
+    .wati-assignment-badge {
+        max-width: 96px;
+        min-height: 28px;
+        padding: 5px 8px;
+        font-size: 9.5px;
+    }
+
+    .wati-conversation-actions-button {
+        width: 36px;
+        min-width: 36px;
+        height: 36px;
+        padding: 0;
+    }
+
+    .wati-conversation-actions-button .wati-actions-label {
+        display: none;
+    }
+
+    .wati-actions-drawer {
+        width: min(360px, 94vw);
+    }
+}
