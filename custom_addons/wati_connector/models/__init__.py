@@ -1,5 +1,6 @@
 from . import res_config_settings
 from . import wati_models
+from . import wati_webhook_quality
 from . import wati_transport
 from . import wati_assignment
 from . import wati_idempotency
