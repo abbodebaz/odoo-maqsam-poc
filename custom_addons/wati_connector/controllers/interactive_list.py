@@ -2,10 +2,11 @@ import json
 import threading
 import time
 
-import requests
-
 from odoo import http
 from odoo.http import request
+
+from ..services.client import WatiClient
+from ..services.exceptions import WatiConfigurationError, WatiRequestError
 
 
 _LIST_GUARD = {}
@@ -15,23 +16,6 @@ _LIST_GUARD_TTL = 180.0
 
 def _clean(value):
     return str(value or "").strip()
-
-
-def _wati_config():
-    params = request.env["ir.config_parameter"].sudo()
-    endpoint = (params.get_param("wati_connector.api_endpoint") or "").strip().rstrip("/")
-    token = (params.get_param("wati_connector.api_token") or "").strip()
-    if token.lower().startswith("bearer "):
-        token = token[7:].strip()
-    return endpoint, token
-
-
-def _headers(token):
-    return {
-        "Authorization": f"Bearer {token}",
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-    }
 
 
 def _reserve_guard(user_id, request_id):
@@ -189,11 +173,6 @@ class WatiInteractiveListController(http.Controller):
                 status=200,
             )
 
-        endpoint, token = _wati_config()
-        if not endpoint or not token:
-            _release_guard(guard_key)
-            return request.make_json_response({"ok": False, "message": "إعدادات WATI API غير مكتملة."}, status=503)
-
         payload = {
             "body": body,
             "buttonText": button_text,
@@ -205,26 +184,17 @@ class WatiInteractiveListController(http.Controller):
             payload["footer"] = footer
 
         try:
-            response = requests.post(
-                f"{endpoint}/api/v1/sendInteractiveListMessage",
-                headers=_headers(token),
-                params={"whatsappNumber": conversation.wa_id},
-                json=payload,
-                timeout=30,
-            )
-        except requests.RequestException as exc:
+            WatiClient(request.env).send_interactive_list(conversation.wa_id, payload)
+        except WatiConfigurationError:
             _release_guard(guard_key)
-            return request.make_json_response(
-                {"ok": False, "message": f"تعذر إرسال القائمة إلى WATI: {exc}"},
-                status=502,
-            )
-
-        if not response.ok:
+            return request.make_json_response({"ok": False, "message": "إعدادات WATI API غير مكتملة."}, status=503)
+        except WatiRequestError as exc:
             _release_guard(guard_key)
-            detail = (response.text or response.reason or "").strip()[:1000]
+            detail = (exc.response_text or str(exc) or "").strip()[:1000]
+            status = exc.status_code or 502
             return request.make_json_response(
-                {"ok": False, "message": f"WATI رفض القائمة ({response.status_code}): {detail}"},
-                status=response.status_code,
+                {"ok": False, "message": f"WATI رفض القائمة ({status}): {detail}"},
+                status=status,
             )
 
         return request.make_json_response(
