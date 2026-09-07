@@ -29,6 +29,18 @@ class ResConfigSettings(models.TransientModel):
         compute="_compute_wati_webhook_url",
         help="انسخ هذا الرابط كاملًا كما هو إلى WATI Webhooks.",
     )
+    wati_enable_interactive_buttons = fields.Boolean(
+        string="الأزرار التفاعلية في صندوق الوارد",
+        config_parameter="wati_connector.enable_interactive_buttons",
+        default=False,
+        help="عند التفعيل يظهر زر «أزرار» لموظفي خدمة العملاء لإرسال Reply Buttons من صندوق الوارد.",
+    )
+    wati_enable_interactive_lists = fields.Boolean(
+        string="القوائم التفاعلية في صندوق الوارد",
+        config_parameter="wati_connector.enable_interactive_lists",
+        default=False,
+        help="عند التفعيل يظهر زر «قائمة» لموظفي خدمة العملاء لإرسال Interactive Lists من صندوق الوارد.",
+    )
 
     @api.depends("wati_webhook_token")
     def _compute_wati_webhook_url(self):
