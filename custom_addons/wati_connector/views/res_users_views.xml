@@ -9,15 +9,18 @@
                 <page string="WhatsApp / WATI" name="wati_user_integration">
                     <group>
                         <group string="ربط حساب الموظف">
-                            <field name="wati_operator_email" string="WATI Operator Email" placeholder="employee@company.com"/>
-                            <field name="wati_is_supervisor" string="مشرف WATI"/>
+                            <field name="wati_operator_email"
+                                   string="WATI Operator Email"
+                                   placeholder="employee@company.com"/>
                             <div class="text-muted">
-                                أدخل إيميل الموظف كما هو مسجل داخل WATI Team Inbox. فعّل «مشرف WATI» فقط لمن يحق له نقل محادثة من موظف إلى موظف آخر.
+                                أدخل إيميل الموظف كما هو مسجل داخل WATI Team Inbox.
+                                صلاحيات WATI تُدار من مجموعات المستخدم: User / Agent / Supervisor / Administrator.
                             </div>
                         </group>
                         <group string="طريقة العمل">
                             <div class="text-muted">
-                                المحادثة غير المسندة يستطيع الموظف استلامها. بعد الاستلام لا يستطيع موظف آخر أخذها أو الرد عليها. النقل القسري متاح فقط لمشرف WATI أو Administrator، وجميع عمليات النقل تُحفظ في سجل الإسناد.
+                                المحادثة غير المسندة يستطيع Agent استلامها. بعد الاستلام لا يستطيع موظف آخر الرد عليها.
+                                نقل المحادثة بين الموظفين متاح لمشرف WATI أو Administrator، وجميع عمليات النقل تُحفظ في سجل الإسناد.
                             </div>
                         </group>
                     </group>
