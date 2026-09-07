@@ -2,11 +2,11 @@ import json
 import logging
 from datetime import timedelta
 
-import requests
-
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
+from ..services.client import WatiClient
+from ..services.exceptions import WatiConfigurationError, WatiRequestError
 from .wati_automation_improvements import (
     _error_summary,
     _find_template_list,
@@ -309,39 +309,28 @@ class WatiAutomationRuleGuard(models.Model):
 
     def _fetch_wati_templates_guarded(self):
         self.ensure_one()
-        endpoint, token, _configured_channel = self._wati_config()
-        if not endpoint or not token:
-            raise UserError(
-                _("إعدادات WATI API غير مكتملة. راجع Settings → WATI WhatsApp.")
-            )
-
-        headers = {
-            "Authorization": f"Bearer {token}",
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-        }
+        client = WatiClient(self.env)
         rows = []
         page_size = 200
         for page_number in range(1, 11):
             try:
-                response = requests.get(
-                    f"{endpoint}/api/v1/getMessageTemplates",
-                    headers=headers,
-                    params={
-                        "pageSize": page_size,
-                        "pageNumber": page_number,
-                    },
-                    timeout=25,
+                response = client.get_message_templates(
+                    page_size=page_size,
+                    page_number=page_number,
                 )
-            except requests.RequestException as exc:
-                raise UserError(_("تعذر الاتصال بـ WATI للتحقق من القالب: %s") % exc) from exc
-
-            if not response.ok:
-                detail = (response.text or response.reason or "").strip()[:900]
+            except WatiConfigurationError as exc:
                 raise UserError(
-                    _("WATI رفض فحص القوالب (%(status)s): %(detail)s")
-                    % {"status": response.status_code, "detail": detail}
-                )
+                    _("إعدادات WATI API غير مكتملة. راجع Settings → WATI WhatsApp.")
+                ) from exc
+            except WatiRequestError as exc:
+                detail = (exc.response_text or str(exc) or "").strip()[:900]
+                if exc.status_code:
+                    raise UserError(
+                        _("WATI رفض فحص القوالب (%(status)s): %(detail)s")
+                        % {"status": exc.status_code, "detail": detail}
+                    ) from exc
+                raise UserError(_("تعذر الاتصال بـ WATI للتحقق من القالب: %s") % detail) from exc
+
             try:
                 page_rows = _find_template_list(response.json())
             except ValueError as exc:
@@ -711,17 +700,17 @@ class WatiAutomationRuleGuard(models.Model):
             )
             return False
 
-        endpoint, token, configured_channel = self._wati_config()
+        client = WatiClient(self.env)
         effective_channel = (
-            self.channel_number or configured_channel or ""
+            self.channel_number or client.config.channel_number or ""
         ).strip()
-        if not endpoint or not token or not effective_channel:
+        if not effective_channel:
             Log.create(
                 self._log_values(
                     record,
                     "failed",
                     phone=phone,
-                    error_message="إعدادات WATI API أو رقم القناة غير مكتملة.",
+                    error_message="رقم قناة WATI غير مكتمل.",
                 )
             )
             return False
@@ -761,44 +750,39 @@ class WatiAutomationRuleGuard(models.Model):
         }
 
         try:
-            response = requests.post(
-                f"{endpoint}/api/v1/sendTemplateMessages",
-                headers={
-                    "Authorization": f"Bearer {token}",
-                    "Accept": "application/json",
-                    "Content-Type": "application/json",
-                },
-                json=body,
-                timeout=25,
-            )
-        except requests.RequestException as exc:
+            response = client.send_template_messages(body)
+        except WatiConfigurationError as exc:
             Log.create(
                 self._log_values(
                     record,
                     "failed",
                     phone=phone,
-                    error_message=f"تعذر الاتصال بـ WATI: {exc}",
+                    error_message="إعدادات WATI API غير مكتملة.",
                 )
             )
             return False
-
-        excerpt = (response.text or response.reason or "").strip()[:2000]
-        if not response.ok:
+        except WatiRequestError as exc:
+            detail = (exc.response_text or str(exc) or "").strip()[:2000]
             Log.create(
                 {
                     **self._log_values(
                         record,
                         "failed",
                         phone=phone,
-                        error_message=f"WATI رفض الإرسال ({response.status_code}).",
-                        response_excerpt=excerpt,
+                        error_message=(
+                            f"WATI رفض الإرسال ({exc.status_code})."
+                            if exc.status_code
+                            else f"تعذر الاتصال بـ WATI: {detail}"
+                        ),
+                        response_excerpt=detail,
                     ),
                     "broadcast_name": broadcast_name,
-                    "delivery_status": "api_rejected",
+                    "delivery_status": "api_rejected" if exc.status_code else "transport_failed",
                 }
             )
             return False
 
+        excerpt = (response.text or response.reason or "").strip()[:2000]
         try:
             payload = response.json()
         except ValueError:
