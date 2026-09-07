@@ -28,7 +28,7 @@ jobs:
             python -m compileall -q "$module"
           done
 
-      - name: Validate XML, manifests and architecture boundaries
+      - name: Validate XML, manifests, assets and architecture boundaries
         run: |
           python - <<'PY'
           import ast
@@ -47,15 +47,31 @@ jobs:
               data = ast.literal_eval(manifest.read_text(encoding='utf-8'))
               assert data.get('installable') is True, f'{module.name} must remain installable'
               assert data.get('license'), f'{module.name} must declare a license'
+
               for xml_file in module.rglob('*.xml'):
                   try:
                       ET.parse(xml_file)
                   except ET.ParseError as exc:
                       raise SystemExit(f'Invalid XML: {xml_file}: {exc}') from exc
+
               for relative in data.get('data', []):
                   path = module / relative
                   if not path.exists():
                       raise SystemExit(f'{module.name} manifest references missing file: {relative}')
+
+              for bundle, entries in data.get('assets', {}).items():
+                  for entry in entries:
+                      if not isinstance(entry, str):
+                          continue
+                      if any(token in entry for token in ('*', '?', '[')):
+                          continue
+                      prefix = f'{module.name}/'
+                      relative = entry[len(prefix):] if entry.startswith(prefix) else entry
+                      path = module / relative
+                      if not path.exists():
+                          raise SystemExit(
+                              f'{module.name} asset bundle {bundle} references missing file: {entry}'
+                          )
 
           core = Path('custom_addons/wati_connector')
           core_manifest = ast.literal_eval((core / '__manifest__.py').read_text(encoding='utf-8'))
