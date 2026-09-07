@@ -58,6 +58,19 @@ class WatiConfig:
     def webhook_token(self):
         return (self._params.get_param(self.PARAM_WEBHOOK_TOKEN) or "").strip()
 
+    @property
+    def is_api_configured(self):
+        """Return whether the connector has a usable API endpoint and token.
+
+        Readiness checks in the UI should never need to duplicate configuration
+        parsing or raise on a malformed endpoint. A malformed endpoint simply
+        means the API is not ready yet.
+        """
+        try:
+            return bool(self.endpoint and self.token)
+        except WatiConfigurationError:
+            return False
+
     def require_api(self):
         endpoint = self.endpoint
         token = self.token
