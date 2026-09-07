@@ -1,7 +1,7 @@
-import re
-
 from odoo import _, fields, models
 from odoo.exceptions import UserError
+
+from ..utils.phone import equivalent_variants, normalize_whatsapp_number
 
 
 _CUSTOMER_MOVE_TYPES = {"out_invoice", "out_refund", "out_receipt"}
@@ -83,21 +83,6 @@ class AccountMoveWati(models.Model):
         compute="_compute_wati_summary",
     )
 
-    @staticmethod
-    def _wati_normalize_phone(value):
-        digits = re.sub(r"\D+", "", str(value or ""))
-        if digits.startswith("00"):
-            digits = digits[2:]
-        if not digits:
-            return ""
-        if digits.startswith("966"):
-            return digits
-        if len(digits) == 10 and digits.startswith("05"):
-            return "966" + digits[1:]
-        if len(digits) == 9 and digits.startswith("5"):
-            return "966" + digits
-        return digits
-
     def _wati_validate_customer_move(self):
         self.ensure_one()
         if self.move_type not in _CUSTOMER_MOVE_TYPES:
@@ -113,7 +98,7 @@ class AccountMoveWati(models.Model):
         values = []
         for field_name in ("mobile", "phone"):
             if field_name in partner._fields and partner[field_name]:
-                phone = self._wati_normalize_phone(partner[field_name])
+                phone = normalize_whatsapp_number(partner[field_name])
                 if phone and phone not in values:
                     values.append(phone)
         return values
@@ -146,13 +131,9 @@ class AccountMoveWati(models.Model):
 
         variants = []
         for phone in phones:
-            for variant in (phone, "+" + phone):
+            for variant in equivalent_variants(phone):
                 if variant not in variants:
                     variants.append(variant)
-            if phone.startswith("966") and len(phone) > 3:
-                local = "0" + phone[3:]
-                if local not in variants:
-                    variants.append(local)
 
         return Conversation.search(
             [("wa_id", "in", variants)],
