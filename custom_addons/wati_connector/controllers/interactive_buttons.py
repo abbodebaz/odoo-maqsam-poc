@@ -1,40 +1,11 @@
 import json
-import threading
-import time
 
 from odoo import http
 from odoo.http import request
 
 from ..services.client import WatiClient
 from ..services.exceptions import WatiConfigurationError, WatiRequestError
-
-
-_INTERACTIVE_GUARD = {}
-_INTERACTIVE_GUARD_LOCK = threading.Lock()
-_INTERACTIVE_GUARD_TTL = 180.0
-
-
-def _reserve_guard(user_id, request_id):
-    request_id = (request_id or "").strip()
-    if not request_id:
-        return "", True
-    now = time.monotonic()
-    key = f"{user_id}:{request_id}"
-    with _INTERACTIVE_GUARD_LOCK:
-        expired = [item for item, created in _INTERACTIVE_GUARD.items() if now - created > _INTERACTIVE_GUARD_TTL]
-        for item in expired:
-            _INTERACTIVE_GUARD.pop(item, None)
-        if key in _INTERACTIVE_GUARD:
-            return key, False
-        _INTERACTIVE_GUARD[key] = now
-    return key, True
-
-
-def _release_guard(key):
-    if not key:
-        return
-    with _INTERACTIVE_GUARD_LOCK:
-        _INTERACTIVE_GUARD.pop(key, None)
+from ..services.idempotency import WatiIdempotency
 
 
 def _clean(value):
@@ -50,10 +21,7 @@ def _parse_buttons(value):
         return []
     result = []
     for item in raw:
-        if isinstance(item, dict):
-            text = _clean(item.get("text"))
-        else:
-            text = _clean(item)
+        text = _clean(item.get("text")) if isinstance(item, dict) else _clean(item)
         if text:
             result.append(text)
     return result
@@ -61,12 +29,7 @@ def _parse_buttons(value):
 
 class WatiInteractiveButtonsController(http.Controller):
 
-    @http.route(
-        "/wati/inbox/send-buttons",
-        type="http",
-        auth="user",
-        methods=["POST"],
-    )
+    @http.route("/wati/inbox/send-buttons", type="http", auth="user", methods=["POST"])
     def send_buttons(
         self,
         conversation_id=None,
@@ -85,8 +48,7 @@ class WatiInteractiveButtonsController(http.Controller):
         conversation = request.env["wati.conversation"].browse(conversation_id).exists()
         if not conversation:
             return request.make_json_response(
-                {"ok": False, "message": "المحادثة غير موجودة."},
-                status=404,
+                {"ok": False, "message": "المحادثة غير موجودة."}, status=404
             )
 
         current_user = request.env.user
@@ -95,11 +57,14 @@ class WatiInteractiveButtonsController(http.Controller):
                 {"ok": False, "message": "استلم المحادثة أولًا قبل إرسال رسالة تفاعلية."},
                 status=409,
             )
-        if conversation.assigned_user_id != current_user and not current_user.has_group("base.group_system"):
+        if conversation.assigned_user_id != current_user:
             return request.make_json_response(
                 {
                     "ok": False,
-                    "message": f"المحادثة مستلمة بواسطة {conversation.assigned_user_id.name}. استخدم أخذ المحادثة أولًا.",
+                    "message": (
+                        f"المحادثة مستلمة بواسطة {conversation.assigned_user_id.name}. "
+                        "انقل المحادثة إليك أولًا."
+                    ),
                 },
                 status=409,
             )
@@ -113,11 +78,9 @@ class WatiInteractiveButtonsController(http.Controller):
         body = _clean(body)
         footer = _clean(footer)
         buttons = _parse_buttons(buttons_json)
-
         if not body:
             return request.make_json_response(
-                {"ok": False, "message": "اكتب نص الرسالة التفاعلية."},
-                status=400,
+                {"ok": False, "message": "اكتب نص الرسالة التفاعلية."}, status=400
             )
         if len(header) > 60:
             return request.make_json_response(
@@ -136,8 +99,7 @@ class WatiInteractiveButtonsController(http.Controller):
             )
         if not 1 <= len(buttons) <= 3:
             return request.make_json_response(
-                {"ok": False, "message": "أضف من زر واحد إلى 3 أزرار."},
-                status=400,
+                {"ok": False, "message": "أضف من زر واحد إلى 3 أزرار."}, status=400
             )
         if any(len(text) > 20 for text in buttons):
             return request.make_json_response(
@@ -151,32 +113,36 @@ class WatiInteractiveButtonsController(http.Controller):
                 status=400,
             )
 
-        guard_key, reserved = _reserve_guard(current_user.id, request_id)
-        if not reserved:
-            return request.make_json_response(
-                {"ok": True, "duplicate_suppressed": True, "message": "تم تجاهل إعادة إرسال مكررة."},
-                status=200,
-            )
-
-        payload = {
-            "body": body,
-            "buttons": [{"text": text} for text in buttons],
-        }
+        payload = {"body": body, "buttons": [{"text": text} for text in buttons]}
         if header:
             payload["header"] = {"type": "Text", "text": header}
         if footer:
             payload["footer"] = footer
 
+        idem = WatiIdempotency(request.env)
+        scope = f"outbound:buttons:user:{current_user.id}"
+        key = (request_id or "").strip() or idem.digest(
+            conversation.id, header, body, footer, buttons_json or ""
+        )
+        if not idem.acquire(scope, key, ttl_seconds=180):
+            return request.make_json_response(
+                {
+                    "ok": True,
+                    "duplicate_suppressed": True,
+                    "message": "تم تجاهل إعادة إرسال مكررة.",
+                },
+                status=200,
+            )
+
         try:
             WatiClient(request.env).send_interactive_buttons(conversation.wa_id, payload)
         except WatiConfigurationError:
-            _release_guard(guard_key)
+            idem.release(scope, key)
             return request.make_json_response(
-                {"ok": False, "message": "إعدادات WATI API غير مكتملة."},
-                status=503,
+                {"ok": False, "message": "إعدادات WATI API غير مكتملة."}, status=503
             )
         except WatiRequestError as exc:
-            _release_guard(guard_key)
+            idem.release(scope, key)
             detail = (exc.response_text or str(exc) or "").strip()[:1000]
             status = exc.status_code or 502
             return request.make_json_response(
