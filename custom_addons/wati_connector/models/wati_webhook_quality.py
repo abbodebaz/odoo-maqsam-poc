@@ -1,3 +1,4 @@
+import hashlib
 import json
 
 from odoo import api, fields, models
@@ -35,6 +36,14 @@ def _message_identity(payload):
     return ""
 
 
+def _advisory_key(namespace, value):
+    """Return a stable signed bigint suitable for PostgreSQL advisory locks."""
+    digest = hashlib.blake2b(
+        f"wati:{namespace}:{value}".encode("utf-8"), digest_size=8
+    ).digest()
+    return int.from_bytes(digest, byteorder="big", signed=True)
+
+
 class WatiConversation(models.Model):
     _inherit = "wati.conversation"
 
@@ -61,6 +70,36 @@ class WatiConversation(models.Model):
 
 class WatiWebhookEvent(models.Model):
     _inherit = "wati.webhook.event"
+
+    @api.model
+    def _wati_lock_ingest_identity(self, payload):
+        """Serialize duplicate/concurrent callbacks before search-then-create logic.
+
+        WATI can deliver the same callback through multiple webhook variants at nearly
+        the same instant. Without serialization, two transactions can both see no
+        existing message/conversation and create duplicates. Transaction-scoped
+        advisory locks keep ingestion idempotent without introducing permanent rows
+        or external lock infrastructure.
+        """
+        if not isinstance(payload, dict):
+            return
+
+        lock_keys = set()
+        message_identity = _message_identity(payload)
+        conversation_uid = _clean(payload.get("conversationId"))
+        wa_id = _clean(payload.get("waId"))
+
+        if message_identity:
+            lock_keys.add(_advisory_key("message", message_identity))
+        if conversation_uid:
+            lock_keys.add(_advisory_key("conversation", conversation_uid))
+        if wa_id:
+            lock_keys.add(_advisory_key("wa", wa_id))
+
+        # Always acquire in deterministic order so two callbacks cannot deadlock
+        # while sharing more than one identity.
+        for lock_key in sorted(lock_keys):
+            self.env.cr.execute("SELECT pg_advisory_xact_lock(%s)", [lock_key])
 
     @api.model
     def _wati_find_existing_message(self, payload):
@@ -143,6 +182,7 @@ class WatiWebhookEvent(models.Model):
 
     @api.model
     def ingest(self, payload):
+        self._wati_lock_ingest_identity(payload)
         if self._wati_is_orphan_status_callback(payload):
             return self._wati_store_audit_event_only(payload)
         return super().ingest(payload)
