@@ -1,12 +1,13 @@
-import json
 import logging
-import re
 import time
-
-import requests
 
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
+
+from ..services.client import WatiClient
+from ..services.config import WatiConfig
+from ..services.exceptions import WatiConfigurationError, WatiRequestError
+from ..utils.phone import normalize_whatsapp_number
 
 _logger = logging.getLogger(__name__)
 
@@ -280,14 +281,7 @@ class WatiAutomationRule(models.Model):
 
     @api.model
     def _normalize_phone(self, value):
-        digits = re.sub(r"\D+", "", str(value or ""))
-        if digits.startswith("00"):
-            digits = digits[2:]
-        if digits.startswith("0") and len(digits) >= 9:
-            digits = "966" + digits[1:]
-        elif len(digits) == 9 and digits.startswith("5"):
-            digits = "966" + digits
-        return digits
+        return normalize_whatsapp_number(value)
 
     def _parameter_value(self, record, line):
         if line.source_type == "static":
@@ -345,20 +339,13 @@ class WatiAutomationRule(models.Model):
             return False
 
     def _wati_config(self):
-        params = self.env["ir.config_parameter"].sudo()
-        endpoint = (params.get_param("wati_connector.api_endpoint") or "").strip().rstrip("/")
-        token = (params.get_param("wati_connector.api_token") or "").strip()
-        if token.lower().startswith("bearer "):
-            token = token[7:].strip()
-        channel = (params.get_param("wati_connector.channel_number") or "").strip()
-        return endpoint, token, channel
+        config = WatiConfig(self.env)
+        return config.endpoint, config.token, config.channel_number
 
     def _send_template(self, record, phone, custom_params):
-        endpoint, token, configured_channel = self._wati_config()
         Log = self.env["wati.automation.log"].sudo()
-        if not endpoint or not token:
-            Log.create(self._log_values(record, "failed", phone=phone, error_message="إعدادات WATI API غير مكتملة."))
-            return False
+        client = WatiClient(self.env)
+        configured_channel = client.config.channel_number
 
         body = {
             "template_name": self.template_name,
@@ -370,31 +357,31 @@ class WatiAutomationRule(models.Model):
             body["channel_number"] = effective_channel
 
         try:
-            response = requests.post(
-                f"{endpoint}/api/v1/sendTemplateMessages",
-                headers={
-                    "Authorization": f"Bearer {token}",
-                    "Accept": "application/json",
-                    "Content-Type": "application/json",
-                },
-                json=body,
-                timeout=20,
-            )
-        except requests.RequestException as exc:
-            Log.create(self._log_values(record, "failed", phone=phone, error_message=f"تعذر الاتصال بـ WATI: {exc}"))
-            return False
-
-        excerpt = (response.text or response.reason or "").strip()[:1200]
-        if not response.ok:
+            response = client.send_template_messages(body)
+        except WatiConfigurationError:
             Log.create(self._log_values(
                 record,
                 "failed",
                 phone=phone,
-                error_message=f"WATI رفض الإرسال ({response.status_code}).",
-                response_excerpt=excerpt,
+                error_message="إعدادات WATI API غير مكتملة.",
+            ))
+            return False
+        except WatiRequestError as exc:
+            detail = (exc.response_text or str(exc) or "").strip()[:1200]
+            Log.create(self._log_values(
+                record,
+                "failed",
+                phone=phone,
+                error_message=(
+                    f"WATI رفض الإرسال ({exc.status_code})."
+                    if exc.status_code
+                    else f"تعذر الاتصال بـ WATI: {detail}"
+                ),
+                response_excerpt=detail,
             ))
             return False
 
+        excerpt = (response.text or response.reason or "").strip()[:1200]
         Log.create(self._log_values(record, "sent", phone=phone, response_excerpt=excerpt))
         return True
 
