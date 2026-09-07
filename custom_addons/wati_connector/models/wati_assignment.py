@@ -1,7 +1,8 @@
-import requests
-
 from odoo import _, fields, models
 from odoo.exceptions import UserError
+
+from ..services.client import WatiClient
+from ..services.exceptions import WatiConfigurationError, WatiRequestError
 
 
 class ResUsers(models.Model):
@@ -75,44 +76,36 @@ class WatiConversation(models.Model):
         if not self.wa_id:
             raise UserError(_("لا يوجد رقم WhatsApp لهذه المحادثة."))
 
-        params = self.env["ir.config_parameter"].sudo()
-        endpoint = (params.get_param("wati_connector.api_endpoint") or "").strip().rstrip("/")
-        token = (params.get_param("wati_connector.api_token") or "").strip()
-        if token.lower().startswith("bearer "):
-            token = token[7:].strip()
-        if not endpoint or not token:
-            raise UserError(_("إعدادات WATI API غير مكتملة."))
-
         try:
-            response = requests.post(
-                f"{endpoint}/api/v1/assignOperator",
-                headers={"Authorization": f"Bearer {token}", "Accept": "application/json"},
-                params={"email": email, "whatsappNumber": self.wa_id},
-                timeout=20,
-            )
-        except requests.RequestException as exc:
-            raise UserError(_("تعذر الاتصال بـ WATI لتعيين الموظف: %s") % exc) from exc
-
-        if not response.ok:
-            detail = (response.text or response.reason or "").strip()[:500]
-            raise UserError(_("WATI رفض تعيين الموظف (%s): %s") % (response.status_code, detail))
+            WatiClient(self.env).assign_operator(self.wa_id, email)
+        except WatiConfigurationError as exc:
+            raise UserError(_("إعدادات WATI API غير مكتملة.")) from exc
+        except WatiRequestError as exc:
+            detail = (exc.response_text or str(exc) or "").strip()[:500]
+            if exc.status_code:
+                raise UserError(_("WATI رفض تعيين الموظف (%s): %s") % (exc.status_code, detail)) from exc
+            raise UserError(_("تعذر الاتصال بـ WATI لتعيين الموظف: %s") % detail) from exc
 
         now = fields.Datetime.now()
-        self.write({
-            "assigned_user_id": user.id,
-            "assigned_at": now,
-            "operator_name": user.name,
-            "operator_email": email,
-        })
+        self.write(
+            {
+                "assigned_user_id": user.id,
+                "assigned_at": now,
+                "operator_name": user.name,
+                "operator_email": email,
+            }
+        )
 
         if previous_user != user:
-            self.env["wati.assignment.log"].sudo().create({
-                "conversation_id": self.id,
-                "from_user_id": previous_user.id if previous_user else False,
-                "to_user_id": user.id,
-                "moved_by_user_id": actor.id,
-                "moved_at": now,
-            })
+            self.env["wati.assignment.log"].sudo().create(
+                {
+                    "conversation_id": self.id,
+                    "from_user_id": previous_user.id if previous_user else False,
+                    "to_user_id": user.id,
+                    "moved_by_user_id": actor.id,
+                    "moved_at": now,
+                }
+            )
         return True
 
     def send_session_message(self, text):
@@ -122,7 +115,7 @@ class WatiConversation(models.Model):
             self.assign_to_odoo_user(current_user)
         elif self.assigned_user_id != current_user:
             raise UserError(_("هذه المحادثة مستلمة بواسطة %s. يجب نقلها إليك أولًا قبل الإرسال.") % self.assigned_user_id.name)
-        return super().send_session_message(text)
+        return self._wati_send_text_via_client(text)
 
 
 class WatiAssignmentLog(models.Model):
