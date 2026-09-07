@@ -87,3 +87,19 @@ class WatiClient:
                 "whatsappNumber": whatsapp_number,
             },
         )
+
+    def send_interactive_buttons(self, whatsapp_number, payload):
+        return self.post(
+            "api/v1/sendInteractiveButtonsMessage",
+            params={"whatsappNumber": whatsapp_number},
+            json=payload,
+            timeout=30,
+        )
+
+    def send_interactive_list(self, whatsapp_number, payload):
+        return self.post(
+            "api/v1/sendInteractiveListMessage",
+            params={"whatsappNumber": whatsapp_number},
+            json=payload,
+            timeout=30,
+        )
