@@ -1,10 +1,11 @@
 import re
 
-import requests
-
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
+from ..services.client import WatiClient
+from ..services.config import WatiConfig
+from ..services.exceptions import WatiRequestError
 from .wati_automation_improvements import (
     _find_template_list,
     _template_body,
@@ -24,17 +25,14 @@ _OPERATOR_LABELS = {
     "is_set": "له قيمة",
     "is_not_set": "بدون قيمة",
 }
-
 _GENERAL_TEMPLATE_NAMES = {"whatsapp", "wati", "unknown", "none", "null"}
 
 
 class WatiAutomationRuleUX(models.Model):
     _inherit = "wati.automation.rule"
 
-    # New rules should be reviewed before activation. Existing rules keep their DB value.
     active = fields.Boolean(default=False)
     template_name = fields.Char(string="WATI Template", required=False)
-
     setup_step = fields.Selection(
         [
             ("trigger", "1. متى؟"),
@@ -48,13 +46,7 @@ class WatiAutomationRuleUX(models.Model):
         copy=False,
     )
     preset_key = fields.Selection(
-        [
-            ("crm_qualified", "CRM · عند التأهيل Qualified"),
-            ("crm_won", "CRM · عند الفوز Won"),
-            ("sale_confirmed", "المبيعات · عند تأكيد الطلب"),
-            ("invoice_posted", "الفواتير · عند الترحيل"),
-            ("invoice_paid", "الفواتير · عند السداد"),
-        ],
+        selection="_wati_preset_selection",
         string="ابدأ من إعداد جاهز",
         copy=False,
     )
@@ -70,6 +62,21 @@ class WatiAutomationRuleUX(models.Model):
     preview_record_name = fields.Char(string="سجل المعاينة", readonly=True, copy=False)
     test_phone = fields.Char(string="رقم اختبار", copy=False, help="لن يتم استخدام رقم العميل عند الإرسال التجريبي.")
 
+    @api.model
+    def _wati_preset_definitions(self):
+        """Extension hook for optional business-app addons.
+
+        The core connector intentionally knows nothing about CRM, Sales,
+        Accounting, Project, Helpdesk, or Field Service. Integration addons
+        extend this mapping when they are installed.
+        """
+        return {}
+
+    @api.model
+    def _wati_preset_selection(self):
+        definitions = self._wati_preset_definitions()
+        return [(key, value["label"]) for key, value in definitions.items()]
+
     @api.depends(
         "name", "model_id", "trigger_field_id", "condition_operator", "target_value",
         "recipient_field_id", "recipient_path", "template_name", "once_per_record",
@@ -77,11 +84,7 @@ class WatiAutomationRuleUX(models.Model):
         "parameter_ids.source_path", "parameter_ids.static_value",
     )
     def _compute_ux_state(self):
-        params = self.env["ir.config_parameter"].sudo()
-        api_ready = bool(
-            (params.get_param("wati_connector.api_endpoint") or "").strip()
-            and (params.get_param("wati_connector.api_token") or "").strip()
-        )
+        api_ready = WatiConfig(self.env).is_api_configured
         for rule in self:
             model_label = rule.model_id.name or "التطبيق"
             field_label = rule.trigger_field_id.field_description or rule.trigger_field_id.name or "الحقل"
@@ -103,9 +106,7 @@ class WatiAutomationRuleUX(models.Model):
 
             template = rule.template_name or "قالب لم يُحدد بعد"
             once = " · مرة واحدة لكل سجل" if rule.once_per_record else ""
-            rule.human_summary = (
-                f"عندما {condition_text} في {model_label} ← أرسل «{template}» إلى {recipient}{once}"
-            )
+            rule.human_summary = f"عندما {condition_text} في {model_label} ← أرسل «{template}» إلى {recipient}{once}"
 
             errors = []
             warnings = []
@@ -143,26 +144,20 @@ class WatiAutomationRuleUX(models.Model):
             if not rule.recipient_field_id and not rule.recipient_path:
                 warnings.append("سيبحث النظام تلقائيًا عن mobile / phone / رقم العميل المرتبط.")
 
-            if errors:
-                rule.readiness_state = "incomplete"
-            elif warnings:
-                rule.readiness_state = "warning"
-            else:
-                rule.readiness_state = "ready"
-
-            checklist = []
-            checklist.append("✅ التطبيق والحدث محددان" if rule.model_id and rule.trigger_field_id else "❌ حدد التطبيق والحقل المراقَب")
-            checklist.append("✅ الشرط مكتمل" if (rule.condition_operator in ("is_set", "is_not_set") or target) else "❌ حدد القيمة المطلوبة")
-            checklist.append("✅ قالب WATI محدد" if rule.template_name else "❌ اختر قالب WATI")
-            checklist.append("✅ اتصال WATI جاهز" if api_ready else "❌ إعدادات WATI API غير مكتملة")
+            rule.readiness_state = "incomplete" if errors else ("warning" if warnings else "ready")
+            checklist = [
+                "✅ التطبيق والحدث محددان" if rule.model_id and rule.trigger_field_id else "❌ حدد التطبيق والحقل المراقَب",
+                "✅ الشرط مكتمل" if (rule.condition_operator in ("is_set", "is_not_set") or target) else "❌ حدد القيمة المطلوبة",
+                "✅ قالب WATI محدد" if rule.template_name else "❌ اختر قالب WATI",
+                "✅ اتصال WATI جاهز" if api_ready else "❌ إعدادات WATI API غير مكتملة",
+            ]
             if unmapped:
                 checklist.append("❌ اربط: " + ", ".join(unmapped[:6]))
             elif rule.parameter_ids:
                 checklist.append(f"✅ {len(rule.parameter_ids)} متغيرات مربوطة")
             elif rule.template_name:
                 checklist.append("⚠️ لا توجد متغيرات محملة للقالب")
-            if warnings:
-                checklist.extend("⚠️ " + item for item in warnings)
+            checklist.extend("⚠️ " + item for item in warnings)
             rule.readiness_message = "\n".join(checklist)
 
     def _validate_step(self, step=None):
@@ -180,9 +175,8 @@ class WatiAutomationRuleUX(models.Model):
                 missing.append("القيمة المطلوبة")
             if missing:
                 raise UserError(_("أكمل الخطوة الأولى: %s", "، ".join(missing)))
-        elif step == "message":
-            if not self.template_name:
-                raise UserError(_("اختر قالب WATI أولًا."))
+        elif step == "message" and not self.template_name:
+            raise UserError(_("اختر قالب WATI أولًا."))
 
     def _validate_activation(self):
         self.ensure_one()
@@ -194,17 +188,17 @@ class WatiAutomationRuleUX(models.Model):
         self.ensure_one()
         self._validate_step(self.setup_step)
         order = ["trigger", "recipient", "message", "review"]
-        idx = order.index(self.setup_step)
-        if idx < len(order) - 1:
-            self.setup_step = order[idx + 1]
+        index = order.index(self.setup_step)
+        if index < len(order) - 1:
+            self.setup_step = order[index + 1]
         return {"type": "ir.actions.client", "tag": "soft_reload"}
 
     def action_previous_step(self):
         self.ensure_one()
         order = ["trigger", "recipient", "message", "review"]
-        idx = order.index(self.setup_step)
-        if idx > 0:
-            self.setup_step = order[idx - 1]
+        index = order.index(self.setup_step)
+        if index > 0:
+            self.setup_step = order[index - 1]
         return {"type": "ir.actions.client", "tag": "soft_reload"}
 
     def action_activate_rule(self):
@@ -259,44 +253,47 @@ class WatiAutomationRuleUX(models.Model):
 
     def action_apply_preset(self):
         self.ensure_one()
-        presets = {
-            "crm_qualified": ("crm.lead", "stage_id", "Qualified", ("mobile", "phone"), "CRM · إرسال عند Qualified"),
-            "crm_won": ("crm.lead", "stage_id", "Won", ("mobile", "phone"), "CRM · إرسال عند Won"),
-            "sale_confirmed": ("sale.order", "state", "sale", (), "المبيعات · إرسال عند تأكيد الطلب"),
-            "invoice_posted": ("account.move", "state", "posted", (), "الفواتير · إرسال عند الترحيل"),
-            "invoice_paid": ("account.move", "payment_state", "paid", (), "الفواتير · إرسال عند السداد"),
-        }
-        preset = presets.get(self.preset_key)
-        if not preset:
+        definition = self._wati_preset_definitions().get(self.preset_key)
+        if not definition:
             raise UserError(_("اختر إعدادًا جاهزًا أولًا."))
-        model_name, field_name, target, recipient_fields, default_name = preset
+
+        model_name = definition["model"]
+        field_name = definition["field"]
+        target = definition["target"]
+        recipient_fields = tuple(definition.get("recipient_fields", ()))
+        recipient_path = definition.get("recipient_path") or False
+        default_name = definition["name"]
+
         model = self.env["ir.model"].sudo().search([("model", "=", model_name)], limit=1)
         if not model:
             raise UserError(_("التطبيق المطلوب غير مثبت حاليًا في Odoo: %s", model_name))
-        trigger = self.env["ir.model.fields"].sudo().search([
-            ("model_id", "=", model.id), ("name", "=", field_name)
-        ], limit=1)
+        trigger = self.env["ir.model.fields"].sudo().search(
+            [("model_id", "=", model.id), ("name", "=", field_name)],
+            limit=1,
+        )
         if not trigger:
             raise UserError(_("لم أجد الحقل %s في التطبيق المختار.", field_name))
+
         recipient = False
-        for rec_name in recipient_fields:
-            recipient = self.env["ir.model.fields"].sudo().search([
-                ("model_id", "=", model.id), ("name", "=", rec_name)
-            ], limit=1)
+        for field in recipient_fields:
+            recipient = self.env["ir.model.fields"].sudo().search(
+                [("model_id", "=", model.id), ("name", "=", field)],
+                limit=1,
+            )
             if recipient:
                 break
-        vals = {
+
+        self.write({
             "name": self.name or default_name,
             "model_id": model.id,
             "trigger_field_id": trigger.id,
-            "condition_operator": "eq",
+            "condition_operator": definition.get("operator", "eq"),
             "target_value": target,
             "recipient_field_id": recipient.id if recipient else False,
-            "recipient_path": False if recipient else "partner_id.mobile",
-            "once_per_record": True,
+            "recipient_path": False if recipient else recipient_path,
+            "once_per_record": definition.get("once_per_record", True),
             "setup_step": "trigger",
-        }
-        self.write(vals)
+        })
         return {
             "type": "ir.actions.client",
             "tag": "display_notification",
@@ -339,10 +336,7 @@ class WatiAutomationRuleUX(models.Model):
             raise UserError(_("هذا الحقل لا يحتوي قائمة قيم جاهزة؛ اكتب القيمة المطلوبة يدويًا."))
         Choice = self.env["wati.automation.value.choice"]
         Choice.search([("rule_id", "=", self.id)]).unlink()
-        Choice.create([
-            {"rule_id": self.id, "value": value, "label": label}
-            for value, label in choices
-        ])
+        Choice.create([{"rule_id": self.id, "value": value, "label": label} for value, label in choices])
         return {
             "type": "ir.actions.act_window",
             "name": _("اختر القيمة المطلوبة"),
@@ -355,25 +349,10 @@ class WatiAutomationRuleUX(models.Model):
 
     def _fetch_wati_templates(self):
         self.ensure_one()
-        endpoint, token, _channel = self._wati_config()
-        if not endpoint or not token:
-            raise UserError(_("إعدادات WATI API غير مكتملة."))
         try:
-            response = requests.get(
-                f"{endpoint}/api/v1/getMessageTemplates",
-                headers={
-                    "Authorization": f"Bearer {token}",
-                    "Accept": "application/json",
-                    "Content-Type": "application/json",
-                },
-                params={"pageSize": 200, "pageNumber": 1},
-                timeout=25,
-            )
-        except requests.RequestException as exc:
-            raise UserError(_("تعذر الاتصال بـ WATI: %s", exc)) from exc
-        if not response.ok:
-            detail = (response.text or response.reason or "").strip()[:700]
-            raise UserError(_("WATI رفض جلب القوالب (%(status)s): %(detail)s", status=response.status_code, detail=detail))
+            response = WatiClient(self.env).get_message_templates(page_size=200, page_number=1)
+        except WatiRequestError as exc:
+            raise UserError(_("تعذر جلب قوالب WATI: %s", exc)) from exc
         try:
             return _find_template_list(response.json())
         except ValueError as exc:
@@ -386,22 +365,22 @@ class WatiAutomationRuleUX(models.Model):
             raise UserError(_("لم أجد قوالب WhatsApp في حساب WATI."))
         Choice = self.env["wati.automation.template.choice"]
         Choice.search([("rule_id", "=", self.id)]).unlink()
-        vals_list = []
+        values = []
         for item in templates:
             name = _template_name(item)
             if not name or name.casefold() in _GENERAL_TEMPLATE_NAMES:
                 continue
             status = str(item.get("status") or item.get("approvalStatus") or item.get("templateStatus") or "") if isinstance(item, dict) else ""
             category = str(item.get("category") or item.get("type") or "") if isinstance(item, dict) else ""
-            vals_list.append({
+            values.append({
                 "rule_id": self.id,
                 "name": name,
                 "status": status,
                 "category": category,
                 "body": _template_body(item),
             })
-        if vals_list:
-            Choice.create(vals_list)
+        if values:
+            Choice.create(values)
         return {
             "type": "ir.actions.act_window",
             "name": _("اختر قالب WATI"),
@@ -458,7 +437,6 @@ class WatiAutomationRuleUX(models.Model):
 
     def action_fetch_template_params(self):
         result = super().action_fetch_template_params()
-        # Keep a body copy for previews and map high-confidence variables automatically.
         try:
             wanted = (self.template_name or "").strip().casefold()
             template = next(
@@ -553,9 +531,15 @@ class WatiAutomationRuleUX(models.Model):
         }
 
     def _log_values(self, record, status, phone="", error_message="", response_excerpt=""):
-        vals = super()._log_values(record, status, phone=phone, error_message=error_message, response_excerpt=response_excerpt)
-        vals["is_test"] = bool(self.env.context.get("wati_test"))
-        return vals
+        values = super()._log_values(
+            record,
+            status,
+            phone=phone,
+            error_message=error_message,
+            response_excerpt=response_excerpt,
+        )
+        values["is_test"] = bool(self.env.context.get("wati_test"))
+        return values
 
     @api.model
     def _upgrade_automation_ux(self):
@@ -630,7 +614,6 @@ class WatiAutomationTemplateChoice(models.TransientModel):
         self.ensure_one()
         rule = self.rule_id
         rule.write({"template_name": self.name, "template_body": self.body or False})
-        # Fetch exact params from WATI and auto-map what can be inferred safely.
         rule.action_fetch_template_params()
         return {
             "type": "ir.actions.act_window",
