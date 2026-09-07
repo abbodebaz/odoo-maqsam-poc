@@ -1,12 +1,14 @@
 import hashlib
 import hmac
-import re
 import threading
 import time
 
 from odoo import fields, http
 from odoo.exceptions import UserError
 from odoo.http import request
+
+from ..services.config import WatiConfig
+from ..utils.phone import phone_identity
 
 
 _SEND_GUARD = {}
@@ -44,34 +46,6 @@ def _release_send_guard(key):
         _SEND_GUARD.pop(key, None)
 
 
-def _phone_identity(value):
-    digits = re.sub(r"\D+", "", str(value or ""))
-    if digits.startswith("00"):
-        digits = digits[2:]
-    if not digits:
-        return {"digits": "", "e164": "", "local": "", "suffix": ""}
-
-    if digits.startswith("966"):
-        international = digits
-        local = "0" + digits[3:] if len(digits) > 3 else digits
-    elif digits.startswith("0") and len(digits) >= 9:
-        local = digits
-        international = "966" + digits[1:]
-    elif len(digits) == 9 and digits.startswith("5"):
-        local = "0" + digits
-        international = "966" + digits
-    else:
-        local = digits
-        international = digits
-
-    return {
-        "digits": digits,
-        "e164": f"+{international}" if international else "",
-        "local": local,
-        "suffix": international[-9:] if international else digits[-9:],
-    }
-
-
 def _partner_phone_fields(partner_model):
     return [field_name for field_name in ("mobile", "phone") if field_name in partner_model._fields]
 
@@ -87,7 +61,7 @@ def _partner_phone_value(partner):
 
 
 def _find_partner_by_wa_id(wa_id):
-    identity = _phone_identity(wa_id)
+    identity = phone_identity(wa_id)
     cache_key = identity["digits"]
     if not cache_key:
         return request.env["res.partner"].browse()
@@ -121,7 +95,7 @@ def _find_partner_by_wa_id(wa_id):
         candidates = partner_model.search(domain, order="id asc", limit=100)
         for candidate in candidates:
             for field_name in phone_fields:
-                candidate_identity = _phone_identity(candidate[field_name])
+                candidate_identity = phone_identity(candidate[field_name])
                 if candidate_identity["suffix"] and candidate_identity["suffix"] == identity["suffix"]:
                     partner = candidate
                     break
@@ -155,7 +129,7 @@ class WatiWebhookController(http.Controller):
         save_session=False,
     )
     def webhook(self, token, **kwargs):
-        configured = request.env["ir.config_parameter"].sudo().get_param("wati_connector.webhook_token") or ""
+        configured = WatiConfig(request.env).webhook_token
         if not configured or not hmac.compare_digest(str(token), str(configured)):
             return request.make_json_response({"ok": False, "message": "unauthorized"}, status=401)
 
