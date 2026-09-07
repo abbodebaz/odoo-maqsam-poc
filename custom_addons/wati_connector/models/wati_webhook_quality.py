@@ -102,6 +102,49 @@ class WatiWebhookEvent(models.Model):
             self.env.cr.execute("SELECT pg_advisory_xact_lock(%s)", [lock_key])
 
     @api.model
+    def _wati_bind_conversation_uid_to_existing_wa(self, payload):
+        """Attach WATI's later conversationId to the first contact stub.
+
+        WATI commonly emits ``newContactMessageReceived`` first with a waId but no
+        conversationId, followed milliseconds later by the real message carrying both
+        identifiers. The first callback creates the customer chat; the second must
+        enrich that same row rather than open another conversation.
+        """
+        if not isinstance(payload, dict):
+            return self.env["wati.conversation"].browse()
+
+        wa_id = _clean(payload.get("waId"))
+        conversation_uid = _clean(payload.get("conversationId"))
+        if not wa_id or not conversation_uid:
+            return self.env["wati.conversation"].browse()
+
+        conversation_model = (
+            self.env["wati.conversation"]
+            .sudo()
+            .with_context(active_test=False)
+        )
+
+        exact = conversation_model.search(
+            [("conversation_uid", "=", conversation_uid)],
+            order="last_message_at desc, id desc",
+            limit=1,
+        )
+        if exact:
+            return exact
+
+        stub = conversation_model.search(
+            [
+                ("wa_id", "=", wa_id),
+                ("conversation_uid", "in", [False, ""]),
+            ],
+            order="last_message_at desc, id desc",
+            limit=1,
+        )
+        if stub:
+            stub.write({"conversation_uid": conversation_uid})
+        return stub
+
+    @api.model
     def _wati_find_existing_message(self, payload):
         message_model = self.env["wati.message"].sudo()
         whatsapp_message_id = _clean(payload.get("whatsappMessageId"))
@@ -183,6 +226,7 @@ class WatiWebhookEvent(models.Model):
     @api.model
     def ingest(self, payload):
         self._wati_lock_ingest_identity(payload)
+        self._wati_bind_conversation_uid_to_existing_wa(payload)
         if self._wati_is_orphan_status_callback(payload):
             return self._wati_store_audit_event_only(payload)
         return super().ingest(payload)

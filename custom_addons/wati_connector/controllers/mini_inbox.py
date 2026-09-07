@@ -39,6 +39,35 @@ def _conversation_title(conversation):
     )
 
 
+def _conversation_identity(conversation):
+    digits = "".join(
+        character
+        for character in str(conversation.wa_id or "")
+        if character.isdigit()
+    )
+    return digits or f"conversation:{conversation.id}"
+
+
+def _dedupe_conversations(conversations, limit=None):
+    """Keep only the newest visible row for each WhatsApp recipient.
+
+    WATI can briefly emit a contact stub before the real conversation callback. The
+    ingestion layer now binds those callbacks to one record, but this defensive view
+    guard also prevents legacy/race duplicates from appearing to service agents.
+    """
+    seen = set()
+    ids = []
+    for conversation in conversations:
+        identity = _conversation_identity(conversation)
+        if identity in seen:
+            continue
+        seen.add(identity)
+        ids.append(conversation.id)
+        if limit and len(ids) >= limit:
+            break
+    return request.env["wati.conversation"].browse(ids)
+
+
 def _conversation_row(conversation, current_user):
     assigned = conversation.assigned_user_id
     return {
@@ -107,9 +136,10 @@ class WatiMiniInboxController(http.Controller):
         if not _mini_enabled():
             return {"enabled": False}
 
-        conversations = request.env["wati.conversation"].search(
-            [], order="last_message_at desc, id desc", limit=30
+        candidates = request.env["wati.conversation"].search(
+            [], order="last_message_at desc, id desc", limit=90
         )
+        conversations = _dedupe_conversations(candidates, limit=30)
         latest_inbound = request.env["wati.message"].search(
             [("direction", "=", "inbound")], order="id desc", limit=1
         )

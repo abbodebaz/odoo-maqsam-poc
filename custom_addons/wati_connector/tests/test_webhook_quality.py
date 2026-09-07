@@ -64,6 +64,52 @@ class TestWatiWebhookQuality(TransactionCase):
         message.invalidate_recordset(["status"])
         self.assertEqual(message.status, "Read")
 
+    def test_contact_stub_is_enriched_instead_of_opening_second_chat(self):
+        wa_id = "966500000777"
+        event_model = self.env["wati.webhook.event"]
+        conversation_model = self.env["wati.conversation"].with_context(active_test=False)
+
+        event_model.ingest(
+            {
+                "eventType": "newContactMessageReceived",
+                "id": "contact-stub-1",
+                "waId": wa_id,
+                "senderName": "Customer",
+                "text": "",
+                "type": "text",
+            }
+        )
+
+        first = conversation_model.search([("wa_id", "=", wa_id)])
+        self.assertEqual(len(first), 1)
+        self.assertFalse(first.conversation_uid)
+
+        event_model.ingest(
+            {
+                "eventType": "message",
+                "id": "message-event-1",
+                "whatsappMessageId": "wamid.followup-1",
+                "waId": wa_id,
+                "senderName": "Customer",
+                "conversationId": "conversation-followup-1",
+                "statusString": "SENT",
+                "text": "مرحبا",
+                "type": "text",
+            }
+        )
+
+        conversations = conversation_model.search([("wa_id", "=", wa_id)])
+        self.assertEqual(len(conversations), 1)
+        self.assertEqual(conversations.conversation_uid, "conversation-followup-1")
+        self.assertTrue(
+            self.env["wati.message"].search_count(
+                [
+                    ("conversation_id", "=", conversations.id),
+                    ("whatsapp_message_id", "=", "wamid.followup-1"),
+                ]
+            )
+        )
+
     def test_placeholder_conversation_is_archived_from_normal_search(self):
         placeholder = self.env["wati.conversation"].with_context(active_test=False).create(
             {
