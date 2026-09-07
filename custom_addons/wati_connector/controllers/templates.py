@@ -1,6 +1,5 @@
 import json
 import re
-import threading
 import time
 
 from odoo import http
@@ -8,34 +7,7 @@ from odoo.http import request
 
 from ..services.client import WatiClient
 from ..services.exceptions import WatiConfigurationError, WatiRequestError
-
-
-_TEMPLATE_SEND_GUARD = {}
-_TEMPLATE_SEND_GUARD_LOCK = threading.Lock()
-_TEMPLATE_SEND_GUARD_TTL = 180.0
-
-
-def _reserve_guard(user_id, request_id):
-    request_id = (request_id or "").strip()
-    if not request_id:
-        return "", True
-    now = time.monotonic()
-    key = f"{user_id}:{request_id}"
-    with _TEMPLATE_SEND_GUARD_LOCK:
-        expired = [item for item, created in _TEMPLATE_SEND_GUARD.items() if now - created > _TEMPLATE_SEND_GUARD_TTL]
-        for item in expired:
-            _TEMPLATE_SEND_GUARD.pop(item, None)
-        if key in _TEMPLATE_SEND_GUARD:
-            return key, False
-        _TEMPLATE_SEND_GUARD[key] = now
-    return key, True
-
-
-def _release_guard(key):
-    if not key:
-        return
-    with _TEMPLATE_SEND_GUARD_LOCK:
-        _TEMPLATE_SEND_GUARD.pop(key, None)
+from ..services.idempotency import WatiIdempotency
 
 
 def _find_template_list(payload):
@@ -43,10 +15,7 @@ def _find_template_list(payload):
         return payload
     if not isinstance(payload, dict):
         return []
-    preferred = (
-        "messageTemplates", "templates", "items", "results", "result", "data", "records"
-    )
-    for key in preferred:
+    for key in ("messageTemplates", "templates", "items", "results", "result", "data", "records"):
         value = payload.get(key)
         if isinstance(value, list):
             return value
@@ -80,14 +49,10 @@ def _body_text(item):
         text = _first(body, ("text", "body", "content"))
         if text:
             return text
-
     components = item.get("components") if isinstance(item, dict) else None
     if isinstance(components, list):
         for component in components:
-            if not isinstance(component, dict):
-                continue
-            component_type = str(component.get("type") or "").upper()
-            if component_type == "BODY":
+            if isinstance(component, dict) and str(component.get("type") or "").upper() == "BODY":
                 text = _first(component, ("text", "body", "content"))
                 if text:
                     return text
@@ -107,7 +72,6 @@ def _params(item, body):
                 name = ""
             if name and name not in names:
                 names.append(name)
-
     for token in re.findall(r"{{\s*([^{}]+?)\s*}}", body or ""):
         token = token.strip()
         if token and token not in names:
@@ -122,18 +86,14 @@ def _normalize_template(item):
     if not name:
         return None
     body = _body_text(item)
-    status = _first(item, ("status", "approvalStatus", "templateStatus"))
-    language = _first(item, ("language", "languageCode", "locale"))
-    category = _first(item, ("category", "templateCategory"))
-    channel = _first(item, ("channelPhoneNumber", "channel_number", "channelNumber", "phoneNumber"))
     return {
         "name": name,
         "body": body,
-        "status": status,
-        "language": language,
-        "category": category,
+        "status": _first(item, ("status", "approvalStatus", "templateStatus")),
+        "language": _first(item, ("language", "languageCode", "locale")),
+        "category": _first(item, ("category", "templateCategory")),
         "params": _params(item, body),
-        "channel_number": channel,
+        "channel_number": _first(item, ("channelPhoneNumber", "channel_number", "channelNumber", "phoneNumber")),
     }
 
 
@@ -148,20 +108,12 @@ class WatiTemplateController(http.Controller):
         except WatiRequestError as exc:
             detail = (exc.response_text or str(exc) or "").strip()[:600]
             status = exc.status_code or 502
-            return request.make_json_response(
-                {"ok": False, "message": f"WATI رفض جلب القوالب ({status}): {detail}"},
-                status=status,
-            )
+            return request.make_json_response({"ok": False, "message": f"WATI رفض جلب القوالب ({status}): {detail}"}, status=status)
         try:
             payload = response.json()
         except ValueError:
             return request.make_json_response({"ok": False, "message": "WATI أعاد استجابة غير مفهومة عند جلب القوالب."}, status=502)
-
-        rows = []
-        for item in _find_template_list(payload):
-            row = _normalize_template(item)
-            if row:
-                rows.append(row)
+        rows = [row for row in (_normalize_template(item) for item in _find_template_list(payload)) if row]
         rows.sort(key=lambda row: (row["name"].lower(), row["language"].lower()))
         return request.make_json_response({"ok": True, "templates": rows}, status=200)
 
@@ -177,9 +129,9 @@ class WatiTemplateController(http.Controller):
 
         current_user = request.env.user
         if not conversation.assigned_user_id:
-            return request.make_json_response({"ok": False, "message": "استلم المحادثة أولًا قبل إرسال قالب."}, status=400)
-        if conversation.assigned_user_id != current_user and not current_user.has_group("base.group_system"):
-            return request.make_json_response({"ok": False, "message": f"المحادثة عند {conversation.assigned_user_id.name}. استخدم أخذ المحادثة أولًا."}, status=403)
+            return request.make_json_response({"ok": False, "message": "استلم المحادثة أولًا قبل إرسال قالب."}, status=409)
+        if conversation.assigned_user_id != current_user:
+            return request.make_json_response({"ok": False, "message": f"المحادثة عند {conversation.assigned_user_id.name}. انقل المحادثة إليك أولًا."}, status=409)
 
         template_name = (template_name or "").strip()
         if not template_name:
@@ -201,21 +153,17 @@ class WatiTemplateController(http.Controller):
                 if name:
                     custom_params.append({"name": name, "value": value})
 
-        guard_key, reserved = _reserve_guard(current_user.id, request_id)
-        if not reserved:
+        idem = WatiIdempotency(request.env)
+        scope = f"outbound:template:user:{current_user.id}"
+        key = (request_id or "").strip() or idem.digest(conversation.id, template_name, params_json or "", channel_number or "")
+        if not idem.acquire(scope, key, ttl_seconds=180):
             return request.make_json_response({"ok": True, "duplicate_suppressed": True, "message": "تم تجاهل إعادة إرسال مكررة."}, status=200)
 
         client = WatiClient(request.env)
-        broadcast_name = f"odoo_{template_name}_{int(time.time())}"
         body = {
             "template_name": template_name,
-            "broadcast_name": broadcast_name,
-            "receivers": [
-                {
-                    "whatsappNumber": conversation.wa_id,
-                    "customParams": custom_params,
-                }
-            ],
+            "broadcast_name": f"odoo_{template_name}_{int(time.time())}",
+            "receivers": [{"whatsappNumber": conversation.wa_id, "customParams": custom_params}],
         }
         effective_channel = (channel_number or client.config.channel_number or "").strip()
         if effective_channel:
@@ -224,15 +172,12 @@ class WatiTemplateController(http.Controller):
         try:
             client.send_template_messages(body)
         except WatiConfigurationError:
-            _release_guard(guard_key)
+            idem.release(scope, key)
             return request.make_json_response({"ok": False, "message": "إعدادات WATI API غير مكتملة."}, status=503)
         except WatiRequestError as exc:
-            _release_guard(guard_key)
+            idem.release(scope, key)
             detail = (exc.response_text or str(exc) or "").strip()[:1000]
             status = exc.status_code or 502
-            return request.make_json_response(
-                {"ok": False, "message": f"WATI رفض إرسال القالب ({status}): {detail}"},
-                status=status,
-            )
+            return request.make_json_response({"ok": False, "message": f"WATI رفض إرسال القالب ({status}): {detail}"}, status=status)
 
         return request.make_json_response({"ok": True, "message": "تم إرسال القالب إلى WATI."}, status=200)
