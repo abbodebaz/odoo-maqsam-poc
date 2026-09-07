@@ -1,28 +1,25 @@
 (() => {
     "use strict";
 
-    const chatActions = document.querySelector(".wati-chat-actions");
     const chatNumber = document.getElementById("chatNumber");
-    if (!chatActions || !chatNumber) return;
-
-    const partnerState = document.createElement("span");
-    partnerState.className = "wati-operator";
-
-    const partnerLink = document.createElement("a");
-    partnerLink.className = "wati-odoo-link is-hidden";
-    partnerLink.textContent = "فتح بطاقة العميل";
-    partnerLink.target = "_blank";
-    partnerLink.rel = "noopener noreferrer";
-
-    chatActions.prepend(partnerLink, partnerState);
+    const partnerStatus = document.getElementById("drawerPartnerStatus");
+    const partnerLink = document.getElementById("drawerPartnerLink");
+    if (!chatNumber || !partnerStatus || !partnerLink) return;
 
     let lastConversationId = 0;
     let lastFetchAt = 0;
 
+    function renderUnlinked() {
+        partnerStatus.textContent = "غير مربوط بعميل Odoo";
+        partnerLink.removeAttribute("href");
+        partnerLink.classList.add("is-hidden");
+    }
+
     async function refreshPartnerInfo(force = false) {
         const conversationId = Number(localStorage.getItem("watiInboxSelected") || 0);
         if (!conversationId) {
-            partnerState.textContent = "";
+            partnerStatus.textContent = "لم يتم اختيار محادثة";
+            partnerLink.removeAttribute("href");
             partnerLink.classList.add("is-hidden");
             return;
         }
@@ -48,13 +45,13 @@
             if (!conversation) return;
 
             if (conversation.partner_id && conversation.partner_url) {
-                partnerState.textContent = "عميل Odoo";
+                partnerStatus.textContent = conversation.partner_name
+                    ? `مربوط بـ ${conversation.partner_name}`
+                    : "مربوط بعميل Odoo";
                 partnerLink.href = conversation.partner_url;
                 partnerLink.classList.remove("is-hidden");
             } else {
-                partnerState.textContent = "غير مربوط بعميل Odoo";
-                partnerLink.removeAttribute("href");
-                partnerLink.classList.add("is-hidden");
+                renderUnlinked();
             }
 
             if (
@@ -71,6 +68,7 @@
 
     refreshPartnerInfo(true);
     window.setInterval(() => refreshPartnerInfo(false), 1000);
+    document.addEventListener("click", () => window.setTimeout(() => refreshPartnerInfo(false), 60));
     document.addEventListener("visibilitychange", () => {
         if (!document.hidden) refreshPartnerInfo(true);
     });
