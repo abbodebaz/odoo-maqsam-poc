@@ -2,7 +2,7 @@ import requests
 from urllib.parse import quote
 
 from .config import WatiConfig
-from .exceptions import WatiRequestError
+from .exceptions import WatiConfigurationError, WatiRequestError
 
 
 class WatiClient:
@@ -15,10 +15,30 @@ class WatiClient:
 
     DEFAULT_TIMEOUT = 20
 
-    def __init__(self, env, *, timeout=None):
+    def __init__(self, env, *, timeout=None, endpoint=None, token=None):
         self.env = env
         self.config = WatiConfig(env)
         self.timeout = timeout or self.DEFAULT_TIMEOUT
+        self._use_overrides = endpoint is not None or token is not None
+        self._endpoint_override = WatiConfig.normalize_endpoint(endpoint or "") if self._use_overrides else ""
+        self._token_override = WatiConfig.normalize_token(token or "") if self._use_overrides else ""
+
+    def _credentials(self):
+        if self._use_overrides:
+            if not self._endpoint_override or not self._token_override:
+                raise WatiConfigurationError("WATI API configuration is incomplete")
+            return self._endpoint_override, self._token_override
+        return self.config.require_api()
+
+    def _headers(self, *, json_content=False):
+        _endpoint, token = self._credentials()
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/json",
+        }
+        if json_content:
+            headers["Content-Type"] = "application/json"
+        return headers
 
     def _request(
         self,
@@ -32,9 +52,9 @@ class WatiClient:
         timeout=None,
         allow_redirects=True,
     ):
-        endpoint, _token = self.config.require_api()
+        endpoint, _token = self._credentials()
         url = f"{endpoint}/{str(path or '').lstrip('/')}"
-        headers = self.config.authorization_headers(json_content=json is not None and files is None)
+        headers = self._headers(json_content=json is not None and files is None)
         try:
             response = requests.request(
                 method=method,
@@ -64,6 +84,19 @@ class WatiClient:
 
     def post(self, path, **kwargs):
         return self._request("POST", path, **kwargs)
+
+    def probe_contacts_v1(self):
+        return self.get(
+            "api/v1/getContacts",
+            params={"pageSize": 1, "pageNumber": 1},
+            timeout=20,
+        )
+
+    def probe_contacts_v3(self):
+        return self.get(
+            "api/ext/v3/contacts/count",
+            timeout=20,
+        )
 
     def send_session_message(self, whatsapp_number, text, *, local_message_id, channel_number=None):
         target = quote(str(whatsapp_number or "").strip(), safe="")
