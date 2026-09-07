@@ -1,7 +1,7 @@
-import re
-
 from odoo import _, fields, models
 from odoo.exceptions import UserError
+
+from ..utils.phone import equivalent_variants, normalize_whatsapp_number
 
 
 class WatiConversationSale(models.Model):
@@ -79,21 +79,6 @@ class SaleOrderWati(models.Model):
         compute="_compute_wati_summary",
     )
 
-    @staticmethod
-    def _wati_normalize_phone(value):
-        digits = re.sub(r"\D+", "", str(value or ""))
-        if digits.startswith("00"):
-            digits = digits[2:]
-        if not digits:
-            return ""
-        if digits.startswith("966"):
-            return digits
-        if len(digits) == 10 and digits.startswith("05"):
-            return "966" + digits[1:]
-        if len(digits) == 9 and digits.startswith("5"):
-            return "966" + digits
-        return digits
-
     def _wati_partner_phones(self):
         self.ensure_one()
         partner = self.partner_id
@@ -101,11 +86,9 @@ class SaleOrderWati(models.Model):
             return []
 
         values = []
-        # Odoo installations can differ on whether `mobile` exists on res.partner.
-        # Read it only when the field is actually present; `phone` is the portable baseline.
         for field_name in ("mobile", "phone"):
             if field_name in partner._fields and partner[field_name]:
-                phone = self._wati_normalize_phone(partner[field_name])
+                phone = normalize_whatsapp_number(partner[field_name])
                 if phone and phone not in values:
                     values.append(phone)
         return values
@@ -135,13 +118,9 @@ class SaleOrderWati(models.Model):
 
         variants = []
         for phone in phones:
-            for variant in (phone, "+" + phone):
+            for variant in equivalent_variants(phone):
                 if variant not in variants:
                     variants.append(variant)
-            if phone.startswith("966") and len(phone) > 3:
-                local = "0" + phone[3:]
-                if local not in variants:
-                    variants.append(local)
 
         return Conversation.search(
             [("wa_id", "in", variants)],
@@ -181,8 +160,6 @@ class SaleOrderWati(models.Model):
         Message = self.env["wati.message"].sudo()
         for order in self:
             conversations = order.wati_conversation_ids
-            # For older orders opened before the explicit relation existed, show the
-            # customer's existing conversation without silently writing during compute.
             if not conversations and order.id:
                 conversations = order._wati_find_customer_conversation()
 
