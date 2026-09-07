@@ -1,4 +1,4 @@
-from odoo import _, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
 from odoo.addons.wati_connector.utils.phone import equivalent_variants, normalize_whatsapp_number
@@ -137,3 +137,30 @@ class AccountMoveWati(models.Model):
         self.ensure_one()
         conversation = self._wati_get_or_create_conversation()
         return {"type": "ir.actions.act_window", "name": _("محادثات WhatsApp"), "res_model": "wati.conversation", "view_mode": "list,form", "domain": [("id", "in", (self.wati_conversation_ids | conversation).ids)], "context": {"create": False}}
+
+
+class WatiAutomationRuleAccountPresets(models.Model):
+    _inherit = "wati.automation.rule"
+
+    @api.model
+    def _wati_preset_definitions(self):
+        definitions = dict(super()._wati_preset_definitions())
+        definitions.update({
+            "invoice_posted": {
+                "label": _("الفواتير · عند الترحيل"),
+                "model": "account.move",
+                "field": "state",
+                "target": "posted",
+                "recipient_path": "partner_id.phone",
+                "name": _("الفواتير · إرسال عند الترحيل"),
+            },
+            "invoice_paid": {
+                "label": _("الفواتير · عند السداد"),
+                "model": "account.move",
+                "field": "payment_state",
+                "target": "paid",
+                "recipient_path": "partner_id.phone",
+                "name": _("الفواتير · إرسال عند السداد"),
+            },
+        })
+        return definitions
