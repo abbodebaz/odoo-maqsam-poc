@@ -42,6 +42,15 @@
                             </div>
                         </setting>
                     </block>
+
+                    <block title="ميزات صندوق الوارد" name="wati_inbox_feature_settings">
+                        <setting string="الأزرار التفاعلية" help="إظهار زر «أزرار» لموظفي خدمة العملاء لإرسال Reply Buttons. عند الإيقاف تبقى الميزة موجودة في النظام لكنها لا تظهر في صندوق الوارد.">
+                            <field name="wati_enable_interactive_buttons"/>
+                        </setting>
+                        <setting string="القوائم التفاعلية" help="إظهار زر «قائمة» لموظفي خدمة العملاء لإرسال Interactive Lists. عند الإيقاف تبقى الميزة موجودة في النظام لكنها لا تظهر في صندوق الوارد.">
+                            <field name="wati_enable_interactive_lists"/>
+                        </setting>
+                    </block>
                 </app>
             </xpath>
         </field>
