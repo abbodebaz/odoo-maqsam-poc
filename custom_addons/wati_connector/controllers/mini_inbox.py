@@ -3,6 +3,7 @@ from odoo.exceptions import UserError
 from odoo.http import request
 
 from ..services.idempotency import WatiIdempotency
+from ..services.media import WatiMediaService
 
 
 def _config_flag(name, default=False):
@@ -64,19 +65,39 @@ def _message_rows(conversation):
     messages = latest.sorted(
         key=lambda message: (message.received_at or fields.Datetime.now(), message.id)
     )
-    return [
-        {
-            "id": message.id,
-            "direction": message.direction or "inbound",
-            "text": message.text or "",
-            "message_type": message.message_type or "text",
-            "status": message.status or "",
-            "received_at": fields.Datetime.to_string(message.received_at)
-            if message.received_at
-            else "",
-        }
-        for message in messages
-    ]
+    rows = []
+    for message in messages:
+        descriptor = WatiMediaService.describe(message)
+        raw_text = message.text or ""
+        display_text = raw_text
+        if (
+            descriptor["has_media"]
+            and descriptor["media_path"]
+            and raw_text.strip() == descriptor["media_path"]
+        ):
+            # WATI can store an outbound media file path in text. That value is
+            # transport metadata, not a caption the operator should see.
+            display_text = ""
+
+        rows.append(
+            {
+                "id": message.id,
+                "direction": message.direction or "inbound",
+                "text": display_text,
+                "message_type": message.message_type or "text",
+                "status": message.status or "",
+                "received_at": fields.Datetime.to_string(message.received_at)
+                if message.received_at
+                else "",
+                "has_media": bool(descriptor["has_media"]),
+                "media_type": descriptor["type"],
+                "file_name": descriptor["file_name"],
+                "media_url": f"/wati/inbox/media/{message.id}"
+                if descriptor["has_media"]
+                else "",
+            }
+        )
+    return rows
 
 
 class WatiMiniInboxController(http.Controller):
@@ -89,13 +110,18 @@ class WatiMiniInboxController(http.Controller):
         conversations = request.env["wati.conversation"].search(
             [], order="last_message_at desc, id desc", limit=30
         )
+        latest_inbound = request.env["wati.message"].search(
+            [("direction", "=", "inbound")], order="id desc", limit=1
+        )
         current_user = request.env.user
         rows = [_conversation_row(conversation, current_user) for conversation in conversations]
         return {
             "enabled": True,
             "unread_total": sum(row["unread_count"] for row in rows),
+            "latest_inbound_id": latest_inbound.id if latest_inbound else 0,
             "conversations": rows,
             "full_inbox_url": "/wati/inbox",
+            "csrf_token": request.csrf_token(),
         }
 
     @http.route("/wati/mini/conversation", type="jsonrpc", auth="user")
