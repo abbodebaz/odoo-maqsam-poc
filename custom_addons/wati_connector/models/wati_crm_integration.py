@@ -1,7 +1,7 @@
-import re
-
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
+
+from ..utils.phone import equivalent_variants, normalize_whatsapp_number
 
 
 class WatiConversationCrm(models.Model):
@@ -53,27 +53,10 @@ class CrmLeadWati(models.Model):
         compute="_compute_wati_summary",
     )
 
-    @staticmethod
-    def _wati_normalize_phone(value):
-        digits = re.sub(r"\D+", "", str(value or ""))
-        if digits.startswith("00"):
-            digits = digits[2:]
-        if not digits:
-            return ""
-        if digits.startswith("966"):
-            return digits
-        if len(digits) == 10 and digits.startswith("05"):
-            return "966" + digits[1:]
-        if len(digits) == 9 and digits.startswith("5"):
-            return "966" + digits
-        return digits
-
     def _wati_phone_values(self):
         self.ensure_one()
         raw_values = []
         if self.partner_id:
-            # Keep this runtime-compatible with Odoo editions/modules where
-            # res.partner may or may not expose a separate mobile field.
             for field_name in ("mobile", "phone"):
                 if field_name in self.partner_id._fields and self.partner_id[field_name]:
                     raw_values.append(self.partner_id[field_name])
@@ -83,7 +66,7 @@ class CrmLeadWati(models.Model):
 
         normalized = []
         for value in raw_values:
-            phone = self._wati_normalize_phone(value)
+            phone = normalize_whatsapp_number(value)
             if phone and phone not in normalized:
                 normalized.append(phone)
         return normalized
@@ -115,13 +98,9 @@ class CrmLeadWati(models.Model):
 
         phone_variants = []
         for phone in phones:
-            for variant in (phone, "+" + phone):
+            for variant in equivalent_variants(phone):
                 if variant not in phone_variants:
                     phone_variants.append(variant)
-            if phone.startswith("966") and len(phone) > 3:
-                local = "0" + phone[3:]
-                if local not in phone_variants:
-                    phone_variants.append(local)
 
         return Conversation.search(
             [
@@ -183,9 +162,6 @@ class CrmLeadWati(models.Model):
             }
         )
 
-    # Only declare fields guaranteed by the Odoo 19 CRM/Contacts models.
-    # Optional fields such as res.partner.mobile are read dynamically above,
-    # but must not appear in @api.depends or they can crash the registry.
     @api.depends("partner_id", "phone", "partner_id.phone")
     def _compute_wati_summary(self):
         Message = self.env["wati.message"].sudo()
