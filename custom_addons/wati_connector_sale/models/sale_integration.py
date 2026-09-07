@@ -1,4 +1,4 @@
-from odoo import _, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
 from odoo.addons.wati_connector.utils.phone import equivalent_variants, normalize_whatsapp_number
@@ -118,3 +118,20 @@ class SaleOrderWati(models.Model):
         self.ensure_one()
         conversation = self._wati_get_or_create_conversation()
         return {"type": "ir.actions.act_window", "name": _("محادثات WhatsApp"), "res_model": "wati.conversation", "view_mode": "list,form", "domain": [("id", "in", (self.wati_conversation_ids | conversation).ids)], "context": {"create": False}}
+
+
+class WatiAutomationRuleSalePresets(models.Model):
+    _inherit = "wati.automation.rule"
+
+    @api.model
+    def _wati_preset_definitions(self):
+        definitions = dict(super()._wati_preset_definitions())
+        definitions["sale_confirmed"] = {
+            "label": _("المبيعات · عند تأكيد الطلب"),
+            "model": "sale.order",
+            "field": "state",
+            "target": "sale",
+            "recipient_path": "partner_id.phone",
+            "name": _("المبيعات · إرسال عند تأكيد الطلب"),
+        }
+        return definitions
