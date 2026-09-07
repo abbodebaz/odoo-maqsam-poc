@@ -24,7 +24,6 @@
         "views/wati_automation_conditions_views.xml",
         "views/wati_automation_builder_views.xml",
         "views/wati_automation_guard_views.xml",
-        "data/wati_automation_demo.xml",
         "data/wati_automation_upgrade.xml"
     ],
     "assets": {
