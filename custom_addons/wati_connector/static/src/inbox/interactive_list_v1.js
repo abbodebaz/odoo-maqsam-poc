@@ -2,21 +2,13 @@
   "use strict";
 
   const app = document.getElementById("watiInboxApp");
-  const actions = document.querySelector(".wati-chat-actions");
   const input = document.getElementById("messageInput");
   const toast = document.getElementById("watiToast");
-  if (!app || !actions || !input) return;
+  if (!app || !input) return;
 
   const csrf = app.dataset.csrf || "";
   let sending = false;
   let toastTimer = null;
-
-  const trigger = document.createElement("button");
-  trigger.type = "button";
-  trigger.className = "wati-list-trigger";
-  trigger.innerHTML = '<span aria-hidden="true">☷</span><span>قائمة</span>';
-  trigger.title = "إرسال قائمة تفاعلية";
-  actions.prepend(trigger);
 
   const overlay = document.createElement("div");
   overlay.className = "wati-list-overlay is-hidden";
@@ -75,8 +67,8 @@
     toast.textContent = message;
     toast.classList.toggle("error", error);
     toast.classList.add("show");
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toast.classList.remove("show"), 3500);
+    window.clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => toast.classList.remove("show"), 3500);
   }
 
   function requestId() {
@@ -104,7 +96,7 @@
       <button type="button" class="wati-list-remove-row" title="حذف الخيار">×</button>`;
     row.querySelector(".row-title").value = title;
     row.querySelector(".row-description").value = description;
-    row.querySelectorAll("input").forEach((el) => el.addEventListener("input", preview));
+    row.querySelectorAll("input").forEach((element) => element.addEventListener("input", preview));
     row.querySelector(".wati-list-remove-row").addEventListener("click", () => {
       row.remove();
       updateCounter();
@@ -187,9 +179,9 @@
         title.textContent = row.title;
         item.appendChild(title);
         if (row.description) {
-          const desc = document.createElement("small");
-          desc.textContent = row.description;
-          item.appendChild(desc);
+          const description = document.createElement("small");
+          description.textContent = row.description;
+          item.appendChild(description);
         }
         options.appendChild(item);
       });
@@ -210,11 +202,13 @@
   }
 
   function open() {
-    if (!Number(localStorage.getItem("watiInboxSelected") || 0)) return notify("اختر محادثة أولًا.", true);
+    if (!Number(localStorage.getItem("watiInboxSelected") || 0)) {
+      return notify("اختر محادثة أولًا.", true);
+    }
     if (input.disabled) return notify("استلم المحادثة أولًا.", true);
     reset();
     overlay.classList.remove("is-hidden");
-    setTimeout(() => body.focus(), 40);
+    window.setTimeout(() => body.focus(), 40);
   }
 
   function close(force = false) {
@@ -227,7 +221,9 @@
     const rows = sections.flatMap((section) => section.rows);
     if (!rows.length) return "أضف خيارًا واحدًا على الأقل.";
     if (rows.length > 10) return "الحد الأقصى 10 خيارات.";
-    if (sections.length > 1 && sections.some((section) => !section.title)) return "اكتب عنوانًا لكل قسم عند استخدام أكثر من قسم.";
+    if (sections.length > 1 && sections.some((section) => !section.title)) {
+      return "اكتب عنوانًا لكل قسم عند استخدام أكثر من قسم.";
+    }
     const normalized = rows.map((row) => row.title.toLocaleLowerCase());
     if (new Set(normalized).size !== normalized.length) return "اجعل عنوان كل خيار مختلفًا.";
     return "";
@@ -269,8 +265,8 @@
       close(true);
       notify("تم قبول القائمة التفاعلية في WATI ✅");
       const refresh = document.getElementById("refreshButton");
-      setTimeout(() => refresh?.click(), 900);
-      setTimeout(() => refresh?.click(), 2300);
+      window.setTimeout(() => refresh?.click(), 900);
+      window.setTimeout(() => refresh?.click(), 2300);
     } catch (error) {
       notify(error.message || "تعذر إرسال القائمة التفاعلية.", true);
     } finally {
@@ -280,12 +276,14 @@
     }
   }
 
-  [header, body, footer, buttonText].forEach((el) => el.addEventListener("input", preview));
+  [header, body, footer, buttonText].forEach((element) => element.addEventListener("input", preview));
   q(".wati-list-add-section").addEventListener("click", () => addSection("", true));
   q(".wati-list-close").addEventListener("click", () => close());
   q(".wati-list-cancel").addEventListener("click", () => close());
   sendButton.addEventListener("click", submit);
-  trigger.addEventListener("click", open);
   overlay.addEventListener("click", (event) => { if (event.target === overlay) close(); });
-  document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !overlay.classList.contains("is-hidden")) close(); });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !overlay.classList.contains("is-hidden")) close();
+  });
+  document.addEventListener("wati:open-interactive-list", open);
 })();
