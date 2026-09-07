@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="wati_connector.WatiAutomationStudio">
+        <div class="o_wati_studio" dir="rtl">
+            <div class="o_wati_studio_hero">
+                <div class="o_wati_studio_hero_copy">
+                    <div class="o_wati_studio_eyebrow">WhatsApp Automation Studio</div>
+                    <h1>مركز الأتمتة</h1>
+                    <p>ابنِ رحلات WhatsApp ذكية داخل Odoo، راقب نتائجها، واعرف أي أتمتة تحتاج انتباه قبل أن تؤثر على العميل.</p>
+                </div>
+                <div class="o_wati_studio_hero_actions">
+                    <button class="btn btn-light o_wati_studio_logs" t-on-click="openLogs">
+                        <i class="fa fa-list-alt me-2"/> سجل التشغيل
+                    </button>
+                    <button class="btn btn-primary o_wati_studio_create" t-on-click="createAutomation">
+                        <i class="fa fa-plus me-2"/> إنشاء أتمتة
+                    </button>
+                </div>
+            </div>
+
+            <div class="o_wati_studio_kpis">
+                <div class="o_wati_kpi_card">
+                    <div class="o_wati_kpi_icon is-active"><i class="fa fa-bolt"/></div>
+                    <div><span>الأتمتات النشطة</span><strong t-esc="state.kpis.active"/></div>
+                </div>
+                <div class="o_wati_kpi_card">
+                    <div class="o_wati_kpi_icon is-attention"><i class="fa fa-exclamation-triangle"/></div>
+                    <div><span>تحتاج انتباه</span><strong t-esc="state.kpis.attention"/></div>
+                </div>
+                <div class="o_wati_kpi_card">
+                    <div class="o_wati_kpi_icon is-runs"><i class="fa fa-play-circle"/></div>
+                    <div><span>تشغيلات اليوم</span><strong t-esc="state.kpis.runsToday"/></div>
+                </div>
+                <div class="o_wati_kpi_card">
+                    <div class="o_wati_kpi_icon is-success"><i class="fa fa-line-chart"/></div>
+                    <div><span>نسبة النجاح</span><strong><t t-esc="state.kpis.successRate"/>%</strong></div>
+                </div>
+            </div>
+
+            <div class="o_wati_studio_toolbar">
+                <div class="o_wati_studio_filters">
+                    <button t-att-class="'o_wati_filter ' + (state.filter === 'all' ? 'is-active' : '')" t-on-click="() => this.setFilter('all')">الكل</button>
+                    <button t-att-class="'o_wati_filter ' + (state.filter === 'active' ? 'is-active' : '')" t-on-click="() => this.setFilter('active')">نشطة</button>
+                    <button t-att-class="'o_wati_filter ' + (state.filter === 'attention' ? 'is-active' : '')" t-on-click="() => this.setFilter('attention')">تحتاج انتباه</button>
+                    <button t-att-class="'o_wati_filter ' + (state.filter === 'paused' ? 'is-active' : '')" t-on-click="() => this.setFilter('paused')">متوقفة</button>
+                </div>
+                <div class="o_wati_studio_search">
+                    <i class="fa fa-search"/>
+                    <input type="search" placeholder="ابحث باسم الأتمتة أو القالب..." t-model="state.query"/>
+                </div>
+            </div>
+
+            <div t-if="state.loading" class="o_wati_studio_loading">
+                <i class="fa fa-circle-o-notch fa-spin"/> جاري تحميل مركز الأتمتة...
+            </div>
+
+            <div t-else="" class="o_wati_studio_grid">
+                <t t-if="filteredRules.length">
+                    <t t-foreach="filteredRules" t-as="rule" t-key="rule.id">
+                        <article class="o_wati_rule_card" t-on-click="() => this.openRule(rule.id)">
+                            <div class="o_wati_rule_card_top">
+                                <div class="o_wati_rule_app_icon"><i class="fa fa-whatsapp"/></div>
+                                <div class="o_wati_rule_identity">
+                                    <div class="o_wati_rule_title_row">
+                                        <h3 t-esc="rule.name"/>
+                                        <span t-att-class="'o_wati_rule_status ' + (rule.active ? 'is-on' : 'is-off')">
+                                            <i t-att-class="rule.active ? 'fa fa-circle' : 'fa fa-pause-circle'"/>
+                                            <t t-esc="rule.active ? 'نشطة' : 'متوقفة'"/>
+                                        </span>
+                                    </div>
+                                    <span class="o_wati_rule_model" t-esc="modelLabel(rule)"/>
+                                </div>
+                            </div>
+
+                            <div class="o_wati_rule_summary" t-esc="rule.human_summary || 'أتمتة WhatsApp داخل Odoo'"/>
+
+                            <div class="o_wati_rule_meta">
+                                <div class="o_wati_rule_meta_item">
+                                    <span>القالب</span>
+                                    <strong t-esc="rule.template_name || 'لم يحدد بعد'"/>
+                                </div>
+                                <div class="o_wati_rule_meta_item">
+                                    <span>الجاهزية</span>
+                                    <strong t-att-class="'o_wati_readiness ' + readinessClass(rule.readiness_state)" t-esc="readinessLabel(rule.readiness_state)"/>
+                                </div>
+                            </div>
+
+                            <div class="o_wati_rule_health">
+                                <div><span class="is-success"><i class="fa fa-check"/> ناجحة</span><strong t-esc="rule.success_count || 0"/></div>
+                                <div><span class="is-failure"><i class="fa fa-times"/> فاشلة</span><strong t-esc="rule.failure_count || 0"/></div>
+                                <div><span><i class="fa fa-history"/> الإجمالي</span><strong t-esc="rule.run_count || 0"/></div>
+                            </div>
+
+                            <div class="o_wati_rule_footer">
+                                <span>فتح الأتمتة</span>
+                                <i class="fa fa-arrow-left"/>
+                            </div>
+                        </article>
+                    </t>
+                </t>
+                <div t-else="" class="o_wati_studio_empty">
+                    <div class="o_wati_empty_icon"><i class="fa fa-bolt"/></div>
+                    <h3>ما فيه أتمتات هنا</h3>
+                    <p>غيّر الفلتر أو أنشئ أول رحلة WhatsApp ذكية.</p>
+                    <button class="btn btn-primary" t-on-click="createAutomation">إنشاء أتمتة</button>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>
