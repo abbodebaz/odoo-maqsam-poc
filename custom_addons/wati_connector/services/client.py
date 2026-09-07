@@ -88,6 +88,20 @@ class WatiClient:
             },
         )
 
+    def get_message_templates(self, *, page_size=200, page_number=1):
+        return self.get(
+            "api/v1/getMessageTemplates",
+            params={"pageSize": page_size, "pageNumber": page_number},
+            timeout=25,
+        )
+
+    def send_template_messages(self, payload):
+        return self.post(
+            "api/v1/sendTemplateMessages",
+            json=payload,
+            timeout=30,
+        )
+
     def send_interactive_buttons(self, whatsapp_number, payload):
         return self.post(
             "api/v1/sendInteractiveButtonsMessage",
