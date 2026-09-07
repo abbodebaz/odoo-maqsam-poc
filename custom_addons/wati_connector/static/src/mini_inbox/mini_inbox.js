@@ -18,12 +18,14 @@ export class WatiMiniInbox extends Component {
     setup() {
         this.notification = useService("notification");
         this.messagesRef = useRef("messages");
+        this.fileInputRef = useRef("fileInput");
         this.state = useState({
             enabled: false,
             open: false,
             loading: false,
             chatLoading: false,
             sending: false,
+            uploading: false,
             assigning: false,
             unreadTotal: 0,
             conversations: [],
@@ -35,15 +37,27 @@ export class WatiMiniInbox extends Component {
             draft: "",
         });
         this.pollTimer = null;
+        this.csrfToken = "";
+        this.latestInboundId = 0;
+        this.bootstrapInitialized = false;
+        this.audioContext = null;
+        this.soundUnlockHandler = () => this.ensureAudioContext();
 
         onWillStart(async () => {
+            window.addEventListener("pointerdown", this.soundUnlockHandler, { passive: true });
+            window.addEventListener("keydown", this.soundUnlockHandler);
             await this.refreshBootstrap(true);
             if (this.state.enabled) {
-                this.pollTimer = window.setInterval(() => this.poll(), 20000);
+                this.pollTimer = window.setInterval(() => this.poll(), 10000);
             }
         });
         onWillUnmount(() => {
             if (this.pollTimer) window.clearInterval(this.pollTimer);
+            window.removeEventListener("pointerdown", this.soundUnlockHandler);
+            window.removeEventListener("keydown", this.soundUnlockHandler);
+            if (this.audioContext && typeof this.audioContext.close === "function") {
+                this.audioContext.close().catch(() => {});
+            }
         });
         onPatched(() => {
             if (this.state.selectedId && this.messagesRef.el) {
@@ -71,8 +85,51 @@ export class WatiMiniInbox extends Component {
         );
     }
 
+    ensureAudioContext() {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        try {
+            if (!this.audioContext) this.audioContext = new AudioContext();
+            if (this.audioContext.state === "suspended") {
+                this.audioContext.resume().catch(() => {});
+            }
+        } catch (error) {
+            console.debug("WATI notification sound unavailable", error);
+        }
+    }
+
+    playNotificationSound() {
+        this.ensureAudioContext();
+        const context = this.audioContext;
+        if (!context || context.state !== "running") return;
+        try {
+            const now = context.currentTime;
+            const oscillator = context.createOscillator();
+            const gain = context.createGain();
+            oscillator.type = "sine";
+            oscillator.frequency.setValueAtTime(880, now);
+            oscillator.frequency.setValueAtTime(1175, now + 0.11);
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.exponentialRampToValueAtTime(0.12, now + 0.015);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
+            oscillator.connect(gain);
+            gain.connect(context.destination);
+            oscillator.start(now);
+            oscillator.stop(now + 0.25);
+        } catch (error) {
+            console.debug("WATI notification sound failed", error);
+        }
+    }
+
     async poll() {
-        if (!this.state.enabled || this.state.loading || this.state.sending) return;
+        if (
+            !this.state.enabled ||
+            this.state.loading ||
+            this.state.sending ||
+            this.state.uploading
+        ) {
+            return;
+        }
         await this.refreshBootstrap(true);
         if (this.state.open && this.state.selectedId && !this.state.chatLoading) {
             await this.loadConversation(this.state.selectedId, true);
@@ -91,6 +148,19 @@ export class WatiMiniInbox extends Component {
                 this.state.conversations = [];
                 return;
             }
+
+            this.csrfToken = payload.csrf_token || this.csrfToken;
+            const incomingId = Number(payload.latest_inbound_id || 0);
+            if (!this.bootstrapInitialized) {
+                this.latestInboundId = incomingId;
+                this.bootstrapInitialized = true;
+            } else if (incomingId > this.latestInboundId) {
+                this.latestInboundId = incomingId;
+                this.playNotificationSound();
+            } else if (incomingId) {
+                this.latestInboundId = Math.max(this.latestInboundId, incomingId);
+            }
+
             this.state.unreadTotal = Number(payload.unread_total || 0);
             this.state.conversations = Array.isArray(payload.conversations)
                 ? payload.conversations
@@ -116,6 +186,7 @@ export class WatiMiniInbox extends Component {
     async togglePanel(event) {
         event?.preventDefault();
         event?.stopPropagation();
+        this.ensureAudioContext();
         this.state.open = !this.state.open;
         if (this.state.open) await this.refreshBootstrap(true);
     }
@@ -132,9 +203,10 @@ export class WatiMiniInbox extends Component {
 
     async openConversation(conversationId) {
         this.state.selectedId = Number(conversationId || 0);
-        this.state.selectedConversation = this.state.conversations.find(
-            (conversation) => Number(conversation.id) === this.state.selectedId
-        ) || null;
+        this.state.selectedConversation =
+            this.state.conversations.find(
+                (conversation) => Number(conversation.id) === this.state.selectedId
+            ) || null;
         this.state.draft = "";
         await this.loadConversation(this.state.selectedId, false);
     }
@@ -158,7 +230,8 @@ export class WatiMiniInbox extends Component {
                 { silent: true }
             );
             if (!payload?.ok) throw new Error(payload?.message || "تعذر تحميل المحادثة");
-            this.state.selectedConversation = payload.conversation || this.state.selectedConversation;
+            this.state.selectedConversation =
+                payload.conversation || this.state.selectedConversation;
             this.state.messages = Array.isArray(payload.messages) ? payload.messages : [];
             this.state.assignment = payload.assignment || null;
         } catch (error) {
@@ -202,14 +275,15 @@ export class WatiMiniInbox extends Component {
     }
 
     async sendMessage() {
-        if (!this.canSend || this.state.sending) return;
+        if (!this.canSend || this.state.sending || this.state.uploading) return;
         const text = (this.state.draft || "").trim();
         if (!text) return;
 
         this.state.sending = true;
         try {
-            const requestId = window.crypto?.randomUUID?.()
-                || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+            const requestId =
+                window.crypto?.randomUUID?.() ||
+                `${Date.now()}-${Math.random().toString(16).slice(2)}`;
             const payload = await rpc(
                 "/wati/mini/send",
                 {
@@ -229,6 +303,108 @@ export class WatiMiniInbox extends Component {
             });
         } finally {
             this.state.sending = false;
+        }
+    }
+
+    attachmentCategory(file) {
+        const type = String(file?.type || "").toLowerCase();
+        const name = String(file?.name || "").toLowerCase();
+        const dot = name.lastIndexOf(".");
+        const extension = dot >= 0 ? name.slice(dot) : "";
+        if (type === "image/jpeg" || type === "image/png" || [".jpg", ".jpeg", ".png"].includes(extension)) {
+            return "image";
+        }
+        if (type === "video/mp4" || type === "video/3gpp" || [".mp4", ".3gp", ".3gpp"].includes(extension)) {
+            return "video";
+        }
+        if (type.startsWith("audio/") || [".aac", ".m4a", ".mp3", ".amr", ".ogg", ".opus"].includes(extension)) {
+            return "audio";
+        }
+        if ([".txt", ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx"].includes(extension)) {
+            return "document";
+        }
+        return "";
+    }
+
+    validateAttachment(file) {
+        const category = this.attachmentCategory(file);
+        if (!category) return "نوع الملف غير مدعوم في WhatsApp.";
+        const limits = {
+            image: 5 * 1024 * 1024,
+            video: 16 * 1024 * 1024,
+            audio: 16 * 1024 * 1024,
+            document: 100 * 1024 * 1024,
+        };
+        if (!file.size) return "الملف فارغ ولا يمكن إرساله.";
+        if (file.size > limits[category]) {
+            return `حجم الملف أكبر من الحد المسموح (${limits[category] / (1024 * 1024)} MB).`;
+        }
+        return "";
+    }
+
+    pickAttachment() {
+        if (!this.canSend || this.state.sending || this.state.uploading) {
+            this.notification.add("استلم المحادثة أولًا قبل إرسال مرفق.", {
+                type: "warning",
+            });
+            return;
+        }
+        this.fileInputRef.el?.click();
+    }
+
+    async onFileSelected(event) {
+        const input = event.currentTarget;
+        const file = input?.files?.[0];
+        if (!file) return;
+        const errorMessage = this.validateAttachment(file);
+        if (errorMessage) {
+            this.notification.add(errorMessage, { type: "danger" });
+            input.value = "";
+            return;
+        }
+        if ((this.state.draft || "").trim().length > 1024) {
+            this.notification.add("تعليق المرفق يجب ألا يتجاوز 1024 حرفًا.", {
+                type: "danger",
+            });
+            input.value = "";
+            return;
+        }
+
+        this.state.uploading = true;
+        const requestId =
+            window.crypto?.randomUUID?.() ||
+            `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        const formData = new FormData();
+        formData.append("csrf_token", this.csrfToken || "");
+        formData.append("conversation_id", String(this.state.selectedId));
+        formData.append("request_id", requestId);
+        formData.append("caption", (this.state.draft || "").trim());
+        formData.append("file", file, file.name);
+
+        try {
+            const response = await fetch("/wati/inbox/send-file", {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { Accept: "application/json" },
+                body: formData,
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.ok) {
+                throw new Error(payload.message || `تعذر إرسال المرفق (${response.status})`);
+            }
+            this.state.draft = "";
+            this.notification.add("تم إرسال المرفق إلى WATI ✅", { type: "success" });
+            await this.refreshBootstrap(true);
+            window.setTimeout(() => this.loadConversation(this.state.selectedId, true), 900);
+            window.setTimeout(() => this.loadConversation(this.state.selectedId, true), 2400);
+        } catch (error) {
+            console.error("WATI Mini Inbox attachment error", error);
+            this.notification.add(error.message || "تعذر إرسال المرفق.", {
+                type: "danger",
+            });
+        } finally {
+            this.state.uploading = false;
+            if (input) input.value = "";
         }
     }
 
@@ -275,9 +451,9 @@ export class WatiMiniInbox extends Component {
 
     messagePlaceholder(type) {
         const clean = String(type || "").toLowerCase();
-        if (clean.includes("image")) return "📷 صورة";
+        if (clean.includes("image") || clean.includes("sticker")) return "📷 صورة";
         if (clean.includes("video")) return "🎥 فيديو";
-        if (clean.includes("audio")) return "🎵 رسالة صوتية";
+        if (clean.includes("audio") || clean.includes("voice")) return "🎵 رسالة صوتية";
         if (clean.includes("document") || clean.includes("file")) return "📎 ملف";
         if (clean.includes("location")) return "📍 موقع";
         return "رسالة";
