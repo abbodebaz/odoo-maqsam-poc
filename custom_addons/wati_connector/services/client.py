@@ -79,6 +79,16 @@ class WatiClient:
             params=params,
         )
 
+    def send_session_file(self, whatsapp_number, *, filename, stream, mimetype, caption=""):
+        target = quote(str(whatsapp_number or "").strip(), safe="")
+        params = {"caption": caption} if caption else None
+        return self.post(
+            f"api/v1/sendSessionFile/{target}",
+            params=params,
+            files={"file": (filename, stream, mimetype)},
+            timeout=90,
+        )
+
     def assign_operator(self, whatsapp_number, operator_email):
         return self.post(
             "api/v1/assignOperator",
