@@ -28,7 +28,7 @@ jobs:
             python -m compileall -q "$module"
           done
 
-      - name: Validate XML, manifests and module boundaries
+      - name: Validate XML, manifests and architecture boundaries
         run: |
           python - <<'PY'
           import ast
@@ -70,6 +70,20 @@ jobs:
               for model in forbidden_models:
                   if model in text:
                       raise SystemExit(f'Optional model {model} leaked into WATI core: {source}')
+
+          allowed_request_files = {
+              core / 'services' / 'client.py',
+              core / 'services' / 'media.py',
+          }
+          for module in modules:
+              for source in module.rglob('*.py'):
+                  if source in allowed_request_files:
+                      continue
+                  text = source.read_text(encoding='utf-8')
+                  if 'import requests' in text or 'requests.' in text:
+                      raise SystemExit(
+                          f'Direct HTTP transport outside WATI service layer: {source}'
+                      )
 
           print('Static WATI validation passed for:', ', '.join(module.name for module in modules))
           PY
