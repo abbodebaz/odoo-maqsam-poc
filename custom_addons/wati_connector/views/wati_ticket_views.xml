@@ -57,11 +57,14 @@
         <field name="context">{'search_default_my_tickets': 0}</field>
     </record>
 
+    <!-- Legacy ticket model is kept for compatibility, but it is intentionally
+         removed from the commercial WhatsApp navigation. -->
     <menuitem
         id="menu_wati_support_tickets"
         name="التذاكر"
         parent="wati_connector.menu_wati_root"
         action="action_wati_support_tickets"
         sequence="30"
+        groups="base.group_no_one"
     />
 </odoo>
