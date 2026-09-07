@@ -1,7 +1,9 @@
-import requests
-
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
+
+from ..services.client import WatiClient
+from ..services.config import WatiConfig
+from ..services.exceptions import WatiConfigurationError, WatiRequestError
 
 
 class ResConfigSettings(models.TransientModel):
@@ -31,42 +33,22 @@ class ResConfigSettings(models.TransientModel):
     @api.depends("wati_webhook_token")
     def _compute_wati_webhook_url(self):
         base_url = (
-            self.env["ir.config_parameter"].sudo().get_param("web.base.url")
-            or "https://odoo-production-790f.up.railway.app"
+            self.env["ir.config_parameter"].sudo().get_param("web.base.url") or ""
         ).strip().rstrip("/")
         for record in self:
             token = (record.wati_webhook_token or "").strip()
             record.wati_webhook_url = (
-                f"{base_url}/wati/webhook/{token}" if token else ""
+                f"{base_url}/wati/webhook/{token}" if base_url and token else ""
             )
 
     def _normalize_wati_endpoint(self, value):
-        endpoint = (value or "").strip().rstrip("/")
-        if not endpoint:
-            return ""
-        if not endpoint.startswith(("https://", "http://")):
-            raise UserError(_("WATI API Endpoint يجب أن يبدأ بـ https://"))
-
-        # Users sometimes paste a complete API URL from WATI instead of the tenant base URL.
-        # Keep the tenant id/path (e.g. /310263) and strip only the versioned /api/... suffix.
-        lower = endpoint.lower()
-        api_pos = lower.find("/api/")
-        if api_pos != -1:
-            endpoint = endpoint[:api_pos].rstrip("/")
-        return endpoint
+        try:
+            return WatiConfig.normalize_endpoint(value)
+        except WatiConfigurationError as exc:
+            raise UserError(_("WATI API Endpoint يجب أن يبدأ بـ http:// أو https://")) from exc
 
     def _normalize_wati_token(self, value):
-        token = (value or "").strip()
-        if token.lower().startswith("bearer "):
-            token = token[7:].strip()
-        return token
-
-    def _wati_headers(self, token):
-        return {
-            "Authorization": f"Bearer {token}",
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-        }
+        return WatiConfig.normalize_token(value)
 
     def action_wati_test_connection(self):
         self.ensure_one()
@@ -75,56 +57,40 @@ class ResConfigSettings(models.TransientModel):
         if not endpoint or not token:
             raise UserError(_("أدخل WATI API Endpoint وAccess Token أولًا."))
 
-        headers = self._wati_headers(token)
+        client = WatiClient(self.env, endpoint=endpoint, token=token)
         attempts = []
-
-        # Classic V1 is first because many existing WATI tenants (and the user's proven n8n flow)
-        # use tenant URLs such as /<tenant-id>/api/v1/.... V3 is kept as discovery fallback.
         probes = [
-            (
-                "V1",
-                f"{endpoint}/api/v1/getContacts",
-                {"pageSize": 1, "pageNumber": 1},
-            ),
-            (
-                "V3",
-                f"{endpoint}/api/ext/v3/contacts/count",
-                {},
-            ),
+            ("V1", client.probe_contacts_v1),
+            ("V3", client.probe_contacts_v3),
         ]
 
         successful_version = None
         successful_response = None
 
-        for version, url, params in probes:
+        for version, probe in probes:
             try:
-                response = requests.get(
-                    url,
-                    headers=headers,
-                    params=params,
-                    timeout=20,
-                    allow_redirects=True,
-                )
-            except requests.RequestException as exc:
-                attempts.append(f"{version}: connection error — {exc}")
+                response = probe()
+            except WatiRequestError as exc:
+                detail = (exc.response_text or str(exc) or "").strip().replace("\n", " ")[:260]
+                if exc.status_code:
+                    attempts.append(f"{version}: HTTP {exc.status_code} — {detail}")
+                else:
+                    attempts.append(f"{version}: connection error — {detail}")
+                continue
+            except WatiConfigurationError as exc:
+                attempts.append(f"{version}: configuration error — {exc}")
                 continue
 
-            detail = (response.text or response.reason or "").strip().replace("\n", " ")[:260]
-            if response.ok:
-                successful_version = version
-                successful_response = response
-                break
-
-            attempts.append(f"{version}: HTTP {response.status_code} — {detail}")
-            # Do not stop after V3/V1 auth errors: older tokens can be accepted by one API family
-            # and rejected by another. We only report auth failure after trying both families.
+            successful_version = version
+            successful_response = response
+            break
 
         if not successful_response:
             auth_errors = [item for item in attempts if "HTTP 401" in item or "HTTP 403" in item]
             if auth_errors:
                 raise UserError(
                     _(
-                        "WATI لم يقبل التوثيق على المسارات التي اختبرناها. تأكد أن API Endpoint هو رابط الحساب نفسه وأن Access Token هو نفسه المستخدم في n8n. يمكنك لصق التوكن مع أو بدون كلمة Bearer.\n\nنتائج الاختبار:\n%s"
+                        "WATI لم يقبل التوثيق على المسارات التي اختبرناها. تأكد أن API Endpoint هو رابط الحساب نفسه وأن Access Token صحيح. يمكنك لصق التوكن مع أو بدون كلمة Bearer.\n\nنتائج الاختبار:\n%s"
                     )
                     % "\n".join(attempts)
                 )
@@ -135,7 +101,6 @@ class ResConfigSettings(models.TransientModel):
                 % "\n".join(attempts)
             )
 
-        # Persist normalized values automatically so future calls use exactly one Bearer prefix.
         self.wati_api_endpoint = endpoint
         self.wati_api_token = token
 
