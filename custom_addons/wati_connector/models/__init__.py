@@ -4,7 +4,6 @@ from . import wati_transport
 from . import wati_assignment
 from . import wati_idempotency
 from . import wati_support_ticket
-from . import wati_send_fix
 from . import wati_automation
 from . import wati_automation_conditions
 from . import wati_automation_improvements
