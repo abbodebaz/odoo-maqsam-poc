@@ -97,21 +97,6 @@ def _partner_url(partner):
 class WatiWebhookController(http.Controller):
 
     @http.route(
-        "/wati/health",
-        type="http",
-        auth="none",
-        methods=["GET"],
-        csrf=False,
-        save_session=False,
-    )
-    def health(self, **kwargs):
-        return request.make_response(
-            "ok",
-            headers=[("Content-Type", "text/plain; charset=utf-8")],
-            status=200,
-        )
-
-    @http.route(
         "/wati/webhook/<string:token>",
         type="http",
         auth="none",
