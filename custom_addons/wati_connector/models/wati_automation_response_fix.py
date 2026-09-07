@@ -1,9 +1,9 @@
 import logging
 
-import requests
-
 from odoo import fields, models
 
+from ..services.client import WatiClient
+from ..services.exceptions import WatiConfigurationError, WatiRequestError
 from .wati_automation_guard import _extract_external_message_id
 from .wati_automation_improvements import _error_summary
 
@@ -115,18 +115,8 @@ class WatiAutomationResponseFix(models.Model):
             )
             return False
 
-        endpoint, token, _configured_channel = self._wati_config()
+        client = WatiClient(self.env)
         effective_channel = self._effective_channel()
-        if not endpoint or not token:
-            Log.create(
-                self._log_values(
-                    record,
-                    "failed",
-                    phone=phone,
-                    error_message="إعدادات WATI API غير مكتملة.",
-                )
-            )
-            return False
 
         empty_params = [
             str(item.get("name") or "").strip()
@@ -164,44 +154,39 @@ class WatiAutomationResponseFix(models.Model):
             body["channel_number"] = effective_channel
 
         try:
-            response = requests.post(
-                f"{endpoint}/api/v1/sendTemplateMessages",
-                headers={
-                    "Authorization": f"Bearer {token}",
-                    "Accept": "application/json",
-                    "Content-Type": "application/json",
-                },
-                json=body,
-                timeout=25,
-            )
-        except requests.RequestException as exc:
+            response = client.send_template_messages(body)
+        except WatiConfigurationError:
             Log.create(
                 self._log_values(
                     record,
                     "failed",
                     phone=phone,
-                    error_message=f"تعذر الاتصال بـ WATI: {exc}",
+                    error_message="إعدادات WATI API غير مكتملة.",
                 )
             )
             return False
-
-        excerpt = (response.text or response.reason or "").strip()[:2000]
-        if not response.ok:
+        except WatiRequestError as exc:
+            detail = (exc.response_text or str(exc) or "").strip()[:2000]
             Log.create(
                 {
                     **self._log_values(
                         record,
                         "failed",
                         phone=phone,
-                        error_message=f"WATI رفض الإرسال ({response.status_code}).",
-                        response_excerpt=excerpt,
+                        error_message=(
+                            f"WATI رفض الإرسال ({exc.status_code})."
+                            if exc.status_code
+                            else f"تعذر الاتصال بـ WATI: {detail}"
+                        ),
+                        response_excerpt=detail,
                     ),
                     "broadcast_name": broadcast_name,
-                    "delivery_status": "api_rejected",
+                    "delivery_status": "api_rejected" if exc.status_code else "transport_failed",
                 }
             )
             return False
 
+        excerpt = (response.text or response.reason or "").strip()[:2000]
         try:
             payload = response.json()
         except ValueError:
@@ -224,9 +209,9 @@ class WatiAutomationResponseFix(models.Model):
             )
             return False
 
-        # Important: HTTP 200 means accepted by WATI, not delivered yet.
-        # A bare `result:false` with empty validation arrays is kept as accepted
-        # and delivery is reconciled later by Delivered/Read/Failed webhooks.
+        # HTTP 200 means accepted by WATI, not delivered yet. A bare
+        # `result:false` with empty validation arrays is kept as accepted and the
+        # final state is reconciled by Delivered/Read/Failed webhooks.
         external_message_id = _extract_external_message_id(payload)
         Log.create(
             {
