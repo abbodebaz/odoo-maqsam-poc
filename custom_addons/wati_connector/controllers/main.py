@@ -101,6 +101,31 @@ def _config_flag(name, default=False):
     return str(value).strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _conversation_identity(conversation):
+    identity = phone_identity(conversation.wa_id)
+    return identity["digits"] or f"conversation:{conversation.id}"
+
+
+def _dedupe_conversations(conversations, limit=None):
+    """Keep the newest inbox row for each WhatsApp recipient.
+
+    This is a defensive presentation guard for legacy/race duplicates. New webhook
+    events are also normalized in the ingestion layer so duplicate records stop being
+    created in the first place.
+    """
+    seen = set()
+    ids = []
+    for conversation in conversations:
+        identity = _conversation_identity(conversation)
+        if identity in seen:
+            continue
+        seen.add(identity)
+        ids.append(conversation.id)
+        if limit and len(ids) >= limit:
+            break
+    return request.env["wati.conversation"].browse(ids)
+
+
 class WatiWebhookController(http.Controller):
 
     @http.route(
@@ -164,9 +189,10 @@ class WatiWebhookController(http.Controller):
     )
     def inbox_data(self, conversation_id=None, **kwargs):
         conversation_model = request.env["wati.conversation"]
-        conversations = conversation_model.search(
-            [], order="last_message_at desc, id desc", limit=150
+        candidates = conversation_model.search(
+            [], order="last_message_at desc, id desc", limit=300
         )
+        conversations = _dedupe_conversations(candidates, limit=150)
         current_user = request.env.user
 
         selected = conversation_model.browse()
