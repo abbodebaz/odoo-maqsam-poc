@@ -94,6 +94,13 @@ def _partner_url(partner):
     return url
 
 
+def _config_flag(name, default=False):
+    value = request.env["ir.config_parameter"].sudo().get_param(
+        name, "True" if default else "False"
+    )
+    return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+
 class WatiWebhookController(http.Controller):
 
     @http.route(
@@ -139,6 +146,12 @@ class WatiWebhookController(http.Controller):
                 "csrf_token": request.csrf_token(),
                 "user_name": request.env.user.name or "Odoo",
                 "odoo_return_url": odoo_return_url,
+                "interactive_buttons_enabled": _config_flag(
+                    "wati_connector.enable_interactive_buttons"
+                ),
+                "interactive_lists_enabled": _config_flag(
+                    "wati_connector.enable_interactive_lists"
+                ),
             },
         )
 
