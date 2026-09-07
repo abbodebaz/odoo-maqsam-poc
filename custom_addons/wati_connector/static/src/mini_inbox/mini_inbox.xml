@@ -80,16 +80,53 @@
                         <div t-elif="!state.messages.length" class="o_wati_mini_empty">لا توجد رسائل في هذه المحادثة.</div>
                         <div t-foreach="state.messages" t-as="message" t-key="message.id" t-att-class="'o_wati_mini_message ' + (message.direction === 'outbound' ? 'is-outbound' : 'is-inbound')">
                             <div class="o_wati_mini_bubble">
-                                <span t-esc="message.text || messagePlaceholder(message.message_type)"/>
-                                <small t-esc="formatTime(message.received_at)"/>
+                                <t t-if="message.has_media &amp;&amp; message.media_url">
+                                    <a t-if="message.media_type === 'image' || message.media_type === 'sticker'" class="o_wati_mini_media_link" t-att-href="message.media_url" target="_blank" rel="noopener noreferrer">
+                                        <img class="o_wati_mini_media_image" t-att-src="message.media_url" t-att-alt="message.file_name || 'صورة WhatsApp'" loading="lazy"/>
+                                    </a>
+                                    <video t-elif="message.media_type === 'video'" class="o_wati_mini_media_video" t-att-src="message.media_url" controls="controls" preload="metadata"/>
+                                    <audio t-elif="message.media_type === 'audio' || message.media_type === 'voice'" class="o_wati_mini_media_audio" t-att-src="message.media_url" controls="controls" preload="metadata"/>
+                                    <a t-elif="message.media_type === 'document'" class="o_wati_mini_media_document" t-att-href="message.media_url" target="_blank" rel="noopener noreferrer">
+                                        <span class="o_wati_mini_media_document_icon">📎</span>
+                                        <span>
+                                            <strong t-esc="message.file_name || 'ملف WhatsApp'"/>
+                                            <small>فتح الملف</small>
+                                        </span>
+                                    </a>
+                                    <a t-else="" class="o_wati_mini_media_document" t-att-href="message.media_url" target="_blank" rel="noopener noreferrer">فتح المرفق</a>
+                                </t>
+                                <span t-if="message.text" class="o_wati_mini_message_text" t-esc="message.text"/>
+                                <span t-elif="!message.has_media" class="o_wati_mini_message_text" t-esc="messagePlaceholder(message.message_type)"/>
+                                <small class="o_wati_mini_message_time" t-esc="formatTime(message.received_at)"/>
                             </div>
                         </div>
                     </div>
 
                     <form class="o_wati_mini_composer" t-on-submit.prevent="sendMessage">
-                        <textarea rows="1" maxlength="4096" placeholder="اكتب رسالة..." t-model="state.draft" t-on-keydown="onComposerKeydown" t-att-disabled="!canSend || state.sending"/>
-                        <button type="submit" t-att-disabled="!canSend || state.sending || !state.draft.trim()">
-                            <t t-if="state.sending">...</t>
+                        <input
+                            t-ref="fileInput"
+                            type="file"
+                            hidden="hidden"
+                            accept=".jpg,.jpeg,.png,.mp4,.3gp,.3gpp,.aac,.m4a,.mp3,.amr,.ogg,.opus,.txt,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,image/jpeg,image/png,video/mp4,video/3gpp,audio/*,application/pdf"
+                            t-on-change="onFileSelected"
+                        />
+                        <button
+                            type="button"
+                            class="o_wati_mini_attach"
+                            title="إرسال صورة أو فيديو أو ملف"
+                            t-on-click="pickAttachment"
+                            t-att-disabled="!canSend || state.sending || state.uploading"
+                        >📎</button>
+                        <textarea
+                            rows="1"
+                            maxlength="4096"
+                            placeholder="اكتب رسالة..."
+                            t-model="state.draft"
+                            t-on-keydown="onComposerKeydown"
+                            t-att-disabled="!canSend || state.sending || state.uploading"
+                        />
+                        <button class="o_wati_mini_send" type="submit" t-att-disabled="!canSend || state.sending || state.uploading || !state.draft.trim()">
+                            <t t-if="state.sending || state.uploading">...</t>
                             <t t-else="">➤</t>
                         </button>
                     </form>
