@@ -1,4 +1,3 @@
-import hashlib
 import hmac
 import threading
 import time
@@ -8,42 +7,13 @@ from odoo.exceptions import UserError
 from odoo.http import request
 
 from ..services.config import WatiConfig
+from ..services.idempotency import WatiIdempotency
 from ..utils.phone import phone_identity
 
-
-_SEND_GUARD = {}
-_SEND_GUARD_LOCK = threading.Lock()
-_SEND_GUARD_TTL = 120.0
 
 _PARTNER_CACHE = {}
 _PARTNER_CACHE_LOCK = threading.Lock()
 _PARTNER_CACHE_TTL = 300.0
-
-
-def _reserve_send_guard(user_id, conversation_id, request_id, message):
-    now = time.monotonic()
-    request_id = (request_id or "").strip()
-    if request_id:
-        key = f"{user_id}:{request_id}"
-    else:
-        digest = hashlib.sha256((message or "").encode("utf-8")).hexdigest()
-        key = f"{user_id}:{conversation_id}:{digest}"
-
-    with _SEND_GUARD_LOCK:
-        expired = [item for item, created_at in _SEND_GUARD.items() if now - created_at > _SEND_GUARD_TTL]
-        for item in expired:
-            _SEND_GUARD.pop(item, None)
-
-        if key in _SEND_GUARD:
-            return key, False
-
-        _SEND_GUARD[key] = now
-        return key, True
-
-
-def _release_send_guard(key):
-    with _SEND_GUARD_LOCK:
-        _SEND_GUARD.pop(key, None)
 
 
 def _partner_phone_fields(partner_model):
@@ -71,7 +41,11 @@ def _find_partner_by_wa_id(wa_id):
         cached = _PARTNER_CACHE.get(cache_key)
         if cached and now - cached[0] <= _PARTNER_CACHE_TTL:
             partner_id = cached[1]
-            return request.env["res.partner"].sudo().browse(partner_id).exists() if partner_id else request.env["res.partner"].browse()
+            return (
+                request.env["res.partner"].sudo().browse(partner_id).exists()
+                if partner_id
+                else request.env["res.partner"].browse()
+            )
 
     partner_model = request.env["res.partner"].sudo()
     partner = partner_model.browse()
@@ -96,7 +70,10 @@ def _find_partner_by_wa_id(wa_id):
         for candidate in candidates:
             for field_name in phone_fields:
                 candidate_identity = phone_identity(candidate[field_name])
-                if candidate_identity["suffix"] and candidate_identity["suffix"] == identity["suffix"]:
+                if (
+                    candidate_identity["suffix"]
+                    and candidate_identity["suffix"] == identity["suffix"]
+                ):
                     partner = candidate
                     break
             if partner:
@@ -104,7 +81,6 @@ def _find_partner_by_wa_id(wa_id):
 
     with _PARTNER_CACHE_LOCK:
         _PARTNER_CACHE[cache_key] = (now, partner.id if partner else 0)
-
     return partner
 
 
@@ -131,11 +107,15 @@ class WatiWebhookController(http.Controller):
     def webhook(self, token, **kwargs):
         configured = WatiConfig(request.env).webhook_token
         if not configured or not hmac.compare_digest(str(token), str(configured)):
-            return request.make_json_response({"ok": False, "message": "unauthorized"}, status=401)
+            return request.make_json_response(
+                {"ok": False, "message": "unauthorized"}, status=401
+            )
 
         payload = request.httprequest.get_json(silent=True)
         if payload is None:
-            return request.make_json_response({"ok": False, "message": "invalid json"}, status=400)
+            return request.make_json_response(
+                {"ok": False, "message": "invalid json"}, status=400
+            )
 
         events = payload if isinstance(payload, list) else [payload]
         accepted = 0
@@ -143,24 +123,15 @@ class WatiWebhookController(http.Controller):
             if isinstance(event, dict):
                 request.env["wati.webhook.event"].sudo().ingest(event)
                 accepted += 1
-
         return request.make_json_response({"ok": True, "accepted": accepted}, status=200)
 
-    @http.route(
-        "/wati/inbox",
-        type="http",
-        auth="user",
-        methods=["GET"],
-    )
+    @http.route("/wati/inbox", type="http", auth="user", methods=["GET"])
     def inbox(self, **kwargs):
         conversations_action = request.env.ref(
-            "wati_connector.action_wati_conversations",
-            raise_if_not_found=False,
+            "wati_connector.action_wati_conversations", raise_if_not_found=False
         )
         odoo_return_url = (
-            f"/odoo/action-{conversations_action.id}"
-            if conversations_action
-            else "/odoo"
+            f"/odoo/action-{conversations_action.id}" if conversations_action else "/odoo"
         )
         return request.render(
             "wati_connector.wati_inbox_page",
@@ -180,7 +151,9 @@ class WatiWebhookController(http.Controller):
     )
     def inbox_data(self, conversation_id=None, **kwargs):
         conversation_model = request.env["wati.conversation"]
-        conversations = conversation_model.search([], order="last_message_at desc, id desc", limit=150)
+        conversations = conversation_model.search(
+            [], order="last_message_at desc, id desc", limit=150
+        )
         current_user = request.env.user
 
         selected = conversation_model.browse()
@@ -188,7 +161,6 @@ class WatiWebhookController(http.Controller):
             selected_id = int(conversation_id or 0)
         except (TypeError, ValueError):
             selected_id = 0
-
         if selected_id:
             candidate = conversation_model.browse(selected_id).exists()
             if candidate:
@@ -203,24 +175,32 @@ class WatiWebhookController(http.Controller):
                 order="received_at desc, id desc",
                 limit=250,
             )
-            messages = latest.sorted(key=lambda message: (message.received_at or fields.Datetime.now(), message.id))
+            messages = latest.sorted(
+                key=lambda message: (message.received_at or fields.Datetime.now(), message.id)
+            )
 
         conversation_rows = []
         for conversation in conversations:
-            wati_name = conversation.name or conversation.sender_name or conversation.wa_id or "WhatsApp"
+            wati_name = (
+                conversation.name
+                or conversation.sender_name
+                or conversation.wa_id
+                or "WhatsApp"
+            )
             partner = conversation.partner_id or _find_partner_by_wa_id(conversation.wa_id)
-            display_name = partner.display_name if partner else wati_name
             assigned = conversation.assigned_user_id
             conversation_rows.append(
                 {
                     "id": conversation.id,
-                    "name": display_name,
+                    "name": partner.display_name if partner else wati_name,
                     "wati_name": wati_name,
                     "wa_id": conversation.wa_id or "",
                     "operator_name": conversation.operator_name or "",
                     "status": conversation.status or "",
                     "last_message": conversation.last_message or "",
-                    "last_message_at": fields.Datetime.to_string(conversation.last_message_at) if conversation.last_message_at else "",
+                    "last_message_at": fields.Datetime.to_string(conversation.last_message_at)
+                    if conversation.last_message_at
+                    else "",
                     "unread_count": conversation.unread_count or 0,
                     "partner_id": partner.id if partner else False,
                     "partner_name": partner.display_name if partner else "",
@@ -233,21 +213,22 @@ class WatiWebhookController(http.Controller):
                 }
             )
 
-        message_rows = []
-        for message in messages:
-            message_rows.append(
-                {
-                    "id": message.id,
-                    "external_id": message.name or "",
-                    "direction": message.direction or "inbound",
-                    "sender_name": message.sender_name or "",
-                    "text": message.text or "",
-                    "message_type": message.message_type or "text",
-                    "status": message.status or "",
-                    "operator_name": message.operator_name or "",
-                    "received_at": fields.Datetime.to_string(message.received_at) if message.received_at else "",
-                }
-            )
+        message_rows = [
+            {
+                "id": message.id,
+                "external_id": message.name or "",
+                "direction": message.direction or "inbound",
+                "sender_name": message.sender_name or "",
+                "text": message.text or "",
+                "message_type": message.message_type or "text",
+                "status": message.status or "",
+                "operator_name": message.operator_name or "",
+                "received_at": fields.Datetime.to_string(message.received_at)
+                if message.received_at
+                else "",
+            }
+            for message in messages
+        ]
 
         return request.make_json_response(
             {
@@ -261,12 +242,7 @@ class WatiWebhookController(http.Controller):
             status=200,
         )
 
-    @http.route(
-        "/wati/inbox/send",
-        type="http",
-        auth="user",
-        methods=["POST"],
-    )
+    @http.route("/wati/inbox/send", type="http", auth="user", methods=["POST"])
     def inbox_send(self, conversation_id=None, message=None, request_id=None, **kwargs):
         try:
             conversation_id = int(conversation_id or 0)
@@ -275,27 +251,34 @@ class WatiWebhookController(http.Controller):
 
         conversation = request.env["wati.conversation"].browse(conversation_id).exists()
         if not conversation:
-            return request.make_json_response({"ok": False, "message": "المحادثة غير موجودة."}, status=404)
-
-        guard_key, reserved = _reserve_send_guard(
-            request.env.user.id,
-            conversation_id,
-            request_id,
-            message or "",
-        )
-        if not reserved:
             return request.make_json_response(
-                {"ok": True, "message": "تم تجاهل إعادة إرسال مكررة.", "duplicate_suppressed": True},
+                {"ok": False, "message": "المحادثة غير موجودة."}, status=404
+            )
+
+        idem = WatiIdempotency(request.env)
+        scope = f"outbound:text:user:{request.env.user.id}"
+        key = (request_id or "").strip() or idem.digest(conversation_id, message or "")
+        if not idem.acquire(scope, key, ttl_seconds=120):
+            return request.make_json_response(
+                {
+                    "ok": True,
+                    "message": "تم تجاهل إعادة إرسال مكررة.",
+                    "duplicate_suppressed": True,
+                },
                 status=200,
             )
 
         try:
             conversation.send_session_message(message or "")
         except UserError as exc:
-            _release_send_guard(guard_key)
-            return request.make_json_response({"ok": False, "message": str(exc)}, status=400)
+            idem.release(scope, key)
+            return request.make_json_response(
+                {"ok": False, "message": str(exc)}, status=400
+            )
         except Exception:
-            _release_send_guard(guard_key)
+            idem.release(scope, key)
             raise
 
-        return request.make_json_response({"ok": True, "message": "تم الإرسال إلى WATI."}, status=200)
+        return request.make_json_response(
+            {"ok": True, "message": "تم الإرسال إلى WATI."}, status=200
+        )
