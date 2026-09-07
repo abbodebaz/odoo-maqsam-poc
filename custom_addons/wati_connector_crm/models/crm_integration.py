@@ -65,7 +65,6 @@ class CrmLeadWati(models.Model):
         self.ensure_one()
         Conversation = self.env["wati.conversation"].sudo()
         candidates = Conversation.browse()
-
         if self.partner_id:
             candidates = Conversation.search(
                 [("partner_id", "=", self.partner_id.id), ("crm_lead_id", "=", False)],
@@ -73,29 +72,23 @@ class CrmLeadWati(models.Model):
             )
             if candidates:
                 return candidates
-
         phones = self._wati_phone_values()
         if not phones:
             return candidates
-
-        phone_variants = []
+        variants = []
         for phone in phones:
             for variant in equivalent_variants(phone):
-                if variant not in phone_variants:
-                    phone_variants.append(variant)
-
+                if variant not in variants:
+                    variants.append(variant)
         return Conversation.search(
-            [("wa_id", "in", phone_variants), ("crm_lead_id", "=", False)],
+            [("wa_id", "in", variants), ("crm_lead_id", "=", False)],
             order="last_message_at desc, id desc",
         )
 
     def _wati_linked_conversations(self, include_candidate=True):
         self.ensure_one()
         Conversation = self.env["wati.conversation"].sudo()
-        linked = Conversation.search(
-            [("crm_lead_id", "=", self.id)],
-            order="last_message_at desc, id desc",
-        )
+        linked = Conversation.search([("crm_lead_id", "=", self.id)], order="last_message_at desc, id desc")
         if linked or not include_candidate:
             return linked
         return self._wati_unlinked_candidates()
@@ -103,14 +96,9 @@ class CrmLeadWati(models.Model):
     def _wati_get_or_create_conversation(self):
         self.ensure_one()
         Conversation = self.env["wati.conversation"].sudo()
-        linked = Conversation.search(
-            [("crm_lead_id", "=", self.id)],
-            order="last_message_at desc, id desc",
-            limit=1,
-        )
+        linked = Conversation.search([("crm_lead_id", "=", self.id)], order="last_message_at desc, id desc", limit=1)
         if linked:
             return linked
-
         candidate = self._wati_unlinked_candidates()[:1]
         if candidate:
             values = {"crm_lead_id": self.id}
@@ -118,11 +106,9 @@ class CrmLeadWati(models.Model):
                 values["partner_id"] = self.partner_id.id
             candidate.write(values)
             return candidate
-
         phone = self._wati_primary_phone()
         if not phone:
             raise UserError(_("أضف رقم جوال أو هاتف للفرصة/العميل قبل فتح WhatsApp."))
-
         display_name = self.partner_id.display_name if self.partner_id else (self.contact_name or self.partner_name or self.name or phone)
         return Conversation.create({
             "name": display_name,
@@ -145,7 +131,6 @@ class CrmLeadWati(models.Model):
                 lead.wati_last_message_at = False
                 lead.wati_last_status = False
                 continue
-
             conversations = lead._wati_linked_conversations(include_candidate=True)
             lead.wati_conversation_count = len(conversations)
             if not conversations:
@@ -154,13 +139,8 @@ class CrmLeadWati(models.Model):
                 lead.wati_last_message_at = False
                 lead.wati_last_status = False
                 continue
-
             lead.wati_message_count = Message.search_count([("conversation_id", "in", conversations.ids)])
-            latest = Message.search(
-                [("conversation_id", "in", conversations.ids)],
-                order="received_at desc, id desc",
-                limit=1,
-            )
+            latest = Message.search([("conversation_id", "in", conversations.ids)], order="received_at desc, id desc", limit=1)
             if latest:
                 lead.wati_last_message = latest.text or ""
                 lead.wati_last_message_at = latest.received_at
@@ -174,11 +154,7 @@ class CrmLeadWati(models.Model):
     def action_open_wati_inbox(self):
         self.ensure_one()
         conversation = self._wati_get_or_create_conversation()
-        return {
-            "type": "ir.actions.act_url",
-            "url": f"/wati/inbox?conversation_id={conversation.id}",
-            "target": "self",
-        }
+        return {"type": "ir.actions.act_url", "url": f"/wati/inbox?conversation_id={conversation.id}", "target": "self"}
 
     def action_open_wati_conversations(self):
         self.ensure_one()
@@ -191,3 +167,32 @@ class CrmLeadWati(models.Model):
             "domain": [("crm_lead_id", "=", self.id)],
             "context": {"create": False},
         }
+
+
+class WatiAutomationRuleCrmPresets(models.Model):
+    _inherit = "wati.automation.rule"
+
+    @api.model
+    def _wati_preset_definitions(self):
+        definitions = dict(super()._wati_preset_definitions())
+        definitions.update({
+            "crm_qualified": {
+                "label": _("CRM · عند التأهيل Qualified"),
+                "model": "crm.lead",
+                "field": "stage_id",
+                "target": "Qualified",
+                "recipient_fields": ("mobile", "phone"),
+                "recipient_path": "partner_id.phone",
+                "name": _("CRM · إرسال عند Qualified"),
+            },
+            "crm_won": {
+                "label": _("CRM · عند الفوز Won"),
+                "model": "crm.lead",
+                "field": "stage_id",
+                "target": "Won",
+                "recipient_fields": ("mobile", "phone"),
+                "recipient_path": "partner_id.phone",
+                "name": _("CRM · إرسال عند Won"),
+            },
+        })
+        return definitions
