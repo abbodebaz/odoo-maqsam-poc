@@ -1,8 +1,8 @@
-import requests
-
 from odoo import _, fields, models
 from odoo.exceptions import UserError
 
+from ..services.client import WatiClient
+from ..services.exceptions import WatiConfigurationError, WatiRequestError
 from .wati_automation_guard import (
     _APPROVED_STATES,
     _GENERIC_TEMPLATE_NAMES,
@@ -25,18 +25,13 @@ class WatiAutomationRuleChannelAuto(models.Model):
     _inherit = "wati.automation.rule"
 
     def _configured_channel(self):
-        """Return only an explicitly configured channel, not discovered metadata."""
         self.ensure_one()
         _endpoint, _token, configured_channel = self._wati_config()
         return (self.channel_number or configured_channel or "").strip()
 
     def _effective_channel(self):
-        """Prefer explicit config; otherwise reuse the channel learned from WATI."""
         self.ensure_one()
-        return (
-            self._configured_channel()
-            or (self.template_channel_number or "").strip()
-        )
+        return self._configured_channel() or (self.template_channel_number or "").strip()
 
     def _select_live_template(self, templates=None):
         self.ensure_one()
@@ -53,8 +48,6 @@ class WatiAutomationRuleChannelAuto(models.Model):
         if not candidates:
             return None, _("القالب «%s» غير موجود في حساب WATI المتصل حاليًا.") % wanted
 
-        # Keep only approved/live templates. A template with an explicit non-approved
-        # state must never pass pre-flight validation.
         statuses = [_template_status(item).strip() for item in candidates]
         approved = [
             item
@@ -75,7 +68,6 @@ class WatiAutomationRuleChannelAuto(models.Model):
 
         effective_channel = self._effective_channel()
         channel_aware = [item for item in candidates if _template_channel(item)]
-
         if effective_channel and channel_aware:
             matching_channel = [
                 item
@@ -97,8 +89,6 @@ class WatiAutomationRuleChannelAuto(models.Model):
             candidates = matching_channel
 
         if not effective_channel:
-            # No channel was configured. Learn it safely from WATI when the result is
-            # unambiguous instead of blocking the user up-front.
             channels = sorted({_template_channel(item) for item in candidates if _template_channel(item)})
             if len(channels) > 1:
                 return None, _(
@@ -108,12 +98,10 @@ class WatiAutomationRuleChannelAuto(models.Model):
             if len(channels) == 1:
                 candidates = [
                     item for item in candidates
-                    if not _template_channel(item) or _same_channel(_template_channel(item), channels[0])
+                    if not _template_channel(item)
+                    or _same_channel(_template_channel(item), channels[0])
                 ]
 
-        # Preserve a language selected previously. If nothing was selected and WATI
-        # exposes multiple explicit translations, require a deliberate choice rather
-        # than guessing and risking Meta error 132001.
         stored_language = (self.template_language or "").strip().casefold()
         if stored_language:
             language_matches = [
@@ -144,12 +132,10 @@ class WatiAutomationRuleChannelAuto(models.Model):
         self.ensure_one()
         if self.template_validation_state != "valid" or not self.template_verified_at:
             return False
-
         effective_channel = self._effective_channel()
         verified_channel = (self.template_channel_number or "").strip()
         if effective_channel and verified_channel and not _same_channel(verified_channel, effective_channel):
             return False
-
         cutoff = fields.Datetime.now() - __import__("datetime").timedelta(minutes=5)
         return self.template_verified_at >= cutoff
 
@@ -171,7 +157,6 @@ class WatiAutomationRuleChannelAuto(models.Model):
                 continue
             if effective_channel and channel and not _same_channel(channel, effective_channel):
                 continue
-
             values.append(
                 {
                     "rule_id": self.id,
@@ -185,10 +170,11 @@ class WatiAutomationRuleChannelAuto(models.Model):
             )
 
         if not values:
-            if effective_channel:
-                message = _("لم أجد أي قالب Approved صالح للقناة %s.") % effective_channel
-            else:
-                message = _("لم أجد أي قالب Approved في حساب WATI المتصل حاليًا.")
+            message = (
+                _("لم أجد أي قالب Approved صالح للقناة %s.") % effective_channel
+                if effective_channel
+                else _("لم أجد أي قالب Approved في حساب WATI المتصل حاليًا.")
+            )
             raise UserError(message)
 
         unique = {}
@@ -200,25 +186,18 @@ class WatiAutomationRuleChannelAuto(models.Model):
             )
             unique[key] = vals
         Choice.create(list(unique.values()))
-
         return {
             "type": "ir.actions.act_window",
             "name": _("اختر قالب WATI المعتمد"),
             "res_model": "wati.automation.template.choice",
             "view_mode": "list",
-            "views": [
-                (
-                    self.env.ref("wati_connector.view_wati_automation_template_choice_list").id,
-                    "list",
-                )
-            ],
+            "views": [(self.env.ref("wati_connector.view_wati_automation_template_choice_list").id, "list")],
             "domain": [("rule_id", "=", self.id)],
             "target": "new",
         }
 
     def _send_template(self, record, phone, custom_params):
         Log = self.env["wati.automation.log"].sudo()
-
         if not self._validate_template_live(force=False, raise_error=False):
             Log.create(
                 self._log_values(
@@ -230,19 +209,7 @@ class WatiAutomationRuleChannelAuto(models.Model):
             )
             return False
 
-        endpoint, token, _configured_channel = self._wati_config()
         effective_channel = self._effective_channel()
-        if not endpoint or not token:
-            Log.create(
-                self._log_values(
-                    record,
-                    "failed",
-                    phone=phone,
-                    error_message="إعدادات WATI API غير مكتملة.",
-                )
-            )
-            return False
-
         empty_params = [
             str(item.get("name") or "").strip()
             for item in custom_params
@@ -268,50 +235,33 @@ class WatiAutomationRuleChannelAuto(models.Model):
         body = {
             "template_name": self.template_name,
             "broadcast_name": broadcast_name,
-            "receivers": [
-                {
-                    "whatsappNumber": phone,
-                    "customParams": custom_params,
-                }
-            ],
+            "receivers": [{"whatsappNumber": phone, "customParams": custom_params}],
         }
-        # Some WATI tenants route through the API token and do not require an
-        # explicit channel_number. Include it only when WATI/configuration tells us one.
         if effective_channel:
             body["channel_number"] = effective_channel
 
         try:
-            response = requests.post(
-                f"{endpoint}/api/v1/sendTemplateMessages",
-                headers={
-                    "Authorization": f"Bearer {token}",
-                    "Accept": "application/json",
-                    "Content-Type": "application/json",
-                },
-                json=body,
-                timeout=25,
-            )
-        except requests.RequestException as exc:
+            response = WatiClient(self.env).send_template_messages(body)
+        except WatiConfigurationError:
             Log.create(
                 self._log_values(
                     record,
                     "failed",
                     phone=phone,
-                    error_message=f"تعذر الاتصال بـ WATI: {exc}",
+                    error_message="إعدادات WATI API غير مكتملة.",
                 )
             )
             return False
-
-        excerpt = (response.text or response.reason or "").strip()[:2000]
-        if not response.ok:
+        except WatiRequestError as exc:
+            detail = (exc.response_text or str(exc) or "").strip()[:2000]
             Log.create(
                 {
                     **self._log_values(
                         record,
                         "failed",
                         phone=phone,
-                        error_message=f"WATI رفض الإرسال ({response.status_code}).",
-                        response_excerpt=excerpt,
+                        error_message=str(exc),
+                        response_excerpt=detail,
                     ),
                     "broadcast_name": broadcast_name,
                     "delivery_status": "api_rejected",
@@ -319,6 +269,7 @@ class WatiAutomationRuleChannelAuto(models.Model):
             )
             return False
 
+        excerpt = (response.text or response.reason or "").strip()[:2000]
         try:
             payload = response.json()
         except ValueError:
@@ -347,12 +298,7 @@ class WatiAutomationRuleChannelAuto(models.Model):
         external_message_id = _extract_external_message_id(payload)
         Log.create(
             {
-                **self._log_values(
-                    record,
-                    "accepted",
-                    phone=phone,
-                    response_excerpt=excerpt,
-                ),
+                **self._log_values(record, "accepted", phone=phone, response_excerpt=excerpt),
                 "broadcast_name": broadcast_name,
                 "external_message_id": external_message_id or False,
                 "delivery_status": "accepted",
