@@ -1,17 +1,12 @@
 import os
-import threading
-import time
 
 from odoo import http
 from odoo.http import request
 
 from ..services.client import WatiClient
 from ..services.exceptions import WatiConfigurationError, WatiRequestError
+from ..services.idempotency import WatiIdempotency
 
-
-_FILE_GUARD = {}
-_FILE_GUARD_LOCK = threading.Lock()
-_FILE_GUARD_TTL = 120.0
 
 _IMAGE_TYPES = {"image/jpeg", "image/png"}
 _VIDEO_TYPES = {"video/mp4", "video/3gpp", "video/3gp"}
@@ -26,41 +21,16 @@ _DOCUMENT_TYPES = {
     "application/vnd.openxmlformats-officedocument.presentationml.presentation",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 }
-
 _IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png"}
 _VIDEO_EXTENSIONS = {".mp4", ".3gp", ".3gpp"}
 _AUDIO_EXTENSIONS = {".aac", ".m4a", ".mp3", ".amr", ".ogg", ".opus"}
 _DOCUMENT_EXTENSIONS = {".txt", ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx"}
-
 _LIMITS = {
     "image": 5 * 1024 * 1024,
     "video": 16 * 1024 * 1024,
     "audio": 16 * 1024 * 1024,
     "document": 100 * 1024 * 1024,
 }
-
-
-def _reserve_guard(user_id, request_id):
-    request_id = (request_id or "").strip()
-    if not request_id:
-        return "", True
-    now = time.monotonic()
-    key = f"{user_id}:{request_id}"
-    with _FILE_GUARD_LOCK:
-        expired = [item for item, created in _FILE_GUARD.items() if now - created > _FILE_GUARD_TTL]
-        for item in expired:
-            _FILE_GUARD.pop(item, None)
-        if key in _FILE_GUARD:
-            return key, False
-        _FILE_GUARD[key] = now
-    return key, True
-
-
-def _release_guard(key):
-    if not key:
-        return
-    with _FILE_GUARD_LOCK:
-        _FILE_GUARD.pop(key, None)
 
 
 def _file_category(filename, mimetype):
@@ -90,18 +60,20 @@ def _stream_size(upload):
 
 
 def _safe_filename(value):
-    name = os.path.basename(value or "").replace('"', "").replace("\r", "").replace("\n", "").replace("\x00", "").strip()
+    name = (
+        os.path.basename(value or "")
+        .replace('"', "")
+        .replace("\r", "")
+        .replace("\n", "")
+        .replace("\x00", "")
+        .strip()
+    )
     return name[:180] or "attachment"
 
 
 class WatiFileSendController(http.Controller):
 
-    @http.route(
-        "/wati/inbox/send-file",
-        type="http",
-        auth="user",
-        methods=["POST"],
-    )
+    @http.route("/wati/inbox/send-file", type="http", auth="user", methods=["POST"])
     def send_file(self, conversation_id=None, caption=None, request_id=None, **kwargs):
         try:
             conversation_id = int(conversation_id or 0)
@@ -110,7 +82,9 @@ class WatiFileSendController(http.Controller):
 
         conversation = request.env["wati.conversation"].browse(conversation_id).exists()
         if not conversation:
-            return request.make_json_response({"ok": False, "message": "المحادثة غير موجودة."}, status=404)
+            return request.make_json_response(
+                {"ok": False, "message": "المحادثة غير موجودة."}, status=404
+            )
 
         current_user = request.env.user
         if not conversation.assigned_user_id:
@@ -118,45 +92,81 @@ class WatiFileSendController(http.Controller):
                 {"ok": False, "message": "استلم المحادثة أولًا قبل إرسال مرفق."},
                 status=409,
             )
-        if conversation.assigned_user_id != current_user and not current_user.has_group("base.group_system"):
+        if conversation.assigned_user_id != current_user:
             return request.make_json_response(
-                {"ok": False, "message": f"المحادثة مستلمة بواسطة {conversation.assigned_user_id.name}. استخدم أخذ المحادثة أولًا."},
+                {
+                    "ok": False,
+                    "message": (
+                        f"المحادثة مستلمة بواسطة {conversation.assigned_user_id.name}. "
+                        "انقل المحادثة إليك أولًا."
+                    ),
+                },
                 status=409,
             )
         if not conversation.wa_id:
-            return request.make_json_response({"ok": False, "message": "لا يوجد رقم WhatsApp لهذه المحادثة."}, status=400)
+            return request.make_json_response(
+                {"ok": False, "message": "لا يوجد رقم WhatsApp لهذه المحادثة."},
+                status=400,
+            )
 
         upload = request.httprequest.files.get("file")
         if not upload or not upload.filename:
-            return request.make_json_response({"ok": False, "message": "اختر ملفًا أولًا."}, status=400)
+            return request.make_json_response(
+                {"ok": False, "message": "اختر ملفًا أولًا."}, status=400
+            )
 
         filename = _safe_filename(upload.filename)
         mimetype = (upload.mimetype or "application/octet-stream").split(";", 1)[0].strip().lower()
         category = _file_category(filename, mimetype)
         if not category:
             return request.make_json_response(
-                {"ok": False, "message": "نوع الملف غير مدعوم في WhatsApp. استخدم صورة JPG/PNG، فيديو MP4/3GP، صوت مدعوم، أو مستند PDF/Office/TXT."},
+                {
+                    "ok": False,
+                    "message": (
+                        "نوع الملف غير مدعوم في WhatsApp. استخدم صورة JPG/PNG، "
+                        "فيديو MP4/3GP، صوت مدعوم، أو مستند PDF/Office/TXT."
+                    ),
+                },
                 status=400,
             )
 
         size = _stream_size(upload)
         if size == 0:
-            return request.make_json_response({"ok": False, "message": "الملف فارغ ولا يمكن إرساله."}, status=400)
+            return request.make_json_response(
+                {"ok": False, "message": "الملف فارغ ولا يمكن إرساله."}, status=400
+            )
         limit = _LIMITS[category]
         if size > limit:
             return request.make_json_response(
-                {"ok": False, "message": f"حجم الملف أكبر من الحد المسموح لهذا النوع ({limit // (1024 * 1024)} MB)."},
+                {
+                    "ok": False,
+                    "message": (
+                        "حجم الملف أكبر من الحد المسموح لهذا النوع "
+                        f"({limit // (1024 * 1024)} MB)."
+                    ),
+                },
                 status=400,
             )
 
         caption = (caption or "").strip()
         if len(caption) > 1024:
-            return request.make_json_response({"ok": False, "message": "تعليق المرفق يجب ألا يتجاوز 1024 حرفًا."}, status=400)
-
-        guard_key, reserved = _reserve_guard(current_user.id, request_id)
-        if not reserved:
             return request.make_json_response(
-                {"ok": True, "message": "تم تجاهل إعادة إرسال مكررة.", "duplicate_suppressed": True},
+                {"ok": False, "message": "تعليق المرفق يجب ألا يتجاوز 1024 حرفًا."},
+                status=400,
+            )
+
+        idem = WatiIdempotency(request.env)
+        scope = f"outbound:file:user:{current_user.id}"
+        key = (request_id or "").strip() or idem.digest(
+            conversation.id, filename, size, caption
+        )
+        if not idem.acquire(scope, key, ttl_seconds=120):
+            return request.make_json_response(
+                {
+                    "ok": True,
+                    "message": "تم تجاهل إعادة إرسال مكررة.",
+                    "duplicate_suppressed": True,
+                },
                 status=200,
             )
 
@@ -170,10 +180,12 @@ class WatiFileSendController(http.Controller):
                 caption=caption,
             )
         except WatiConfigurationError:
-            _release_guard(guard_key)
-            return request.make_json_response({"ok": False, "message": "إعدادات WATI API غير مكتملة."}, status=503)
+            idem.release(scope, key)
+            return request.make_json_response(
+                {"ok": False, "message": "إعدادات WATI API غير مكتملة."}, status=503
+            )
         except WatiRequestError as exc:
-            _release_guard(guard_key)
+            idem.release(scope, key)
             detail = (exc.response_text or str(exc) or "").strip()[:600]
             status = exc.status_code or 502
             return request.make_json_response(
