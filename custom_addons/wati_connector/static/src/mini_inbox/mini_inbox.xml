@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="wati_connector.WatiMiniInbox">
+        <li t-if="state.enabled" class="o_wati_mini_systray">
+            <button class="o_wati_mini_toggle" type="button" title="محادثات WhatsApp السريعة" t-on-click="togglePanel">
+                <span class="o_wati_mini_icon" aria-hidden="true">W</span>
+                <span t-if="state.unreadTotal" class="o_wati_mini_badge" t-esc="state.unreadTotal &gt; 99 ? '99+' : state.unreadTotal"/>
+            </button>
+
+            <div t-if="state.open" class="o_wati_mini_panel" dir="rtl">
+                <div class="o_wati_mini_head">
+                    <div>
+                        <strong>محادثات واتساب</strong>
+                        <span>رد سريع بدون مغادرة Odoo</span>
+                    </div>
+                    <button type="button" class="o_wati_mini_close" title="إغلاق" t-on-click="closePanel">×</button>
+                </div>
+
+                <t t-if="!state.selectedId">
+                    <div class="o_wati_mini_toolbar">
+                        <label class="o_wati_mini_search">
+                            <span aria-hidden="true">⌕</span>
+                            <input type="search" placeholder="ابحث بالاسم أو الرقم..." t-model="state.query"/>
+                        </label>
+                        <button type="button" class="o_wati_mini_refresh" title="تحديث" t-on-click="manualRefresh" t-att-disabled="state.loading">↻</button>
+                    </div>
+
+                    <div class="o_wati_mini_list">
+                        <div t-if="state.loading &amp;&amp; !state.conversations.length" class="o_wati_mini_empty">جاري تحميل المحادثات...</div>
+                        <div t-elif="!filteredConversations.length" class="o_wati_mini_empty">لا توجد محادثات مطابقة.</div>
+                        <button t-foreach="filteredConversations" t-as="conversation" t-key="conversation.id" type="button" class="o_wati_mini_conversation" t-on-click="() => this.openConversation(conversation.id)">
+                            <span class="o_wati_mini_avatar" t-esc="initials(conversation.name)"/>
+                            <span class="o_wati_mini_conversation_main">
+                                <strong t-esc="conversation.name"/>
+                                <small class="o_wati_mini_phone" t-esc="conversation.wa_id"/>
+                                <span class="o_wati_mini_preview" t-esc="conversation.last_message || 'بدون رسائل'"/>
+                            </span>
+                            <span class="o_wati_mini_conversation_side">
+                                <small t-esc="formatTime(conversation.last_message_at)"/>
+                                <span t-if="conversation.unread_count" class="o_wati_mini_unread" t-esc="conversation.unread_count &gt; 99 ? '99+' : conversation.unread_count"/>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="o_wati_mini_footer">
+                        <a href="/wati/inbox" target="_blank" rel="noopener noreferrer">فتح صندوق الوارد الكامل ↗</a>
+                    </div>
+                </t>
+
+                <t t-else="">
+                    <div class="o_wati_mini_chat_head">
+                        <button type="button" class="o_wati_mini_back" title="رجوع" t-on-click="backToList">‹</button>
+                        <span class="o_wati_mini_avatar is-chat" t-esc="initials(state.selectedConversation?.name)"/>
+                        <div class="o_wati_mini_chat_identity">
+                            <strong t-esc="state.selectedConversation?.name || 'WhatsApp'"/>
+                            <span t-esc="state.selectedConversation?.wa_id || ''"/>
+                        </div>
+                        <a class="o_wati_mini_full_link" href="/wati/inbox" target="_blank" rel="noopener noreferrer" title="فتح صندوق الوارد الكامل">↗</a>
+                    </div>
+
+                    <div class="o_wati_mini_assignment" t-if="state.assignment">
+                        <t t-if="!state.assignment.wati_email">
+                            <span class="is-warning">أضف WATI Operator Email لحسابك قبل الرد.</span>
+                        </t>
+                        <t t-elif="state.assignment.assigned_to_me">
+                            <span class="is-mine">✓ مسندة لي</span>
+                        </t>
+                        <t t-elif="state.assignment.is_unassigned">
+                            <span>المحادثة غير مسندة</span>
+                            <button type="button" t-on-click="() => this.assignCurrent(false)" t-att-disabled="state.assigning">استلام المحادثة</button>
+                        </t>
+                        <t t-else="">
+                            <span>عند <strong t-esc="state.assignment.assigned_user_name || 'موظف آخر'"/></span>
+                            <button t-if="state.assignment.can_takeover" type="button" class="is-takeover" t-on-click="() => this.assignCurrent(true)" t-att-disabled="state.assigning">نقل إليّ</button>
+                        </t>
+                    </div>
+
+                    <div class="o_wati_mini_messages" t-ref="messages">
+                        <div t-if="state.chatLoading" class="o_wati_mini_empty">جاري تحميل الرسائل...</div>
+                        <div t-elif="!state.messages.length" class="o_wati_mini_empty">لا توجد رسائل في هذه المحادثة.</div>
+                        <div t-foreach="state.messages" t-as="message" t-key="message.id" t-att-class="'o_wati_mini_message ' + (message.direction === 'outbound' ? 'is-outbound' : 'is-inbound')">
+                            <div class="o_wati_mini_bubble">
+                                <span t-esc="message.text || messagePlaceholder(message.message_type)"/>
+                                <small t-esc="formatTime(message.received_at)"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form class="o_wati_mini_composer" t-on-submit.prevent="sendMessage">
+                        <textarea rows="1" maxlength="4096" placeholder="اكتب رسالة..." t-model="state.draft" t-on-keydown="onComposerKeydown" t-att-disabled="!canSend || state.sending"/>
+                        <button type="submit" t-att-disabled="!canSend || state.sending || !state.draft.trim()">
+                            <t t-if="state.sending">...</t>
+                            <t t-else="">➤</t>
+                        </button>
+                    </form>
+                </t>
+            </div>
+        </li>
+    </t>
+</templates>
