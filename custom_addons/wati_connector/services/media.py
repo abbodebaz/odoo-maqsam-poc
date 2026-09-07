@@ -46,6 +46,24 @@ class WatiMediaService:
                 return value.strip()
         return ""
 
+    @staticmethod
+    def _safe_relative_media_path(value):
+        """Return a safe WATI data/... path or an empty string.
+
+        Older outbound WATI status callbacks put the uploaded media path in
+        ``text`` (for example ``data/image/<uuid>.png``) instead of ``data``.
+        Treat only a conservative WATI-relative path as media metadata so a
+        normal customer text message can never become a file lookup.
+        """
+        value = str(value or "").strip()
+        if not value.startswith("data/"):
+            return ""
+        if ".." in value or "\\" in value or value.startswith("/"):
+            return ""
+        if any(char in value for char in ("\r", "\n", "\x00")):
+            return ""
+        return value[:1024]
+
     @classmethod
     def describe(cls, message):
         payload = cls._payload(message)
@@ -65,11 +83,26 @@ class WatiMediaService:
         file_name = cls._first(data_map, ("fileName", "filename", "name", "file_name"))
         media_path = cls._first(data_map, ("path", "filePath", "file", "mediaPath"))
 
+        # WATI outbound status callbacks can preserve the media location only
+        # in message.text. This is the exact format produced by WATI after a
+        # successful session-file upload.
+        if message_type in _MEDIA_TYPES and not media_path:
+            media_path = cls._safe_relative_media_path(message.text)
+
         if not file_name:
             candidate = source_url or media_path
             if candidate:
                 try:
-                    file_name = os.path.basename(urlparse(candidate).path) or ""
+                    if source_url and candidate == source_url:
+                        parsed = urlparse(candidate)
+                        query_name = ""
+                        if "fileName=" in (parsed.query or ""):
+                            from urllib.parse import parse_qs
+
+                            query_name = (parse_qs(parsed.query).get("fileName") or [""])[0]
+                        file_name = os.path.basename(query_name or parsed.path) or ""
+                    else:
+                        file_name = os.path.basename(candidate) or ""
                 except Exception:
                     file_name = ""
 
@@ -82,7 +115,9 @@ class WatiMediaService:
             if value and value not in message_refs:
                 message_refs.append(value)
 
-        has_media = message_type in _MEDIA_TYPES and bool(source_url or media_path or file_name or message_refs)
+        has_media = message_type in _MEDIA_TYPES and bool(
+            source_url or media_path or file_name or message_refs
+        )
         return {
             "type": message_type,
             "source_url": source_url,
@@ -200,7 +235,9 @@ class WatiMediaService:
         if response is None:
             raise WatiMediaNotFound()
 
-        content_type = (response.headers.get("Content-Type") or "application/octet-stream").split(";", 1)[0].strip()
+        content_type = (
+            response.headers.get("Content-Type") or "application/octet-stream"
+        ).split(";", 1)[0].strip()
         content = self._response_bytes(response)
         filename = descriptor["file_name"] or f"wati-{message.id}"
         safe_filename = filename.replace('"', "").replace("\r", "").replace("\n", "")
