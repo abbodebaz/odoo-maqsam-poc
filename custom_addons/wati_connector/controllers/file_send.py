@@ -1,12 +1,12 @@
 import os
 import threading
 import time
-from urllib.parse import quote
-
-import requests
 
 from odoo import http
 from odoo.http import request
+
+from ..services.client import WatiClient
+from ..services.exceptions import WatiConfigurationError, WatiRequestError
 
 
 _FILE_GUARD = {}
@@ -61,15 +61,6 @@ def _release_guard(key):
         return
     with _FILE_GUARD_LOCK:
         _FILE_GUARD.pop(key, None)
-
-
-def _wati_config():
-    params = request.env["ir.config_parameter"].sudo()
-    endpoint = (params.get_param("wati_connector.api_endpoint") or "").strip().rstrip("/")
-    token = (params.get_param("wati_connector.api_token") or "").strip()
-    if token.lower().startswith("bearer "):
-        token = token[7:].strip()
-    return endpoint, token
 
 
 def _file_category(filename, mimetype):
@@ -162,10 +153,6 @@ class WatiFileSendController(http.Controller):
         if len(caption) > 1024:
             return request.make_json_response({"ok": False, "message": "تعليق المرفق يجب ألا يتجاوز 1024 حرفًا."}, status=400)
 
-        endpoint, token = _wati_config()
-        if not endpoint or not token:
-            return request.make_json_response({"ok": False, "message": "إعدادات WATI API غير مكتملة."}, status=503)
-
         guard_key, reserved = _reserve_guard(current_user.id, request_id)
         if not reserved:
             return request.make_json_response(
@@ -175,30 +162,25 @@ class WatiFileSendController(http.Controller):
 
         try:
             upload.stream.seek(0)
-            response = requests.post(
-                f"{endpoint}/api/v1/sendSessionFile/{quote(conversation.wa_id, safe='')}",
-                headers={
-                    "Authorization": f"Bearer {token}",
-                    "Accept": "application/json",
-                },
-                params={"caption": caption} if caption else None,
-                files={"file": (filename, upload.stream, mimetype)},
-                timeout=90,
+            WatiClient(request.env).send_session_file(
+                conversation.wa_id,
+                filename=filename,
+                stream=upload.stream,
+                mimetype=mimetype,
+                caption=caption,
             )
-        except requests.RequestException as exc:
+        except WatiConfigurationError:
             _release_guard(guard_key)
-            return request.make_json_response({"ok": False, "message": f"تعذر إرسال المرفق إلى WATI: {exc}"}, status=502)
-
-        if not response.ok:
+            return request.make_json_response({"ok": False, "message": "إعدادات WATI API غير مكتملة."}, status=503)
+        except WatiRequestError as exc:
             _release_guard(guard_key)
-            detail = (response.text or response.reason or "").strip()[:600]
+            detail = (exc.response_text or str(exc) or "").strip()[:600]
+            status = exc.status_code or 502
             return request.make_json_response(
-                {"ok": False, "message": f"WATI رفض قبول المرفق ({response.status_code}): {detail}"},
-                status=400,
+                {"ok": False, "message": f"WATI رفض قبول المرفق ({status}): {detail}"},
+                status=status,
             )
 
-        # HTTP 2xx means WATI accepted the file request. The authoritative
-        # SENT/DELIVERED/READ/FAILED lifecycle comes from WATI webhooks.
         return request.make_json_response(
             {
                 "ok": True,
