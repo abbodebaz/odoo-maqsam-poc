@@ -6,7 +6,7 @@ on:
       - refactor/wati-commercial-ready
   pull_request:
     paths:
-      - 'custom_addons/wati_connector/**'
+      - 'custom_addons/wati_connector*/**'
       - '.github/workflows/wati-quality.yml'
 
 jobs:
@@ -22,31 +22,54 @@ jobs:
           python-version: '3.12'
 
       - name: Compile Python sources
-        run: python -m compileall -q custom_addons/wati_connector
+        run: |
+          for module in custom_addons/wati_connector*; do
+            [ -d "$module" ] || continue
+            python -m compileall -q "$module"
+          done
 
-      - name: Validate XML and manifest
+      - name: Validate XML, manifests and module boundaries
         run: |
           python - <<'PY'
           import ast
           from pathlib import Path
           import xml.etree.ElementTree as ET
 
-          module = Path('custom_addons/wati_connector')
-          manifest = module / '__manifest__.py'
-          data = ast.literal_eval(manifest.read_text(encoding='utf-8'))
-          assert data.get('installable') is True, 'Module must remain installable'
-          assert data.get('license'), 'Manifest must declare a license'
+          modules = sorted(
+              path for path in Path('custom_addons').glob('wati_connector*')
+              if path.is_dir() and (path / '__manifest__.py').exists()
+          )
+          if not modules:
+              raise SystemExit('No WATI modules found')
 
-          for xml_file in module.rglob('*.xml'):
-              try:
-                  ET.parse(xml_file)
-              except ET.ParseError as exc:
-                  raise SystemExit(f'Invalid XML: {xml_file}: {exc}') from exc
+          for module in modules:
+              manifest = module / '__manifest__.py'
+              data = ast.literal_eval(manifest.read_text(encoding='utf-8'))
+              assert data.get('installable') is True, f'{module.name} must remain installable'
+              assert data.get('license'), f'{module.name} must declare a license'
+              for xml_file in module.rglob('*.xml'):
+                  try:
+                      ET.parse(xml_file)
+                  except ET.ParseError as exc:
+                      raise SystemExit(f'Invalid XML: {xml_file}: {exc}') from exc
+              for relative in data.get('data', []):
+                  path = module / relative
+                  if not path.exists():
+                      raise SystemExit(f'{module.name} manifest references missing file: {relative}')
 
-          for relative in data.get('data', []):
-              path = module / relative
-              if not path.exists():
-                  raise SystemExit(f'Manifest references missing file: {relative}')
+          core = Path('custom_addons/wati_connector')
+          core_manifest = ast.literal_eval((core / '__manifest__.py').read_text(encoding='utf-8'))
+          forbidden_dependencies = {'crm', 'sale', 'sale_management', 'account', 'project', 'helpdesk', 'industry_fsm'}
+          leaked = forbidden_dependencies.intersection(core_manifest.get('depends', []))
+          if leaked:
+              raise SystemExit(f'Core leaks optional business dependencies: {sorted(leaked)}')
 
-          print('Static WATI validation passed')
+          forbidden_models = ('crm.lead', 'sale.order', 'account.move', 'project.task', 'helpdesk.ticket')
+          for source in list((core / 'models').rglob('*.py')) + list((core / 'views').rglob('*.xml')):
+              text = source.read_text(encoding='utf-8')
+              for model in forbidden_models:
+                  if model in text:
+                      raise SystemExit(f'Optional model {model} leaked into WATI core: {source}')
+
+          print('Static WATI validation passed for:', ', '.join(module.name for module in modules))
           PY
