@@ -3,33 +3,16 @@ import re
 import threading
 import time
 
-import requests
-
 from odoo import http
 from odoo.http import request
+
+from ..services.client import WatiClient
+from ..services.exceptions import WatiConfigurationError, WatiRequestError
 
 
 _TEMPLATE_SEND_GUARD = {}
 _TEMPLATE_SEND_GUARD_LOCK = threading.Lock()
 _TEMPLATE_SEND_GUARD_TTL = 180.0
-
-
-def _wati_config():
-    params = request.env["ir.config_parameter"].sudo()
-    endpoint = (params.get_param("wati_connector.api_endpoint") or "").strip().rstrip("/")
-    token = (params.get_param("wati_connector.api_token") or "").strip()
-    if token.lower().startswith("bearer "):
-        token = token[7:].strip()
-    channel = (params.get_param("wati_connector.channel_number") or "").strip()
-    return endpoint, token, channel
-
-
-def _headers(token):
-    return {
-        "Authorization": f"Bearer {token}",
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-    }
 
 
 def _reserve_guard(user_id, request_id):
@@ -158,21 +141,17 @@ class WatiTemplateController(http.Controller):
 
     @http.route("/wati/inbox/templates", type="http", auth="user", methods=["GET"], csrf=False)
     def templates(self, **kwargs):
-        endpoint, token, _channel = _wati_config()
-        if not endpoint or not token:
-            return request.make_json_response({"ok": False, "message": "إعدادات WATI API غير مكتملة."}, status=503)
         try:
-            response = requests.get(
-                f"{endpoint}/api/v1/getMessageTemplates",
-                headers=_headers(token),
-                params={"pageSize": 200, "pageNumber": 1},
-                timeout=25,
+            response = WatiClient(request.env).get_message_templates(page_size=200, page_number=1)
+        except WatiConfigurationError:
+            return request.make_json_response({"ok": False, "message": "إعدادات WATI API غير مكتملة."}, status=503)
+        except WatiRequestError as exc:
+            detail = (exc.response_text or str(exc) or "").strip()[:600]
+            status = exc.status_code or 502
+            return request.make_json_response(
+                {"ok": False, "message": f"WATI رفض جلب القوالب ({status}): {detail}"},
+                status=status,
             )
-        except requests.RequestException as exc:
-            return request.make_json_response({"ok": False, "message": f"تعذر الاتصال بـ WATI: {exc}"}, status=502)
-        if not response.ok:
-            detail = (response.text or response.reason or "").strip()[:600]
-            return request.make_json_response({"ok": False, "message": f"WATI رفض جلب القوالب ({response.status_code}): {detail}"}, status=response.status_code)
         try:
             payload = response.json()
         except ValueError:
@@ -226,11 +205,7 @@ class WatiTemplateController(http.Controller):
         if not reserved:
             return request.make_json_response({"ok": True, "duplicate_suppressed": True, "message": "تم تجاهل إعادة إرسال مكررة."}, status=200)
 
-        endpoint, token, configured_channel = _wati_config()
-        if not endpoint or not token:
-            _release_guard(guard_key)
-            return request.make_json_response({"ok": False, "message": "إعدادات WATI API غير مكتملة."}, status=503)
-
+        client = WatiClient(request.env)
         broadcast_name = f"odoo_{template_name}_{int(time.time())}"
         body = {
             "template_name": template_name,
@@ -242,24 +217,22 @@ class WatiTemplateController(http.Controller):
                 }
             ],
         }
-        effective_channel = (channel_number or configured_channel or "").strip()
+        effective_channel = (channel_number or client.config.channel_number or "").strip()
         if effective_channel:
             body["channel_number"] = effective_channel
 
         try:
-            response = requests.post(
-                f"{endpoint}/api/v1/sendTemplateMessages",
-                headers=_headers(token),
-                json=body,
-                timeout=30,
+            client.send_template_messages(body)
+        except WatiConfigurationError:
+            _release_guard(guard_key)
+            return request.make_json_response({"ok": False, "message": "إعدادات WATI API غير مكتملة."}, status=503)
+        except WatiRequestError as exc:
+            _release_guard(guard_key)
+            detail = (exc.response_text or str(exc) or "").strip()[:1000]
+            status = exc.status_code or 502
+            return request.make_json_response(
+                {"ok": False, "message": f"WATI رفض إرسال القالب ({status}): {detail}"},
+                status=status,
             )
-        except requests.RequestException as exc:
-            _release_guard(guard_key)
-            return request.make_json_response({"ok": False, "message": f"تعذر إرسال القالب إلى WATI: {exc}"}, status=502)
-
-        if not response.ok:
-            _release_guard(guard_key)
-            detail = (response.text or response.reason or "").strip()[:1000]
-            return request.make_json_response({"ok": False, "message": f"WATI رفض إرسال القالب ({response.status_code}): {detail}"}, status=response.status_code)
 
         return request.make_json_response({"ok": True, "message": "تم إرسال القالب إلى WATI."}, status=200)
