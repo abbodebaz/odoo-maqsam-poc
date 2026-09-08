@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_automation_rule_form_template_mapper" model="ir.ui.view">
+        <field name="name">wati.automation.rule.form.template.mapper</field>
+        <field name="model">wati.automation.rule</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_automation_rule_form_builder"/>
+        <field name="priority">139</field>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('wati_template_picker_box')]" position="replace">
+                <div class="wati_template_picker_box wati_template_picker_smart">
+                    <div class="wati_template_picker_intro">
+                        <span class="wati_template_step_label">1 · اختر القالب</span>
+                        <strong>أي رسالة تريد إرسالها؟</strong>
+                        <small>اختر قالبًا معتمدًا من حساب WATI، وسنجلب نصه ومتغيراته تلقائيًا.</small>
+                    </div>
+                    <div class="wati_template_field">
+                        <span class="wati_section_label">القالب المختار</span>
+                        <field name="template_name" nolabel="1" placeholder="لم يتم اختيار قالب بعد" readonly="1"/>
+                    </div>
+                    <div class="wati_template_picker_actions">
+                        <button name="action_pick_template" type="object" string="اختيار قالب من WATI" icon="fa-whatsapp" class="btn-primary"/>
+                        <button name="action_fetch_template_params" type="object" string="إعادة المزامنة" icon="fa-refresh"
+                                class="btn-secondary" invisible="not template_name"/>
+                    </div>
+                </div>
+            </xpath>
+
+            <xpath expr="//div[hasclass('wati_template_preview')]" position="replace">
+                <div class="wati_template_preview wati_template_preview_smart" invisible="not template_body">
+                    <div class="wati_template_preview_head">
+                        <div>
+                            <span class="wati_template_step_label">معاينة الرسالة</span>
+                            <strong><field name="template_name" nolabel="1" readonly="1"/></strong>
+                        </div>
+                        <div class="wati_template_variable_count">
+                            <field name="template_parameter_count" nolabel="1" readonly="1"/>
+                            <span>متغيرات</span>
+                        </div>
+                    </div>
+                    <div class="wati_template_message_bubble">
+                        <field name="template_body" nolabel="1" readonly="1"/>
+                    </div>
+                </div>
+            </xpath>
+
+            <xpath expr="//div[hasclass('wati_mapping_head')]" position="replace">
+                <div class="wati_mapping_head wati_mapping_head_smart">
+                    <div>
+                        <span class="wati_template_step_label">2 · اربط البيانات</span>
+                        <h3>ماذا نضع مكان متغيرات الرسالة؟</h3>
+                        <p>النظام يجرب الربط الواضح تلقائيًا. عدّل فقط المتغيرات التي تحتاج اختيارًا منك.</p>
+                    </div>
+                    <div class="wati_mapping_actions" invisible="not template_parameter_count">
+                        <div class="wati_mapping_progress">
+                            <field name="template_mapping_state" widget="badge" readonly="1"
+                                   decoration-success="template_mapping_state == 'ready'"
+                                   decoration-warning="template_mapping_state == 'partial'"/>
+                            <field name="template_mapping_progress" nolabel="1" readonly="1"/>
+                        </div>
+                        <button name="action_auto_map_parameters" type="object" string="اقتراح الربط تلقائيًا" icon="fa-magic"
+                                class="btn-secondary"/>
+                    </div>
+                </div>
+            </xpath>
+
+            <xpath expr="//field[@name='parameter_ids']" position="replace">
+                <div class="wati_no_template_variables" invisible="template_parameter_count != 0 or not template_name">
+                    <span class="wati_no_template_variables_icon">✓</span>
+                    <div>
+                        <strong>هذا القالب لا يحتاج بيانات متغيرة</strong>
+                        <small>الرسالة جاهزة كما هي، ويمكنك الانتقال مباشرة للمراجعة.</small>
+                    </div>
+                </div>
+
+                <div class="wati_parameter_mapper" invisible="not template_parameter_count">
+                    <field name="parameter_ids" nolabel="1">
+                        <list editable="bottom" create="false" delete="false" string="بيانات الرسالة">
+                            <field name="sequence" column_invisible="True"/>
+                            <field name="template_variable_label" string="مكانه في الرسالة" readonly="1"/>
+                            <field name="param_name" column_invisible="True"/>
+                            <field name="source_type" string="القيمة تأتي من"/>
+                            <field name="model_id" column_invisible="True"/>
+                            <field name="source_field_id" string="اختر بيانات Odoo"
+                                   options="{'no_create': True, 'no_open': True}"
+                                   invisible="source_type != 'field'"/>
+                            <field name="static_value" string="القيمة"
+                                   invisible="source_type != 'static'"/>
+                            <field name="source_path" string="مسار متقدم" optional="hide"
+                                   groups="base.group_system" invisible="source_type != 'field'"/>
+                            <field name="mapping_summary" string="الحالة" readonly="1"/>
+                        </list>
+                    </field>
+                    <div class="wati_parameter_mapper_hint">
+                        <span>💡</span>
+                        <p><strong>ما تحتاج تضيف أو تحذف أسطر.</strong> هذه القائمة تأتي مباشرة من قالب WATI، وأي تغيير في القالب يتم مزامنته تلقائيًا بدون تكرار.</p>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>
