@@ -28,3 +28,4 @@ from . import wati_interactive_reply
 from . import wati_automation_template_invariant
 from . import wati_automation_template_integrity
 from . import wati_automation_review
+from . import wati_automation_template_contract
