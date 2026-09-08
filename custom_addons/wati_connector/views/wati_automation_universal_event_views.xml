@@ -6,16 +6,16 @@
         <field name="inherit_id" ref="wati_connector.view_wati_automation_rule_form_builder"/>
         <field name="priority">130</field>
         <field name="arch" type="xml">
-            <xpath expr="//div[@class='wati_presets_section']" position="replace"/>
+            <xpath expr="//div[hasclass('wati_presets_section')]" position="replace"/>
 
-            <xpath expr="//div[@class='wati_builder_step'][@invisible=&quot;setup_step != 'trigger'&quot;]/div[@class='wati_builder_step_head']/div/h2" position="replace">
+            <xpath expr="//div[hasclass('wati_builder_step')][@invisible=&quot;setup_step != 'trigger'&quot;]/div[hasclass('wati_builder_step_head')]/div/h2" position="replace">
                 <h2>متى تريد أن تبدأ الأتمتة؟</h2>
             </xpath>
-            <xpath expr="//div[@class='wati_builder_step'][@invisible=&quot;setup_step != 'trigger'&quot;]/div[@class='wati_builder_step_head']/div/p" position="replace">
+            <xpath expr="//div[hasclass('wati_builder_step')][@invisible=&quot;setup_step != 'trigger'&quot;]/div[hasclass('wati_builder_step_head')]/div/p" position="replace">
                 <p>عرّف الحدث بثلاثة أسئلة بسيطة. الخيارات تُقرأ مباشرة من Odoo المثبت عندك.</p>
             </xpath>
 
-            <xpath expr="//div[@class='wati_trigger_builder']" position="replace">
+            <xpath expr="//div[hasclass('wati_trigger_builder')]" position="replace">
                 <div class="wati_universal_event_builder">
                     <div class="wati_universal_event_intro">
                         <div>
@@ -97,7 +97,7 @@
                 </div>
             </xpath>
 
-            <xpath expr="//div[@class='wati_builder_hint']" position="replace">
+            <xpath expr="//div[hasclass('wati_builder_hint')]" position="replace">
                 <div class="wati_builder_hint wati_universal_hint">
                     هذا البناء يعتمد على النماذج والحقول الموجودة فعليًا في بيئة Odoo، بدون ربط الإضافة باسم تطبيق أعمال محدد.
                 </div>
