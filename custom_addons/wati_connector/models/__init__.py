@@ -26,3 +26,4 @@ from . import wati_automation_lifecycle
 from . import wati_media_hardening
 from . import wati_interactive_reply
 from . import wati_automation_template_invariant
+from . import wati_automation_template_integrity
