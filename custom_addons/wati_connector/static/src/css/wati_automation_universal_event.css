@@ -89,7 +89,8 @@
 }
 
 .wati_event_field_box .o_field_widget,
-.wati_event_field_box .o_input {
+.wati_event_field_box .o_input,
+.wati_event_field_box select {
     width: 100% !important;
 }
 
@@ -112,7 +113,7 @@
 
 .wati_event_condition_grid {
     display: grid;
-    grid-template-columns: 190px 1fr auto;
+    grid-template-columns: 190px 1fr;
     gap: 9px;
     align-items: center;
 }
@@ -121,10 +122,12 @@
     min-width: 0;
 }
 
-.wati_event_value_picker {
-    min-height: 40px;
-    border-radius: 11px !important;
-    white-space: nowrap;
+.wati_smart_target_select,
+.wati_smart_target_input {
+    min-height: 34px;
+    border: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
 }
 
 .wati_event_live_summary {
@@ -176,10 +179,6 @@
 
     .wati_event_condition_grid {
         grid-template-columns: 1fr;
-    }
-
-    .wati_event_value_picker {
-        width: 100%;
     }
 }
 
