@@ -139,12 +139,11 @@
                 <filter name="failed" string="فشلت" domain="[('status', '=', 'failed')]"/>
                 <filter name="test" string="تجريبية" domain="[('is_test', '=', True)]"/>
                 <filter name="live" string="فعلية" domain="[('is_test', '=', False)]"/>
-                <group expand="0" string="تجميع حسب">
-                    <filter name="group_rule" string="الأتمتة" context="{'group_by': 'rule_id'}"/>
-                    <filter name="group_status" string="الحالة" context="{'group_by': 'status'}"/>
-                    <filter name="group_template" string="القالب" context="{'group_by': 'template_name'}"/>
-                    <filter name="group_day" string="اليوم" context="{'group_by': 'create_date:day'}"/>
-                </group>
+                <separator/>
+                <filter name="group_rule" string="تجميع: الأتمتة" context="{'group_by': 'rule_id'}"/>
+                <filter name="group_status" string="تجميع: الحالة" context="{'group_by': 'status'}"/>
+                <filter name="group_template" string="تجميع: القالب" context="{'group_by': 'template_name'}"/>
+                <filter name="group_day" string="تجميع: اليوم" context="{'group_by': 'create_date:day'}"/>
             </search>
         </field>
     </record>
