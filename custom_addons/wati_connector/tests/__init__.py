@@ -3,3 +3,4 @@ from . import test_phone_utils
 from . import test_webhook_quality
 from . import test_smart_target
 from . import test_template_params
+from . import test_template_switch
