@@ -11,6 +11,7 @@ from . import wati_automation_improvements
 from . import wati_automation_ux
 from . import wati_automation_draft
 from . import wati_automation_builder
+from . import wati_automation_smart_target
 from . import wati_name_guard
 from . import wati_automation_guard
 from . import wati_automation_channel_auto
