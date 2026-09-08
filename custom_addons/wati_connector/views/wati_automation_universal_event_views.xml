@@ -19,6 +19,7 @@
                 <div class="wati_universal_event_builder">
                     <field name="available_app_menu_ids" invisible="1"/>
                     <field name="available_model_ids" invisible="1"/>
+                    <field name="smart_target_metadata" invisible="1"/>
 
                     <div class="wati_universal_event_intro">
                         <div>
@@ -111,21 +112,18 @@
                         <span class="wati_event_question_no">5</span>
                         <div class="wati_event_question_body">
                             <div class="wati_event_question_title">ما الشرط والقيمة؟</div>
-                            <div class="wati_event_question_help">حدد متى نعتبر تغير الحقل حدثًا يستحق إرسال الرسالة.</div>
+                            <div class="wati_event_question_help">القيمة تتكيّف تلقائيًا مع نوع الحقل: قائمة جاهزة إذا كانت القيم معروفة، أو إدخال مباشر إذا كانت مفتوحة.</div>
                             <div class="wati_event_condition_grid">
                                 <div class="wati_event_field_box wati_event_operator_box">
                                     <field name="condition_operator" nolabel="1"/>
                                 </div>
                                 <div class="wati_event_field_box"
                                      invisible="condition_operator in ('is_set', 'is_not_set')">
-                                    <field name="target_value" nolabel="1" placeholder="اكتب أو اختر القيمة المطلوبة"/>
+                                    <field name="target_value"
+                                           nolabel="1"
+                                           widget="wati_smart_target"
+                                           placeholder="اختر أو اكتب القيمة المطلوبة"/>
                                 </div>
-                                <button name="action_pick_target_value"
-                                        type="object"
-                                        string="اختيار من القيم"
-                                        icon="fa-chevron-down"
-                                        class="btn-secondary wati_event_value_picker"
-                                        invisible="condition_operator in ('is_set', 'is_not_set')"/>
                             </div>
                         </div>
                     </div>
