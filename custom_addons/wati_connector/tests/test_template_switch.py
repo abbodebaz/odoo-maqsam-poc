@@ -47,3 +47,26 @@ class TestWatiTemplateSwitch(TransactionCase):
 
         self.rule.action_fetch_template_params()
         self.assertEqual(self.rule.parameter_ids.mapped("param_name"), ["1"])
+
+    def test_direct_template_write_never_keeps_previous_rows(self):
+        self._choice("first", "Hi {{1}} {{2}}", ["first", "second"]).action_select()
+        self.assertEqual(len(self.rule.parameter_ids), 2)
+
+        self.rule.write({
+            "template_name": "second",
+            "template_body": "Only {{1}}",
+            "template_param_names_json": json.dumps(["1"]),
+        })
+        self.assertEqual(self.rule.parameter_ids.mapped("param_name"), ["1"])
+
+    def test_upgrade_repair_cleans_saved_legacy_rows(self):
+        self._choice("one_var", "Hello {{1}}", ["1"]).action_select()
+        self.env["wati.automation.parameter"].create([
+            {"rule_id": self.rule.id, "param_name": "services"},
+            {"rule_id": self.rule.id, "param_name": "serdate"},
+            {"rule_id": self.rule.id, "param_name": "sertime"},
+        ])
+        self.assertEqual(len(self.rule.parameter_ids), 4)
+
+        self.env["wati.automation.rule"]._repair_template_parameter_invariants()
+        self.assertEqual(self.rule.parameter_ids.mapped("param_name"), ["1"])
