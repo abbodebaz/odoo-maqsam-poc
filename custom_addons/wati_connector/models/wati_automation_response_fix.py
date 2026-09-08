@@ -20,13 +20,6 @@ _FAILED_STATUS_WORDS = {
 }
 
 
-def _truthy_collection(value):
-    """Return True only when WATI actually returned one or more invalid items."""
-    if value in (None, False, "", [], {}, ()):
-        return False
-    return bool(value)
-
-
 def _meaningful_text(value):
     if value in (None, False):
         return ""
@@ -36,17 +29,36 @@ def _meaningful_text(value):
     return text
 
 
+def _truthy_collection(value):
+    """Return True only when WATI returned real failure content.
+
+    WATI can return an ``errors`` object that is structurally non-empty while
+    every value inside it is empty, for example::
+
+        {"error": "", "invalidWhatsappNumbers": [],
+         "invalidCustomParameters": []}
+
+    Treating ``bool(errors)`` as failure creates a false-negative log even though
+    WATI accepted the message. Inspect nested values recursively instead.
+    """
+    if value in (None, False, "", [], {}, ()):
+        return False
+    if isinstance(value, dict):
+        return any(_truthy_collection(item) for item in value.values())
+    if isinstance(value, (list, tuple, set)):
+        return any(_truthy_collection(item) for item in value)
+    if isinstance(value, str):
+        return bool(_meaningful_text(value))
+    return bool(value)
+
+
 def _wati_payload_has_hard_failure(payload):
-    """Interpret WATI's v1 sendTemplateMessages response conservatively.
+    """Interpret WATI's sendTemplateMessages response conservatively.
 
-    Some WATI tenants return HTTP 200 together with `result: false` even though
-    the request has been accepted and the message is queued/sent. Therefore a
-    bare `result: false` is NOT sufficient evidence of failure.
-
-    A response is considered an immediate API failure only when it contains
-    concrete failure evidence: a non-empty error, invalid recipient/parameter
-    collections, explicit `success: false`, or an explicit failed status.
-    Final delivery is still determined by WATI webhooks.
+    A successful HTTP response is API acceptance unless WATI supplies concrete
+    failure evidence. A bare ``result: false`` or an ``errors`` object whose
+    nested values are all empty is not failure evidence. Final delivery/read/
+    failure remains asynchronous and is reconciled through WATI webhooks.
     """
     if not isinstance(payload, dict):
         return False
@@ -82,9 +94,7 @@ def _wati_payload_has_hard_failure(payload):
         if text in _FAILED_STATUS_WORDS:
             return True
 
-    # Check common nested envelopes without treating a bare boolean `result`
-    # as failure evidence.
-    for key in ("data", "response"):
+    for key in ("data", "response", "errors"):
         nested = payload.get(key)
         if isinstance(nested, dict) and _wati_payload_has_hard_failure(nested):
             return True
@@ -96,11 +106,7 @@ class WatiAutomationResponseFix(models.Model):
     _inherit = "wati.automation.rule"
 
     def _send_template(self, record, phone, custom_params):
-        """Send a template and classify HTTP 200 as accepted unless truly invalid.
-
-        WATI documents 2xx as a successful API acceptance. Delivery/failure after
-        acceptance is asynchronous and must be reconciled by webhooks.
-        """
+        """Send and distinguish API acceptance from final WhatsApp delivery."""
         self.ensure_one()
         Log = self.env["wati.automation.log"].sudo()
 
@@ -209,9 +215,6 @@ class WatiAutomationResponseFix(models.Model):
             )
             return False
 
-        # HTTP 200 means accepted by WATI, not delivered yet. A bare
-        # `result:false` with empty validation arrays is kept as accepted and the
-        # final state is reconciled by Delivered/Read/Failed webhooks.
         external_message_id = _extract_external_message_id(payload)
         Log.create(
             {
@@ -229,7 +232,7 @@ class WatiAutomationResponseFix(models.Model):
 
         if isinstance(payload, dict) and payload.get("result") is False:
             _logger.info(
-                "WATI automation %s accepted HTTP 200 despite result=false; awaiting webhook. broadcast=%s",
+                "WATI automation %s accepted HTTP 2xx despite result=false; awaiting webhook. broadcast=%s",
                 self.id,
                 broadcast_name,
             )
