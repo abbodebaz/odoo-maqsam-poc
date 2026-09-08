@@ -1,5 +1,7 @@
 from odoo import api, fields, models
 
+from .wati_automation_improvements import _dedupe_names
+
 
 def _is_parameter_mapped(line):
     return bool(
@@ -36,6 +38,40 @@ class WatiAutomationRuleTemplateMapper(models.Model):
         string="تقدم ربط القالب",
         compute="_compute_template_mapping_progress",
     )
+
+    def _sync_template_parameters(self, param_names):
+        """Reconcile template rows safely while preserving same-name mappings."""
+        self.ensure_one()
+        desired = _dedupe_names(param_names)
+        desired_keys = {name.casefold() for name in desired}
+        existing_by_key = {}
+        stale_or_duplicate = self.env["wati.automation.parameter"]
+
+        for line in self.parameter_ids.sorted(lambda item: (item.sequence, item.id)):
+            key = (line.param_name or "").strip().casefold()
+            if not key or key not in desired_keys or key in existing_by_key:
+                stale_or_duplicate |= line
+                continue
+            existing_by_key[key] = line
+
+        if stale_or_duplicate:
+            stale_or_duplicate.unlink()
+
+        created = 0
+        for index, name in enumerate(desired, start=1):
+            key = name.casefold()
+            line = existing_by_key.get(key)
+            vals = {"param_name": name, "sequence": index * 10}
+            if line:
+                line.write(vals)
+            else:
+                vals.update({
+                    "rule_id": self.id,
+                    "source_type": "field",
+                })
+                self.env["wati.automation.parameter"].create(vals)
+                created += 1
+        return created
 
     @api.depends(
         "parameter_ids",
