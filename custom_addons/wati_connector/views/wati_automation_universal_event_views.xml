@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_automation_rule_form_universal_event" model="ir.ui.view">
+        <field name="name">wati.automation.rule.form.universal.event</field>
+        <field name="model">wati.automation.rule</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_automation_rule_form_builder"/>
+        <field name="priority">130</field>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@class='wati_presets_section']" position="replace"/>
+
+            <xpath expr="//div[@class='wati_builder_step'][@invisible=&quot;setup_step != 'trigger'&quot;]/div[@class='wati_builder_step_head']/div/h2" position="replace">
+                <h2>متى تريد أن تبدأ الأتمتة؟</h2>
+            </xpath>
+            <xpath expr="//div[@class='wati_builder_step'][@invisible=&quot;setup_step != 'trigger'&quot;]/div[@class='wati_builder_step_head']/div/p" position="replace">
+                <p>عرّف الحدث بثلاثة أسئلة بسيطة. الخيارات تُقرأ مباشرة من Odoo المثبت عندك.</p>
+            </xpath>
+
+            <xpath expr="//div[@class='wati_trigger_builder']" position="replace">
+                <div class="wati_universal_event_builder">
+                    <div class="wati_universal_event_intro">
+                        <div>
+                            <span class="wati_section_label">ابنِ الحدث</span>
+                            <h3>لا تحتاج تعرف أسماء Odoo التقنية</h3>
+                            <p>اختر مكان الحدث، ثم المعلومة التي نراقبها، ثم الشرط. أي موديل أعمال مثبت أو مخصص في Odoo يظهر تلقائيًا.</p>
+                        </div>
+                        <span class="wati_dynamic_badge">ديناميكي من Odoo</span>
+                    </div>
+
+                    <div class="wati_event_question">
+                        <span class="wati_event_question_no">1</span>
+                        <div class="wati_event_question_body">
+                            <div class="wati_event_question_title">أين يحدث هذا؟</div>
+                            <div class="wati_event_question_help">اختر نوع السجل أو جزء العمل الذي تريد مراقبته.</div>
+                            <div class="wati_event_field_box">
+                                <field name="model_id"
+                                       nolabel="1"
+                                       domain="[('transient', '=', False), ('abstract', '=', False)]"
+                                       options="{'no_create': True, 'no_open': True}"
+                                       placeholder="ابحث في النماذج الموجودة داخل Odoo..."/>
+                            </div>
+                            <div class="wati_event_meta">القائمة تأتي من النماذج المثبتة فعليًا؛ إذا أضيف موديل جديد لاحقًا يظهر هنا تلقائيًا.</div>
+                        </div>
+                    </div>
+
+                    <div class="wati_event_connector" invisible="not model_id">
+                        <span>↓</span>
+                    </div>
+
+                    <div class="wati_event_question" invisible="not model_id">
+                        <span class="wati_event_question_no">2</span>
+                        <div class="wati_event_question_body">
+                            <div class="wati_event_question_title">ما المعلومة التي نراقبها؟</div>
+                            <div class="wati_event_question_help">ستظهر فقط الحقول المحفوظة التابعة للسجل الذي اخترته.</div>
+                            <div class="wati_event_field_box">
+                                <field name="trigger_field_id"
+                                       nolabel="1"
+                                       options="{'no_create': True, 'no_open': True}"
+                                       placeholder="اختر الحقل الذي سيبدأ الحدث..."/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wati_event_connector" invisible="not trigger_field_id">
+                        <span>↓</span>
+                    </div>
+
+                    <div class="wati_event_question" invisible="not trigger_field_id">
+                        <span class="wati_event_question_no">3</span>
+                        <div class="wati_event_question_body">
+                            <div class="wati_event_question_title">متى نعتبر الحدث تحقق؟</div>
+                            <div class="wati_event_question_help">اختر طريقة المقارنة، ثم القيمة المطلوبة إذا كان الشرط يحتاج قيمة.</div>
+                            <div class="wati_event_condition_grid">
+                                <div class="wati_event_field_box wati_event_operator_box">
+                                    <field name="condition_operator" nolabel="1"/>
+                                </div>
+                                <div class="wati_event_field_box"
+                                     invisible="condition_operator in ('is_set', 'is_not_set')">
+                                    <field name="target_value" nolabel="1" placeholder="اكتب أو اختر القيمة المطلوبة"/>
+                                </div>
+                                <button name="action_pick_target_value"
+                                        type="object"
+                                        string="اختيار من القيم"
+                                        icon="fa-chevron-down"
+                                        class="btn-secondary wati_event_value_picker"
+                                        invisible="condition_operator in ('is_set', 'is_not_set')"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wati_event_live_summary" invisible="not model_id">
+                        <span class="wati_event_live_icon">⚡</span>
+                        <div>
+                            <strong>معاينة الحدث</strong>
+                            <field name="event_summary" nolabel="1" readonly="1"/>
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+
+            <xpath expr="//div[@class='wati_builder_hint']" position="replace">
+                <div class="wati_builder_hint wati_universal_hint">
+                    هذا البناء يعتمد على النماذج والحقول الموجودة فعليًا في بيئة Odoo، بدون ربط الإضافة باسم تطبيق أعمال محدد.
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>
