@@ -14,6 +14,7 @@ from . import wati_automation_builder
 from . import wati_automation_smart_target
 from . import wati_automation_recipient
 from . import wati_automation_template_mapper
+from . import wati_automation_template_truth
 from . import wati_name_guard
 from . import wati_automation_guard
 from . import wati_automation_channel_auto
