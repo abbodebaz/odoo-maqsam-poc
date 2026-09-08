@@ -1,7 +1,5 @@
 import logging
 
-from psycopg2.extras import execute_values
-
 from odoo import api, models
 
 from .wati_webhook_monitor import (
@@ -15,6 +13,7 @@ from .wati_webhook_monitor import (
 
 
 _logger = logging.getLogger(__name__)
+_UPDATE_CHUNK_SIZE = 500
 
 
 class WatiWebhookEventMonitorFastBackfill(models.Model):
@@ -26,9 +25,9 @@ class WatiWebhookEventMonitorFastBackfill(models.Model):
 
         Runtime callbacks are enriched one at a time for correctness. Historical
         upgrades can contain thousands of audit rows, so this path preloads exact
-        identifiers once, classifies events in memory, then sends set-based UPDATE
-        statements in chunks. The number of database round trips stays bounded as
-        history grows.
+        identifiers once, classifies events in memory, then updates rows through
+        VALUES-backed SQL in bounded chunks. No per-event relation query or update
+        is issued during the historical migration.
         """
         events = self.sudo().search([], order="received_at asc, id asc")
 
@@ -142,10 +141,14 @@ class WatiWebhookEventMonitorFastBackfill(models.Model):
                 )
             )
 
-        if rows:
-            execute_values(
-                self.env.cr._obj,
-                """
+        for offset in range(0, len(rows), _UPDATE_CHUNK_SIZE):
+            chunk = rows[offset : offset + _UPDATE_CHUNK_SIZE]
+            placeholders = ",".join(
+                ["(%s,%s,%s,%s,%s,%s,%s,%s,%s)"] * len(chunk)
+            )
+            params = [value for row in chunk for value in row]
+            self.env.cr.execute(
+                f"""
                 UPDATE wati_webhook_event AS event
                    SET event_key = values.event_key,
                        is_duplicate_variant = values.is_duplicate_variant::boolean,
@@ -155,7 +158,7 @@ class WatiWebhookEventMonitorFastBackfill(models.Model):
                        linked_message_id = values.linked_message_id::integer,
                        linked_conversation_id = values.linked_conversation_id::integer,
                        linked_automation_log_id = values.linked_automation_log_id::integer
-                  FROM (VALUES %s) AS values(
+                  FROM (VALUES {placeholders}) AS values(
                        event_key,
                        is_duplicate_variant,
                        duplicate_of_id,
@@ -168,9 +171,10 @@ class WatiWebhookEventMonitorFastBackfill(models.Model):
                   )
                  WHERE event.id = values.event_id::integer
                 """,
-                rows,
-                page_size=1000,
+                params,
             )
+
+        if rows:
             events.invalidate_recordset(
                 [
                     "event_key",
