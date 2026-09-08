@@ -99,7 +99,7 @@
 
             <xpath expr="//div[@class='wati_builder_hint']" position="replace">
                 <div class="wati_builder_hint wati_universal_hint">
-                    يعمل هذا الاختيار مع النماذج المثبتة والمخصصة داخل Odoo بدون ربط الإضافة بأسماء CRM أو المبيعات أو الدعم أو أي تطبيق محدد.
+                    هذا البناء يعتمد على النماذج والحقول الموجودة فعليًا في بيئة Odoo، بدون ربط الإضافة باسم تطبيق أعمال محدد.
                 </div>
             </xpath>
         </field>
