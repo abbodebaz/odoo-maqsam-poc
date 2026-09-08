@@ -1,0 +1,156 @@
+.wati_recipient_mode_box {
+    padding: 16px 18px;
+    border: 1px solid #e4e8ed;
+    border-radius: 16px;
+    background: #fbfcfd;
+    margin-bottom: 14px;
+}
+
+.wati_recipient_mode_box .o_field_radio {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    width: 100%;
+}
+
+.wati_recipient_mode_box .o_radio_item {
+    min-height: 78px;
+    display: flex !important;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 15px;
+    border: 1px solid #e1e5ea;
+    border-radius: 14px;
+    background: #fff;
+    cursor: pointer;
+}
+
+.wati_recipient_mode_box .o_radio_item:has(input:checked) {
+    border-color: rgba(113, 75, 135, .45);
+    background: #f8f4fa;
+    box-shadow: 0 5px 16px rgba(113, 75, 135, .08);
+}
+
+.wati_recipient_context {
+    display: flex;
+    align-items: flex-start;
+    gap: 13px;
+    padding: 18px;
+    border: 1px solid #e2e6eb;
+    border-radius: 17px;
+    background: #fff;
+    margin-bottom: 14px;
+}
+
+.wati_recipient_context_icon,
+.wati_recipient_preview_icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    border-radius: 12px;
+    background: #f1ebf5;
+    color: #714b87;
+    font-weight: 900;
+}
+
+.wati_recipient_context strong,
+.wati_recipient_preview strong {
+    display: block;
+    margin-bottom: 4px;
+    color: #253041;
+    font-weight: 900;
+}
+
+.wati_recipient_context p,
+.wati_recipient_advanced_body p {
+    margin: 0;
+    color: #8792a0;
+    font-size: .82rem;
+    line-height: 1.65;
+}
+
+.wati_recipient_select_wrap {
+    width: 100%;
+}
+
+.wati_recipient_select_wrap .o_field_widget,
+.wati_recipient_select_wrap .o_input,
+.wati_smart_recipient_select {
+    width: 100% !important;
+}
+
+.wati_recipient_select_wrap .o_field_widget {
+    margin-top: 10px;
+}
+
+.wati_smart_recipient_empty {
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #fff7ed;
+    color: #9a5b13;
+    font-size: .82rem;
+}
+
+.wati_recipient_preview {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 15px 17px;
+    border: 1px solid rgba(34, 197, 94, .25);
+    border-radius: 15px;
+    background: rgba(34, 197, 94, .045);
+    margin: 14px 0;
+}
+
+.wati_recipient_preview_icon {
+    background: #dcfce7;
+    color: #07883b;
+}
+
+.wati_recipient_preview .o_field_widget:first-of-type {
+    display: block;
+    color: #22302a;
+    font-weight: 800;
+}
+
+.wati_recipient_preview .o_field_widget:last-of-type {
+    display: block;
+    margin-top: 3px;
+    color: #77838f;
+    font-size: .8rem;
+}
+
+.wati_policy_title {
+    margin-bottom: 8px;
+    color: #253041;
+    font-weight: 900;
+}
+
+.wati_recipient_advanced {
+    margin-top: 18px;
+    border: 1px solid #e5e8ec;
+    border-radius: 14px;
+    background: #fafbfc;
+    overflow: hidden;
+}
+
+.wati_recipient_advanced summary {
+    padding: 13px 16px;
+    cursor: pointer;
+    color: #5f6875;
+    font-weight: 800;
+}
+
+.wati_recipient_advanced_body {
+    padding: 0 16px 16px;
+    border-top: 1px solid #eceff2;
+}
+
+@media (max-width: 900px) {
+    .wati_recipient_mode_box .o_field_radio {
+        grid-template-columns: 1fr;
+    }
+}
