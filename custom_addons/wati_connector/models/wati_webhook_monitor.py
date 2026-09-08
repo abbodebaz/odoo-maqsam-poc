@@ -40,12 +40,7 @@ def _payload_dict(raw):
 
 
 def _normalise_event_family(event_type, status=""):
-    """Collapse WATI callback variants into one business event family.
-
-    WATI may emit both legacy and ``_v2`` callback names for the same lifecycle
-    transition. The raw event type remains stored for audit/debugging, while this
-    function gives the UI and dedupe layer one stable semantic meaning.
-    """
+    """Collapse WATI callback variants into one stable business event family."""
     event = _clean(event_type).casefold().replace("_v2", "")
     state = _clean(status).casefold()
     combined = f"{event} {state}"
@@ -94,13 +89,42 @@ def _canonical_event_key(family, payload, external_id="", status=""):
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 
+def _processing_truth(family, has_message=False, has_conversation=False, has_automation=False):
+    """Return a truthful monitor state for one normalized callback.
+
+    Lifecycle callbacks such as Delivered/Read are only considered processed when
+    Odoo can tie them to the concrete message (or to the automation run that sent
+    it). A conversation match alone is useful context but does not prove that the
+    message lifecycle was applied correctly.
+    """
+    if family in _LIFECYCLE_FAMILIES:
+        if has_message or has_automation:
+            return (
+                "processed",
+                "تم ربط حالة الرسالة ببيانات Odoo ومعالجتها بنجاح.",
+            )
+        return (
+            "needs_attention",
+            "وصلت حالة من WATI لكن لم يتم العثور على الرسالة المرتبطة داخل Odoo.",
+        )
+    if has_message or has_conversation or has_automation:
+        return (
+            "processed",
+            "تم ربط الحدث ببيانات Odoo ومعالجته بنجاح.",
+        )
+    return (
+        "audit_only",
+        "تم حفظ الحدث كسجل تدقيق تقني، ولا يحتاج إجراءً إضافيًا.",
+    )
+
+
 class WatiWebhookEventMonitor(models.Model):
     _inherit = "wati.webhook.event"
     _rec_name = "event_label"
 
     event_family = fields.Selection(
         _EVENT_FAMILIES,
-        string="الحدث",
+        string="العائلة الموحدة",
         compute="_compute_monitor_labels",
         store=True,
         index=True,
@@ -215,9 +239,7 @@ class WatiWebhookEventMonitor(models.Model):
             )
         if not conversation and wa_id:
             conversation = Conversation.search(
-                [("wa_id", "=", wa_id)],
-                order="id desc",
-                limit=1,
+                [("wa_id", "=", wa_id)], order="id desc", limit=1
             )
 
         automation_log = self.env["wati.automation.log"].sudo().browse()
@@ -232,7 +254,11 @@ class WatiWebhookEventMonitor(models.Model):
     def _monitor_enrich(self, payload=None, seen=None):
         """Attach semantic monitoring metadata without mutating the raw audit event."""
         for event in self.sudo():
-            current_payload = payload if len(self) == 1 and payload is not None else event._monitor_payload()
+            current_payload = (
+                payload
+                if len(self) == 1 and payload is not None
+                else event._monitor_payload()
+            )
             family = _normalise_event_family(event.event_type, event.status)
             key = _canonical_event_key(
                 family,
@@ -256,20 +282,22 @@ class WatiWebhookEventMonitor(models.Model):
                         limit=1,
                     )
 
-            message, conversation, automation_log = event._monitor_find_relations(current_payload)
+            message, conversation, automation_log = event._monitor_find_relations(
+                current_payload
+            )
 
             if duplicate:
                 processing_state = "duplicate"
-                note = "نسخة Callback إضافية لنفس الحدث؛ تم الاحتفاظ بها للتدقيق فقط."
-            elif message or conversation or automation_log:
-                processing_state = "processed"
-                note = "تم ربط الحدث ببيانات Odoo ومعالجته بنجاح."
-            elif family in _LIFECYCLE_FAMILIES:
-                processing_state = "needs_attention"
-                note = "وصلت حالة من WATI لكن لم يتم العثور على رسالة مرتبطة داخل Odoo."
+                note = (
+                    "نسخة Callback إضافية لنفس الحدث؛ تم الاحتفاظ بها للتدقيق فقط."
+                )
             else:
-                processing_state = "audit_only"
-                note = "تم حفظ الحدث كسجل تدقيق تقني، ولا يحتاج إجراءً إضافيًا."
+                processing_state, note = _processing_truth(
+                    family,
+                    has_message=bool(message),
+                    has_conversation=bool(conversation),
+                    has_automation=bool(automation_log),
+                )
 
             event.with_context(wati_webhook_monitor_internal=True).write(
                 {
@@ -311,21 +339,17 @@ class WatiWebhookEventMonitor(models.Model):
 
     @api.model
     def _repair_webhook_monitor(self):
-        """Backfill monitor metadata for the existing raw webhook audit history."""
+        """Fallback repair; production backfill override is loaded after this model."""
         events = self.sudo().search([], order="received_at asc, id asc")
         seen = {}
-        processed = 0
-        duplicates = 0
-        attention = 0
+        processed = duplicates = attention = 0
         for event in events:
             event._monitor_enrich(seen=seen)
             processed += 1
-            if event.is_duplicate_variant:
-                duplicates += 1
-            if event.processing_state == "needs_attention":
-                attention += 1
+            duplicates += int(event.is_duplicate_variant)
+            attention += int(event.processing_state == "needs_attention")
         _logger.warning(
-            "WATI_WEBHOOK_MONITOR_REPAIR processed=%s duplicates=%s attention=%s",
+            "WATI_WEBHOOK_MONITOR_REPAIR processed=%s duplicates=%s attention=%s mode=fallback",
             processed,
             duplicates,
             attention,

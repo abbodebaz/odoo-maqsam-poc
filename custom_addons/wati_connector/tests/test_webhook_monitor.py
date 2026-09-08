@@ -1,5 +1,7 @@
 from odoo.tests.common import TransactionCase
 
+from ..models.wati_webhook_monitor import _processing_truth
+
 
 class TestWatiWebhookMonitor(TransactionCase):
 
@@ -73,6 +75,25 @@ class TestWatiWebhookMonitor(TransactionCase):
         self.assertEqual(row.event_family, "delivered")
         self.assertEqual(row.processing_state, "needs_attention")
         self.assertFalse(row.linked_message_id)
+
+    def test_conversation_alone_does_not_prove_lifecycle_processing(self):
+        state, note = _processing_truth(
+            "delivered",
+            has_message=False,
+            has_conversation=True,
+            has_automation=False,
+        )
+        self.assertEqual(state, "needs_attention")
+        self.assertIn("الرسالة", note)
+
+    def test_non_lifecycle_conversation_match_is_processed(self):
+        state, _note = _processing_truth(
+            "conversation",
+            has_message=False,
+            has_conversation=True,
+            has_automation=False,
+        )
+        self.assertEqual(state, "processed")
 
     def test_different_lifecycle_states_are_not_duplicates(self):
         self.events.ingest(self._payload("templateMessageSent_v2", "SENT", "callback-sent-1"))
