@@ -1,14 +1,16 @@
 import logging
 
+from psycopg2.extras import execute_values
+
 from odoo import api, models
 
 from .wati_webhook_monitor import (
-    _LIFECYCLE_FAMILIES,
     _canonical_event_key,
     _clean,
     _message_identity,
     _normalise_event_family,
     _payload_dict,
+    _processing_truth,
 )
 
 
@@ -20,14 +22,13 @@ class WatiWebhookEventMonitorFastBackfill(models.Model):
 
     @api.model
     def _repair_webhook_monitor(self):
-        """Backfill existing webhook events with bounded query count.
+        """Backfill monitor metadata with bounded reads and set-based writes.
 
-        The runtime ingest path intentionally performs precise lookups for one
-        callback at a time. Historical upgrades are different: thousands of old
-        audit rows may already exist, so resolving relations row-by-row creates
-        unnecessary query amplification. This repair preloads exact identifiers,
-        classifies all events in memory, then writes the monitor metadata in one
-        batch.
+        Runtime callbacks are enriched one at a time for correctness. Historical
+        upgrades can contain thousands of audit rows, so this path preloads exact
+        identifiers once, classifies events in memory, then sends set-based UPDATE
+        statements in chunks. The number of database round trips stays bounded as
+        history grows.
         """
         events = self.sudo().search([], order="received_at asc, id asc")
 
@@ -118,20 +119,14 @@ class WatiWebhookEventMonitorFastBackfill(models.Model):
                     "نسخة Callback إضافية لنفس الحدث؛ تم الاحتفاظ بها للتدقيق فقط."
                 )
                 duplicate_count += 1
-            elif linked_message_id or linked_conversation_id or linked_automation_log_id:
-                processing_state = "processed"
-                processing_note = "تم ربط الحدث ببيانات Odoo ومعالجته بنجاح."
-            elif family in _LIFECYCLE_FAMILIES:
-                processing_state = "needs_attention"
-                processing_note = (
-                    "وصلت حالة من WATI لكن لم يتم العثور على رسالة مرتبطة داخل Odoo."
-                )
-                attention_count += 1
             else:
-                processing_state = "audit_only"
-                processing_note = (
-                    "تم حفظ الحدث كسجل تدقيق تقني، ولا يحتاج إجراءً إضافيًا."
+                processing_state, processing_note = _processing_truth(
+                    family,
+                    has_message=bool(linked_message_id),
+                    has_conversation=bool(linked_conversation_id),
+                    has_automation=bool(linked_automation_log_id),
                 )
+                attention_count += int(processing_state == "needs_attention")
 
             rows.append(
                 (
@@ -148,20 +143,33 @@ class WatiWebhookEventMonitorFastBackfill(models.Model):
             )
 
         if rows:
-            self.env.cr.executemany(
+            execute_values(
+                self.env.cr._obj,
                 """
-                UPDATE wati_webhook_event
-                   SET event_key = %s,
-                       is_duplicate_variant = %s,
-                       duplicate_of_id = %s,
-                       processing_state = %s,
-                       processing_note = %s,
-                       linked_message_id = %s,
-                       linked_conversation_id = %s,
-                       linked_automation_log_id = %s
-                 WHERE id = %s
+                UPDATE wati_webhook_event AS event
+                   SET event_key = values.event_key,
+                       is_duplicate_variant = values.is_duplicate_variant::boolean,
+                       duplicate_of_id = values.duplicate_of_id::integer,
+                       processing_state = values.processing_state,
+                       processing_note = values.processing_note,
+                       linked_message_id = values.linked_message_id::integer,
+                       linked_conversation_id = values.linked_conversation_id::integer,
+                       linked_automation_log_id = values.linked_automation_log_id::integer
+                  FROM (VALUES %s) AS values(
+                       event_key,
+                       is_duplicate_variant,
+                       duplicate_of_id,
+                       processing_state,
+                       processing_note,
+                       linked_message_id,
+                       linked_conversation_id,
+                       linked_automation_log_id,
+                       event_id
+                  )
+                 WHERE event.id = values.event_id::integer
                 """,
                 rows,
+                page_size=1000,
             )
             events.invalidate_recordset(
                 [
@@ -177,7 +185,7 @@ class WatiWebhookEventMonitorFastBackfill(models.Model):
             )
 
         _logger.warning(
-            "WATI_WEBHOOK_MONITOR_REPAIR processed=%s duplicates=%s attention=%s mode=batch",
+            "WATI_WEBHOOK_MONITOR_REPAIR processed=%s duplicates=%s attention=%s mode=set_based",
             len(events),
             duplicate_count,
             attention_count,
