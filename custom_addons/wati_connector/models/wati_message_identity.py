@@ -139,11 +139,14 @@ class WatiMessageIdentity(models.Model):
 
         canonical = max(records, key=lambda message: message._wati_canonical_score())
         duplicates = records - canonical
-        ordered = canonical + duplicates.sorted(key=lambda message: message.id)
+        ordered = [canonical] + list(duplicates.sorted(key=lambda message: message.id))
 
         whatsapp_id = _first_nonempty(ordered, "whatsapp_message_id")
         local_id = _first_nonempty(ordered, "local_message_id")
         status = _pick_status(ordered)
+        conversation = canonical.conversation_id or _first_nonempty(
+            ordered, "conversation_id"
+        )
 
         text_candidates = [
             _clean(message.text) for message in ordered if _clean(message.text)
@@ -158,8 +161,7 @@ class WatiMessageIdentity(models.Model):
             "name": whatsapp_id or local_id or canonical.name,
             "whatsapp_message_id": whatsapp_id or False,
             "local_message_id": local_id or False,
-            "conversation_id": canonical.conversation_id.id
-            or _first_nonempty(ordered, "conversation_id").id,
+            "conversation_id": conversation.id if conversation else False,
             "conversation_uid": _first_nonempty(ordered, "conversation_uid"),
             "ticket_uid": _first_nonempty(ordered, "ticket_uid"),
             "wa_id": _first_nonempty(ordered, "wa_id"),
@@ -179,7 +181,12 @@ class WatiMessageIdentity(models.Model):
             "read_at": _earliest(ordered, "read_at"),
             "failed_at": _earliest(ordered, "failed_at"),
             "status_updated_at": _latest(ordered, "status_updated_at"),
-            "raw_payload": max(raw_candidates, key=len) if raw_candidates else canonical.raw_payload,
+            # Sent callbacks usually contain richer media/template metadata than later
+            # status callbacks, so keep the richest raw payload rather than merely the
+            # newest callback body.
+            "raw_payload": max(raw_candidates, key=len)
+            if raw_candidates
+            else canonical.raw_payload,
         }
 
         # Preserve webhook-monitor links before removing duplicate rows.
@@ -254,8 +261,8 @@ class WatiMessageIdentity(models.Model):
 
     @api.model
     def _wati_repair_duplicate_identities(self):
-        """One-time/upgrade repair for historical duplicate message rows."""
-        merged_before = self.sudo().search_count([])
+        """Upgrade repair for historical rows with provably identical identities."""
+        count_before = self.sudo().search_count([])
 
         self.env.cr.execute(
             """
@@ -298,13 +305,13 @@ class WatiMessageIdentity(models.Model):
             if len(group) > 1 and len(provider_ids) <= 1:
                 group._wati_merge_identity_group()
 
-        merged_after = self.sudo().search_count([])
-        removed = max(0, merged_before - merged_after)
+        count_after = self.sudo().search_count([])
+        removed = max(0, count_before - count_after)
         _logger.warning(
             "WATI_MESSAGE_IDENTITY_REPAIR removed=%s before=%s after=%s",
             removed,
-            merged_before,
-            merged_after,
+            count_before,
+            count_after,
         )
         return True
 
