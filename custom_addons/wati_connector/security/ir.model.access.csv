@@ -8,6 +8,8 @@ access_wati_assignment_log_agent,wati.assignment.log agent,model_wati_assignment
 access_wati_support_ticket_user,wati.support.ticket user,model_wati_support_ticket,wati_connector.group_wati_user,1,0,0,0
 access_wati_support_ticket_agent,wati.support.ticket agent,model_wati_support_ticket,wati_connector.group_wati_agent,1,1,1,0
 access_wati_support_ticket_admin,wati.support.ticket admin,model_wati_support_ticket,wati_connector.group_wati_admin,1,1,1,1
+access_wati_template_admin,wati.template admin,model_wati_template,wati_connector.group_wati_admin,1,1,1,1
+access_wati_template_variable_admin,wati.template.variable admin,model_wati_template_variable,wati_connector.group_wati_admin,1,1,1,1
 access_wati_automation_rule_admin,wati.automation.rule admin,model_wati_automation_rule,wati_connector.group_wati_admin,1,1,1,1
 access_wati_automation_condition_admin,wati.automation.condition admin,model_wati_automation_condition,wati_connector.group_wati_admin,1,1,1,1
 access_wati_automation_parameter_admin,wati.automation.parameter admin,model_wati_automation_parameter,wati_connector.group_wati_admin,1,1,1,1
@@ -22,6 +24,8 @@ access_wati_message_system,wati.message system,model_wati_message,base.group_sys
 access_wati_webhook_event_system,wati.webhook.event system,model_wati_webhook_event,base.group_system,1,1,1,1
 access_wati_assignment_log_system,wati.assignment.log system,model_wati_assignment_log,base.group_system,1,1,1,1
 access_wati_support_ticket_system,wati.support.ticket system,model_wati_support_ticket,base.group_system,1,1,1,1
+access_wati_template_system,wati.template system,model_wati_template,base.group_system,1,1,1,1
+access_wati_template_variable_system,wati.template.variable system,model_wati_template_variable,base.group_system,1,1,1,1
 access_wati_automation_rule_system,wati.automation.rule system,model_wati_automation_rule,base.group_system,1,1,1,1
 access_wati_automation_condition_system,wati.automation.condition system,model_wati_automation_condition,base.group_system,1,1,1,1
 access_wati_automation_parameter_system,wati.automation.parameter system,model_wati_automation_parameter,base.group_system,1,1,1,1
