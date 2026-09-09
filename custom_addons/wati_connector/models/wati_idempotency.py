@@ -10,10 +10,7 @@ class WatiIdempotencyKey(models.Model):
     key = fields.Char(required=True, index=True)
     expires_at = fields.Datetime(required=True, index=True)
 
-    _sql_constraints = [
-        (
-            "wati_idempotency_scope_key_unique",
-            "unique(scope, key)",
-            "The WATI request has already been processed.",
-        )
-    ]
+    _scope_key_unique = models.Constraint(
+        "unique(scope, key)",
+        "The WATI request has already been processed.",
+    )
