@@ -1,0 +1,5 @@
+<odoo>
+    <data noupdate="0">
+        <function model="wati.message" name="_wati_repair_duplicate_identities"/>
+    </data>
+</odoo>
