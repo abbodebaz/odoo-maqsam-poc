@@ -3,10 +3,10 @@
     <!-- System administrators must be able to configure and inspect OTP Bridge
          even when the dedicated WATI role has not been assigned explicitly. -->
     <record id="menu_wati_otp_bridges" model="ir.ui.menu">
-        <field name="groups_id" eval="[(4, ref('base.group_system'))]"/>
+        <field name="group_ids" eval="[(4, ref('base.group_system'))]"/>
     </record>
 
     <record id="menu_wati_otp_logs" model="ir.ui.menu">
-        <field name="groups_id" eval="[(4, ref('base.group_system'))]"/>
+        <field name="group_ids" eval="[(4, ref('base.group_system'))]"/>
     </record>
 </odoo>
