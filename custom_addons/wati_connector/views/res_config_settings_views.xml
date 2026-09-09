@@ -110,25 +110,22 @@
 
                         <page string="💬 صندوق الوارد" name="wati_settings_inbox">
                             <block title="ميزات صندوق الوارد" name="wati_inbox_feature_settings">
-                                <setting string="المحادثات السريعة داخل Odoo" help="إظهار نافذة WhatsApp المصغّرة من أي شاشة." class="wati-setting-item">
-                                    <div class="content-group wati-setting-content">
-                                        <field name="wati_enable_mini_inbox"/>
-                                        <div class="text-muted small mt8">رد سريع بدون مغادرة الشاشة الحالية.</div>
-                                    </div>
+                                <setting string="المحادثات السريعة داخل Odoo"
+                                         help="فعّل لإظهار نافذة WhatsApp المصغّرة من أي شاشة، أو عطّل لإخفائها."
+                                         class="wati-setting-item">
+                                    <field name="wati_enable_mini_inbox"/>
                                 </setting>
 
-                                <setting string="الأزرار التفاعلية" help="إظهار أداة الأزرار داخل صندوق الوارد." class="wati-setting-item">
-                                    <div class="content-group wati-setting-content">
-                                        <field name="wati_enable_interactive_buttons"/>
-                                        <div class="text-muted small mt8">عند الإيقاف تختفي الأداة فقط من الواجهة.</div>
-                                    </div>
+                                <setting string="الأزرار التفاعلية"
+                                         help="فعّل لإظهار أداة الأزرار التفاعلية داخل صندوق الوارد، أو عطّل لإخفائها من الواجهة."
+                                         class="wati-setting-item">
+                                    <field name="wati_enable_interactive_buttons"/>
                                 </setting>
 
-                                <setting string="القوائم التفاعلية" help="إظهار أداة القوائم داخل صندوق الوارد." class="wati-setting-item">
-                                    <div class="content-group wati-setting-content">
-                                        <field name="wati_enable_interactive_lists"/>
-                                        <div class="text-muted small mt8">عند الإيقاف تختفي الأداة فقط من الواجهة.</div>
-                                    </div>
+                                <setting string="القوائم التفاعلية"
+                                         help="فعّل لإظهار أداة القوائم التفاعلية داخل صندوق الوارد، أو عطّل لإخفائها من الواجهة."
+                                         class="wati-setting-item">
+                                    <field name="wati_enable_interactive_lists"/>
                                 </setting>
                             </block>
                         </page>
