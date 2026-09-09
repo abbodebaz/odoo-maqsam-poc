@@ -69,7 +69,7 @@
             "wati_connector/static/src/workspace/workspace_access.xml"
         ]
     },
-    "installable": true,
-    "application": true,
-    "auto_install": false
+    "installable": True,
+    "application": True,
+    "auto_install": False,
 }
