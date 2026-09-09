@@ -20,9 +20,9 @@ class TestWatiFeatureAccess(TransactionCase):
         access = self.env.ref("wati_connector.access_wati_automation_rule_admin")
 
         self.assertEqual(get_feature_mode(self.env, "automation"), "admin")
-        self.assertIn(self.admin_group, menu.groups_id)
-        self.assertIn(self.system_group, menu.groups_id)
-        self.assertNotIn(self.user_group, menu.groups_id)
+        self.assertIn(self.admin_group, menu.group_ids)
+        self.assertIn(self.system_group, menu.group_ids)
+        self.assertNotIn(self.user_group, menu.group_ids)
         self.assertEqual(access.group_id, self.admin_group)
 
     def test_automation_all_policy_updates_menu_and_acl(self):
@@ -33,8 +33,8 @@ class TestWatiFeatureAccess(TransactionCase):
         access = self.env.ref("wati_connector.access_wati_automation_rule_admin")
 
         self.assertEqual(get_feature_mode(self.env, "automation"), "all")
-        self.assertIn(self.user_group, menu.groups_id)
-        self.assertIn(self.system_group, menu.groups_id)
+        self.assertIn(self.user_group, menu.group_ids)
+        self.assertIn(self.system_group, menu.group_ids)
         self.assertEqual(access.group_id, self.user_group)
 
     def test_history_policy_changes_menu_without_revoking_inbox_models(self):
@@ -44,8 +44,8 @@ class TestWatiFeatureAccess(TransactionCase):
         menu = self.env.ref("wati_connector.menu_wati_conversations")
         base_access = self.env.ref("wati_connector.access_wati_conversation_user")
 
-        self.assertIn(self.admin_group, menu.groups_id)
-        self.assertNotIn(self.user_group, menu.groups_id)
+        self.assertIn(self.admin_group, menu.group_ids)
+        self.assertNotIn(self.user_group, menu.group_ids)
         # Inbox agents still need the underlying conversation model. Only the
         # historical feature screen is restricted.
         self.assertEqual(base_access.group_id, self.user_group)
