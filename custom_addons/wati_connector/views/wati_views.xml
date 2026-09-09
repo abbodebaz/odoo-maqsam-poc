@@ -5,15 +5,15 @@
         <field name="model">wati.conversation</field>
         <field name="arch" type="xml">
             <list string="Conversation Log" create="false" edit="false" delete="false" default_order="last_message_at desc, id desc">
-                <field name="last_message_at" string="Latest activity"/>
+                <field name="last_message_at" string="Last Activity"/>
                 <field name="name" string="Customer"/>
-                <field name="wa_id" string="No WhatsApp"/>
-                <field name="assigned_user_id" string="Responsible employee"/>
-                <field name="status" string="Latest case"/>
-                <field name="unread_count" string="Unreadable"/>
-                <field name="last_message" string="Last message"/>
-                <field name="partner_id" string="Client Odoo" optional="hide"/>
-                <field name="operator_name" string="Agent WATI" optional="hide"/>
+                <field name="wa_id" string="WhatsApp Number"/>
+                <field name="assigned_user_id" string="Assigned Agent"/>
+                <field name="status" string="Status"/>
+                <field name="unread_count" string="Unread"/>
+                <field name="last_message" string="Last Message"/>
+                <field name="partner_id" string="Odoo Contact" optional="hide"/>
+                <field name="operator_name" string="WATI Agent" optional="hide"/>
                 <field name="conversation_uid" string="Conversation ID" optional="hide"/>
             </list>
         </field>
@@ -23,15 +23,15 @@
         <field name="name">wati.conversation.search</field>
         <field name="model">wati.conversation</field>
         <field name="arch" type="xml">
-            <search string="Search chat history">
+            <search string="Search Conversations">
                 <field name="name" string="Customer"/>
-                <field name="wa_id" string="No WhatsApp"/>
-                <field name="assigned_user_id" string="Responsible employee"/>
+                <field name="wa_id" string="WhatsApp Number"/>
+                <field name="assigned_user_id" string="Assigned Agent"/>
                 <field name="status" string="Status"/>
-                <field name="last_message" string="Last message"/>
+                <field name="last_message" string="Last Message"/>
                 <separator/>
-                <filter name="unread" string="Unreadable" domain="[('unread_count', '&gt;', 0)]"/>
-                <filter name="unassigned" string="Not supported" domain="[('assigned_user_id', '=', False)]"/>
+                <filter name="unread" string="Unread" domain="[('unread_count', '&gt;', 0)]"/>
+                <filter name="unassigned" string="Unassigned" domain="[('assigned_user_id', '=', False)]"/>
             </search>
         </field>
     </record>
@@ -40,9 +40,9 @@
         <field name="name">wati.conversation.form</field>
         <field name="model">wati.conversation</field>
         <field name="arch" type="xml">
-            <form string="Conversation details" create="false" delete="false">
+            <form string="Conversation Details" create="false" delete="false">
                 <header>
-                    <button name="action_open_reply_wizard" type="object" string="Reply via WhatsApp" class="btn-primary" icon="fa-reply"/>
+                    <button name="action_open_reply_wizard" type="object" string="Reply on WhatsApp" class="btn-primary" icon="fa-reply"/>
                 </header>
                 <sheet>
                     <div class="oe_title"><h1><field name="name"/></h1></div>
@@ -68,7 +68,7 @@
                     </group>
                     <field name="message_ids" readonly="1">
                         <list create="false" delete="false">
-                            <field name="received_at" string="time"/>
+                            <field name="received_at" string="Time"/>
                             <field name="direction"/>
                             <field name="sender_name"/>
                             <field name="message_type" string="Type"/>
@@ -85,11 +85,11 @@
         <field name="name">wati.reply.wizard.form</field>
         <field name="model">wati.reply.wizard</field>
         <field name="arch" type="xml">
-            <form string="Reply via WhatsApp">
+            <form string="Reply on WhatsApp">
                 <group>
                     <field name="conversation_id"/>
                     <field name="wa_id"/>
-                    <field name="message" placeholder="Write your response to the customer..." nolabel="1"/>
+                    <field name="message" placeholder="Write your message..." nolabel="1"/>
                 </group>
                 <footer>
                     <button name="action_send" type="object" string="Send" class="btn-primary" icon="fa-paper-plane"/>
@@ -117,15 +117,15 @@
         <field name="model">wati.message</field>
         <field name="arch" type="xml">
             <list string="Message Log" create="false" edit="false" delete="false" default_order="received_at desc, id desc">
-                <field name="received_at" string="time"/>
+                <field name="received_at" string="Time"/>
                 <field name="conversation_id" string="Conversation"/>
-                <field name="direction" string="direction"/>
-                <field name="wa_id" string="No WhatsApp"/>
+                <field name="direction" string="Direction"/>
+                <field name="wa_id" string="WhatsApp Number"/>
                 <field name="sender_name" string="Sender"/>
                 <field name="message_type" string="Type"/>
                 <field name="text" string="Content"/>
                 <field name="status" string="Status"/>
-                <field name="operator_name" string="Employee" optional="hide"/>
+                <field name="operator_name" string="Agent" optional="hide"/>
                 <field name="whatsapp_message_id" string="WhatsApp Message ID" optional="hide"/>
             </list>
         </field>
@@ -135,8 +135,8 @@
         <field name="name">wati.message.search</field>
         <field name="model">wati.message</field>
         <field name="arch" type="xml">
-            <search string="Search message history">
-                <field name="wa_id" string="No WhatsApp"/>
+            <search string="Search Messages">
+                <field name="wa_id" string="WhatsApp Number"/>
                 <field name="sender_name" string="Sender"/>
                 <field name="conversation_id" string="Conversation"/>
                 <field name="message_type" string="Type"/>
@@ -171,7 +171,7 @@
     </record>
 
     <record id="action_wati_webhook_events" model="ir.actions.act_window">
-        <field name="name">Events Webhook</field>
+        <field name="name">Webhook Events</field>
         <field name="res_model">wati.webhook.event</field>
         <field name="view_mode">list</field>
     </record>
@@ -180,5 +180,5 @@
     <menuitem id="menu_wati_inbox" name="Inbox" parent="menu_wati_root" action="action_wati_inbox" sequence="5"/>
     <menuitem id="menu_wati_conversations" name="Conversation Log" parent="menu_wati_root" action="action_wati_conversations" sequence="10"/>
     <menuitem id="menu_wati_messages" name="Message Log" parent="menu_wati_root" action="action_wati_messages" sequence="20"/>
-    <menuitem id="menu_wati_webhook_events" name="Events Webhook" parent="menu_wati_root" action="action_wati_webhook_events" groups="base.group_system" sequence="90"/>
+    <menuitem id="menu_wati_webhook_events" name="Webhook Events" parent="menu_wati_root" action="action_wati_webhook_events" groups="base.group_system" sequence="90"/>
 </odoo>
