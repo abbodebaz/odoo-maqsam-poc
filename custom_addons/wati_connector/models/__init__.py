@@ -50,3 +50,4 @@ from . import wati_message_identity
 from . import wati_otp_bridge
 from . import wati_smart_button
 from . import wati_smart_button_compat
+from . import wati_smart_button_admin_visibility
