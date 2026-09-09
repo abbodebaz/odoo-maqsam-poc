@@ -104,8 +104,6 @@ def _message_rows(conversation):
             and descriptor["media_path"]
             and raw_text.strip() == descriptor["media_path"]
         ):
-            # WATI can store an outbound media file path in text. That value is
-            # transport metadata, not a caption the operator should see.
             display_text = ""
 
         rows.append(
@@ -257,7 +255,7 @@ class WatiMiniInboxController(http.Controller):
         idem = WatiIdempotency(request.env)
         scope = f"outbound:mini-text:user:{request.env.user.id}"
         key = (request_id or "").strip() or idem.digest(conversation_id, text)
-        if not idem.acquire(scope, key, ttl_seconds=120):
+        if not idem.acquire_durable(scope, key, ttl_seconds=120):
             return {
                 "ok": True,
                 "message": "تم تجاهل إعادة إرسال مكررة.",
@@ -267,10 +265,14 @@ class WatiMiniInboxController(http.Controller):
         try:
             conversation.send_session_message(text)
         except UserError as exc:
-            idem.release(scope, key)
+            # Known business/provider rejection happens before WATI accepts the
+            # message, so a deliberate retry should remain possible.
+            idem.release_durable(scope, key)
             return {"ok": False, "message": str(exc)}
         except Exception:
-            idem.release(scope, key)
+            # Fail closed. WATI may already have accepted the message before a
+            # local serialization/database error. Keeping the durable key makes
+            # Odoo's automatic transaction retry a no-op instead of a 2nd send.
             raise
 
         return {"ok": True, "message": "تم إرسال الرسالة إلى WATI ✅"}
