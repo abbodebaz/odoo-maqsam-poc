@@ -28,6 +28,7 @@ access_wati_smart_button_location_agent,wati.smart.button.location agent,model_w
 access_wati_smart_button_location_admin,wati.smart.button.location admin,model_wati_smart_button_location,wati_connector.group_wati_admin,1,1,1,1
 access_wati_universal_compose_wizard_agent,wati.universal.compose.wizard agent,model_wati_universal_compose_wizard,wati_connector.group_wati_agent,1,1,1,1
 access_wati_universal_compose_parameter_agent,wati.universal.compose.parameter agent,model_wati_universal_compose_parameter,wati_connector.group_wati_agent,1,1,1,1
+access_wati_universal_timeline_wizard_agent,wati.universal.timeline.wizard agent,model_wati_universal_timeline_wizard,wati_connector.group_wati_agent,1,1,1,1
 access_wati_conversation_system,wati.conversation system,model_wati_conversation,base.group_system,1,1,1,1
 access_wati_reply_wizard_system,wati.reply.wizard system,model_wati_reply_wizard,base.group_system,1,1,1,1
 access_wati_message_system,wati.message system,model_wati_message,base.group_system,1,1,1,1
@@ -50,3 +51,4 @@ access_wati_otp_test_wizard_system,wati.otp.test.wizard system,model_wati_otp_te
 access_wati_smart_button_location_system,wati.smart.button.location system,model_wati_smart_button_location,base.group_system,1,1,1,1
 access_wati_universal_compose_wizard_system,wati.universal.compose.wizard system,model_wati_universal_compose_wizard,base.group_system,1,1,1,1
 access_wati_universal_compose_parameter_system,wati.universal.compose.parameter system,model_wati_universal_compose_parameter,base.group_system,1,1,1,1
+access_wati_universal_timeline_wizard_system,wati.universal.timeline.wizard system,model_wati_universal_timeline_wizard,base.group_system,1,1,1,1
