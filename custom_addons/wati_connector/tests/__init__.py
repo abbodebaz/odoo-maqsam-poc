@@ -8,3 +8,4 @@ from . import test_template_switch
 from . import test_template_contract
 from . import test_response_truth
 from . import test_workspace
+from . import test_feature_access
