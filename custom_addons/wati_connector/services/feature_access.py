@@ -99,14 +99,11 @@ def ensure_feature_access(env, feature_id, user=None):
 def sync_feature_access_controls(env, feature_ids=None):
     """Synchronize menu visibility and dedicated-model ACLs from feature policy.
 
-    Menus are gated at the Odoo navigation layer. Features with dedicated models
-    (automation, run logs, webhook monitor) also move their ACL between the base
-    WATI user role and the WATI administrator role, so a hidden admin-only feature
-    cannot be opened by guessing its URL/action id.
-
-    Conversation/message history share the operational inbox models, so their
-    feature policy controls the history screens without revoking the underlying
-    inbox data access that agents need to do their job.
+    Odoo 19 renamed the menu relation to ``group_ids``. Features with dedicated
+    models (automation, run logs, webhook monitor) also move their ACL between
+    the base WATI user role and WATI Administrator. Conversation/message history
+    share the inbox models, so those policies only gate the history screens and
+    never revoke the data access agents require to serve customers in Inbox.
     """
 
     registry = FEATURE_ACCESS_REGISTRY
@@ -123,13 +120,11 @@ def sync_feature_access_controls(env, feature_ids=None):
         mode = get_feature_mode(env, feature_id)
         target_group = user_group if mode == ACCESS_ALL else admin_group
 
-        # Odoo system administrators always retain an emergency path to the menu,
-        # while day-to-day access follows the narrower WhatsApp role policy.
         menu_group_ids = [target_group.id, system_group.id]
         for xmlid in definition.get("menu_xmlids", []):
             menu = env.ref(xmlid, raise_if_not_found=False)
             if menu:
-                menu.sudo().write({"groups_id": [(6, 0, menu_group_ids)]})
+                menu.sudo().write({"group_ids": [(6, 0, menu_group_ids)]})
 
         for xmlid in definition.get("acl_xmlids", []):
             access = env.ref(xmlid, raise_if_not_found=False)
