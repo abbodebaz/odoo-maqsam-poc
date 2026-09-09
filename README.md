@@ -26,7 +26,7 @@ WATI modules use Odoo-style five-part versions:
 
 `19.0.<release>.<minor>.<patch>`
 
-The delivery bundle is version-aligned. Release `19.0.11.0.1` is the pre-delivery cleanup baseline.
+The delivery bundle is version-aligned. Release `19.0.11.0.2` is the pre-delivery cleanup baseline.
 
 ## Quality gate
 
