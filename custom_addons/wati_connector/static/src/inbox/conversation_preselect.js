@@ -8,6 +8,6 @@
             localStorage.setItem("watiInboxSelected", String(conversationId));
         }
     } catch (error) {
-        console.warn("WATI CRM preselect skipped", error);
+        console.warn("WATI conversation preselect skipped", error);
     }
 })();

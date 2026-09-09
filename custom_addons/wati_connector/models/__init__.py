@@ -19,9 +19,9 @@ from . import wati_automation_template_switch
 from . import wati_name_guard
 from . import wati_automation_guard
 from . import wati_automation_channel_auto
-from . import wati_automation_dedup_fix
-from . import wati_automation_response_fix
-from . import wati_automation_log_repair
+from . import wati_automation_dedup
+from . import wati_automation_response
+from . import wati_automation_log
 from . import wati_automation_lifecycle
 from . import wati_media_hardening
 from . import wati_interactive_reply
@@ -44,7 +44,7 @@ from . import wati_template_submission_truth
 from . import wati_template_button_guard
 from . import wati_template_button_contract
 from . import wati_template_custom_params_contract
-from . import wati_template_lifecycle_final
+from . import wati_template_lifecycle
 from . import wati_template_lifecycle_provider_scope
 from . import wati_message_identity
 from . import wati_otp_bridge

@@ -13,12 +13,12 @@ _PROVIDER_ERROR_MESSAGE_RE = re.compile(
 
 
 class WatiTemplateButtonGuard(models.Model):
-    """Keep provider-error recovery while button authoring uses a verified contract.
+    """Preserve provider-error recovery for the verified button contract.
 
-    The temporary fail-closed block was needed while the nested WATI button
-    object was unknown. We now mirror the exact ``parameter`` structure returned
-    by WATI's own template catalogue, so supported Standard buttons can proceed
-    through the normal builder validation and lifecycle checks.
+    Earlier releases used a fail-closed block while the nested WATI button
+    object was being verified. The connector now mirrors the exact ``parameter``
+    structure returned by WATI's template catalogue, so supported standard
+    buttons can use the normal builder validation and lifecycle checks.
     """
 
     _inherit = "wati.template"
@@ -28,7 +28,7 @@ class WatiTemplateButtonGuard(models.Model):
 
     @api.model
     def _repair_provider_rejected_template_submissions(self):
-        """Return explicit WATI creation failures to editable draft state."""
+        """Migration helper: return explicit WATI creation failures to draft."""
         records = self.sudo().search(
             [
                 ("source", "=", "odoo"),
@@ -51,7 +51,7 @@ class WatiTemplateButtonGuard(models.Model):
             record.sudo().write(
                 {
                     "status": "draft",
-                    "last_error": _("He refused WATI Create the template: %s") % message,
+                    "last_error": _("WATI rejected template creation: %s") % message,
                 }
             )
             repaired += 1

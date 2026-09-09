@@ -6,29 +6,29 @@ from odoo import _, api, fields, models
 _logger = logging.getLogger(__name__)
 
 
-class WatiAutomationLogRepair(models.Model):
+class WatiAutomationLogExperience(models.Model):
     _inherit = "wati.automation.log"
 
     ui_state = fields.Selection(
         [
-            ("accepted", "The request has been accepted"),
+            ("accepted", "Accepted"),
             ("sent", "Sent"),
             ("delivered", "Delivered"),
-            ("read", "Read done"),
+            ("read", "Read"),
             ("failed", "Failed"),
-            ("pending", "Under follow-up"),
+            ("pending", "Pending"),
         ],
         string="Result",
         compute="_compute_log_experience",
     )
     ui_kind = fields.Selection(
-        [("test", "Demo"), ("live", "Actual")],
-        string="Operating type",
+        [("test", "Test"), ("live", "Live")],
+        string="Run type",
         compute="_compute_log_experience",
     )
     ui_summary = fields.Char(string="Summary", compute="_compute_log_experience")
     ui_timeline = fields.Char(string="Message path", compute="_compute_log_experience")
-    ui_has_error = fields.Boolean(string="There is an error", compute="_compute_log_experience")
+    ui_has_error = fields.Boolean(string="Has error", compute="_compute_log_experience")
 
     @api.depends(
         "status",
@@ -50,47 +50,47 @@ class WatiAutomationLogRepair(models.Model):
 
             if raw_status == "read" or "read" in webhook:
                 state = "read"
-                summary = _("The message arrived and was read on WhatsApp.")
+                summary = _("The WhatsApp message was delivered and read.")
             elif raw_status == "delivered" or "delivered" in webhook:
                 state = "delivered"
-                summary = _("The message has been delivered to WhatsApp Successfully.")
+                summary = _("The WhatsApp message was delivered successfully.")
             elif raw_status == "sent" or "sent" in webhook:
                 state = "sent"
-                summary = _("The message was sent from WATIWe are waiting for the delivery update.")
+                summary = _("WATI sent the message; delivery confirmation is pending.")
             elif raw_status == "accepted" or delivery.startswith("accepted"):
                 state = "accepted"
-                summary = _("Received WATI The dispatch request was successful, and we are waiting for the delivery status update.")
+                summary = _("WATI accepted the send request; delivery confirmation is pending.")
             elif raw_status == "failed":
                 state = "failed"
                 summary = (log.error_message or _("The message could not be sent.")).strip()
             else:
                 state = "pending"
-                summary = _("Playback is in progress.")
+                summary = _("The automation run is still being processed.")
 
             milestones = []
             if log.accepted_at or state in ("accepted", "sent", "delivered", "read"):
-                milestones.append(_("He accepted"))
+                milestones.append(_("Accepted"))
             if log.sent_at or state in ("sent", "delivered", "read"):
                 milestones.append(_("Sent"))
             if log.delivered_at or state in ("delivered", "read"):
                 milestones.append(_("Delivered"))
             if log.read_at or state == "read":
-                milestones.append(_("Read done"))
+                milestones.append(_("Read"))
             if state == "failed":
                 milestones.append(_("Failed"))
 
             log.ui_state = state
             log.ui_kind = "test" if log.is_test else "live"
             log.ui_summary = summary[:500]
-            log.ui_timeline = " ← ".join(milestones) if milestones else _("Waiting for an update WATI")
+            log.ui_timeline = " → ".join(milestones) if milestones else _("Waiting for a WATI update")
             log.ui_has_error = state == "failed"
 
     @api.model
     def _repair_false_negative_logs(self):
-        """Reclassify only the proven WATI empty-error HTTP-2xx pattern.
+        """Reclassify the proven WATI empty-error HTTP-2xx legacy pattern.
 
-        This does not claim that a message was delivered. It only corrects the
-        API-boundary truth from ``failed`` to ``accepted``; Delivered/Read remain
+        This migration helper does not claim delivery. It only corrects API
+        acceptance from ``failed`` to ``accepted``; delivery/read remain
         webhook-driven.
         """
         self.env.cr.execute(
@@ -117,10 +117,7 @@ class WatiAutomationLogRepair(models.Model):
         repaired = self.env.cr.rowcount
         if repaired:
             _logger.warning(
-                "WATI_LOG_TRUTH_REPAIR reclassified=%s false-negative log(s) as accepted",
+                "WATI_LOG_MIGRATION_RECLASSIFIED count=%s",
                 repaired,
             )
         return repaired
-
-    def init(self):
-        self._repair_false_negative_logs()
