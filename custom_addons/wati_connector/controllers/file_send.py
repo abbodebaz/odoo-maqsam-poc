@@ -160,7 +160,7 @@ class WatiFileSendController(http.Controller):
         key = (request_id or "").strip() or idem.digest(
             conversation.id, filename, size, caption
         )
-        if not idem.acquire(scope, key, ttl_seconds=120):
+        if not idem.acquire_durable(scope, key, ttl_seconds=120):
             return request.make_json_response(
                 {
                     "ok": True,
@@ -180,18 +180,22 @@ class WatiFileSendController(http.Controller):
                 caption=caption,
             )
         except WatiConfigurationError:
-            idem.release(scope, key)
+            idem.release_durable(scope, key)
             return request.make_json_response(
                 {"ok": False, "message": "إعدادات WATI API غير مكتملة."}, status=503
             )
         except WatiRequestError as exc:
-            idem.release(scope, key)
+            idem.release_durable(scope, key)
             detail = (exc.response_text or str(exc) or "").strip()[:600]
             status = exc.status_code or 502
             return request.make_json_response(
                 {"ok": False, "message": f"WATI رفض قبول المرفق ({status}): {detail}"},
                 status=status,
             )
+        except Exception:
+            # Unknown failures are fail-closed: the provider may already have
+            # accepted the file, so preserve the durable key across Odoo retries.
+            raise
 
         return request.make_json_response(
             {
