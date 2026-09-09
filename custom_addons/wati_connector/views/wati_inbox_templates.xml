@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <template id="wati_inbox_page" name="WATI WhatsApp Inbox">
-        <html lang="ar" dir="rtl">
+        <html lang="en" dir="ltr">
             <head>
                 <meta charset="utf-8"/>
                 <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -39,7 +39,7 @@
                                 <span class="wati-online-dot"></span>
                                 <t t-esc="user_name"/>
                             </span>
-                            <a class="wati-odoo-link" t-att-href="odoo_return_url">Back to WhatsApp In Odoo</a>
+                            <a class="wati-odoo-link" t-att-href="odoo_return_url">Back to Odoo</a>
                         </div>
                     </header>
 
@@ -58,9 +58,9 @@
                             </label>
                             <div class="wati-filters">
                                 <button class="wati-filter active" type="button" data-filter="all">All</button>
-                                <button class="wati-filter" type="button" data-filter="mine">My conversations</button>
-                                <button class="wati-filter" type="button" data-filter="unassigned">Not supported</button>
-                                <button class="wati-filter" type="button" data-filter="unread">Unreadable</button>
+                                <button class="wati-filter" type="button" data-filter="mine">My Conversations</button>
+                                <button class="wati-filter" type="button" data-filter="unassigned">Unassigned</button>
+                                <button class="wati-filter" type="button" data-filter="unread">Unread</button>
                             </div>
                             <div id="conversationList" class="wati-conversation-list"></div>
                         </aside>
@@ -68,8 +68,8 @@
                         <section id="watiChat" class="wati-chat">
                             <div id="chatEmpty" class="wati-empty">
                                 <div class="wati-empty-icon">💬</div>
-                                <h2>Choose a conversation</h2>
-                                <p>Select a customer from the list to view the conversation and reply to them.</p>
+                                <h2>Select a conversation</h2>
+                                <p>Choose a customer from the list to view the conversation and reply.</p>
                             </div>
 
                             <div id="chatContent" class="wati-chat-content is-hidden">
@@ -86,9 +86,9 @@
                                         </div>
                                     </div>
                                     <div class="wati-chat-actions">
-                                        <span id="assignmentBadge" class="wati-assignment-badge is-unassigned">Verifying...</span>
+                                        <span id="assignmentBadge" class="wati-assignment-badge is-unassigned">Checking...</span>
                                         <button id="conversationActionsButton" class="wati-conversation-actions-button" type="button" aria-haspopup="dialog" aria-controls="conversationActionsDrawer" aria-expanded="false">
-                                            <span class="wati-actions-label">Conversation actions</span>
+                                            <span class="wati-actions-label">Conversation Actions</span>
                                             <span class="wati-actions-dots" aria-hidden="true">⋯</span>
                                         </button>
                                     </div>
@@ -100,7 +100,7 @@
                                     <textarea id="messageInput" name="message" rows="1" maxlength="4096" placeholder="Write a message..." required="required"></textarea>
                                     <button id="sendButton" type="submit">Send <span>➤</span></button>
                                 </form>
-                                <div class="wati-composer-note">You can send free messages and attachments within a session, or use a button «Templates» To send Template Approved by WATI.</div>
+                                <div class="wati-composer-note">Send free-form messages and attachments during the active WhatsApp session, or use Templates to send an approved WATI template.</div>
                             </div>
                         </section>
                     </main>
@@ -109,52 +109,52 @@
                         <aside id="conversationActionsDrawer" class="wati-actions-drawer" role="dialog" aria-modal="true" aria-labelledby="conversationActionsTitle">
                             <div class="wati-actions-drawer-head">
                                 <div>
-                                    <strong id="conversationActionsTitle">Conversation actions</strong>
-                                    <span>Attribution and tools WhatsApp and conversation information</span>
+                                    <strong id="conversationActionsTitle">Conversation Actions</strong>
+                                    <span>Assignment, WhatsApp tools, and conversation details</span>
                                 </div>
                                 <button id="conversationActionsClose" class="wati-actions-drawer-close" type="button" aria-label="Close">×</button>
                             </div>
                             <div class="wati-actions-drawer-body">
                                 <section class="wati-actions-section">
-                                    <h3>Attribution</h3>
+                                    <h3>Assignment</h3>
                                     <div class="wati-actions-info-row">
                                         <span>Status</span>
-                                        <strong id="drawerAssignmentStatus">Verifying...</strong>
+                                        <strong id="drawerAssignmentStatus">Checking...</strong>
                                     </div>
                                     <div class="wati-actions-info-row">
-                                        <span>Responsible employee</span>
+                                        <span>Assigned Agent</span>
                                         <span id="drawerAssignedUser">—</span>
                                     </div>
                                     <div id="drawerAssignmentAction"></div>
                                 </section>
 
                                 <section class="wati-actions-section">
-                                    <h3>client in Odoo</h3>
+                                    <h3>Odoo Contact</h3>
                                     <div class="wati-actions-info-row">
                                         <span>Status</span>
-                                        <strong id="drawerPartnerStatus">Verifying...</strong>
+                                        <strong id="drawerPartnerStatus">Checking...</strong>
                                     </div>
-                                    <a id="drawerPartnerLink" class="wati-actions-inline-link is-hidden" href="#" target="_blank" rel="noopener noreferrer">Open customer card in Odoo</a>
+                                    <a id="drawerPartnerLink" class="wati-actions-inline-link is-hidden" href="#" target="_blank" rel="noopener noreferrer">Open Contact in Odoo</a>
                                 </section>
 
                                 <t t-if="interactive_buttons_enabled or interactive_lists_enabled">
                                     <section class="wati-actions-section">
-                                        <h3>Tools WhatsApp</h3>
+                                        <h3>WhatsApp Tools</h3>
                                         <div class="wati-actions-tools">
                                             <t t-if="interactive_buttons_enabled">
-                                                <button id="drawerInteractiveButtons" class="wati-actions-tool" type="button">▦ Interactive buttons</button>
+                                                <button id="drawerInteractiveButtons" class="wati-actions-tool" type="button">▦ Interactive Buttons</button>
                                             </t>
                                             <t t-if="interactive_lists_enabled">
-                                                <button id="drawerInteractiveList" class="wati-actions-tool" type="button">☷ Interactive menu</button>
+                                                <button id="drawerInteractiveList" class="wati-actions-tool" type="button">☷ Interactive List</button>
                                             </t>
                                         </div>
                                     </section>
                                 </t>
 
                                 <section class="wati-actions-section">
-                                    <h3>Conversation information</h3>
+                                    <h3>Conversation Details</h3>
                                     <div class="wati-actions-info-row">
-                                        <span>No WhatsApp</span>
+                                        <span>WhatsApp Number</span>
                                         <span id="drawerPhone">—</span>
                                     </div>
                                     <span id="chatOperator" class="is-hidden"></span>
