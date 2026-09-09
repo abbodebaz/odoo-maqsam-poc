@@ -18,3 +18,4 @@ from . import test_template_submission_truth
 from . import test_template_provider_error
 from . import test_template_lifecycle_final
 from . import test_template_lifecycle_provider_scope
+from . import test_template_custom_params_contract
