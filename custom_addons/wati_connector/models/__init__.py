@@ -39,3 +39,4 @@ from . import wati_template_policy
 from . import wati_template_webhook
 from . import wati_template_compat
 from . import wati_template_provider_policy
+from . import wati_template_variable_save
