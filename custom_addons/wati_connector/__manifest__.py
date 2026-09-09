@@ -1,6 +1,6 @@
 {
     "name": "WATI WhatsApp Connector",
-    "version": "19.0.10.0.53",
+    "version": "19.0.11.0.0",
     "summary": "WATI WhatsApp inbox, templates, no-code automation, OTP Bridge, smart buttons, customer timeline, webhooks and API integration for Odoo",
     "category": "Productivity",
     "author": "Abdulrhman Bazarah",
@@ -10,8 +10,6 @@
         "security/wati_security.xml",
         "security/ir.model.access.csv",
         "data/wati_ticket_sequence.xml",
-        "data/wati_message_identity_repair.xml",
-        "data/wati_template_parameter_repair.xml",
         "views/res_config_settings_views.xml",
         "views/res_users_views.xml",
         "views/wati_inbox_templates.xml",
@@ -27,8 +25,6 @@
         "views/wati_smart_button_views.xml",
         "views/wati_smart_button_settings_views.xml",
         "views/wati_universal_timeline_views.xml",
-        "data/wati_smart_button_admin_visibility_repair.xml",
-        "data/wati_universal_timeline_repair.xml",
         "views/wati_automation_improvements_views.xml",
         "views/wati_automation_ux_views.xml",
         "views/wati_automation_conditions_views.xml",
@@ -43,16 +39,8 @@
         "views/wati_automation_log_experience_views.xml",
         "views/wati_workspace_views.xml",
         "data/wati_menu_structure.xml",
-        "data/wati_template_integrity_final.xml",
-        "data/wati_template_contract_repair.xml",
-        "data/wati_log_truth_repair.xml",
-        "data/wati_webhook_monitor_repair.xml",
         "data/wati_feature_access_sync.xml",
-        "data/wati_template_submission_truth_repair.xml",
-        "data/wati_template_provider_error_repair.xml",
-        "data/wati_template_button_contract_repair.xml",
-        "data/wati_template_lifecycle_final.xml",
-        "data/wati_template_lifecycle_final_repair.xml"
+        "data/wati_template_lifecycle_cron.xml"
     ],
     "assets": {
         "web.assets_backend": [

@@ -1,6 +1,6 @@
 import logging
 
-from odoo import fields, models
+from odoo import _, fields, models
 
 from ..services.client import WatiClient
 from ..services.exceptions import WatiConfigurationError, WatiRequestError
@@ -30,16 +30,16 @@ def _meaningful_text(value):
 
 
 def _truthy_collection(value):
-    """Return True only when WATI returned real failure content.
+    """Return True only when WATI returned concrete failure content.
 
     WATI can return an ``errors`` object that is structurally non-empty while
-    every value inside it is empty, for example::
+    every nested value is empty, for example::
 
         {"error": "", "invalidWhatsappNumbers": [],
          "invalidCustomParameters": []}
 
-    Treating ``bool(errors)`` as failure creates a false-negative log even though
-    WATI accepted the message. Inspect nested values recursively instead.
+    Treating ``bool(errors)`` as failure would create a false-negative log even
+    though WATI accepted the request, so nested values are inspected recursively.
     """
     if value in (None, False, "", [], {}, ()):
         return False
@@ -53,12 +53,11 @@ def _truthy_collection(value):
 
 
 def _wati_payload_has_hard_failure(payload):
-    """Interpret WATI's sendTemplateMessages response conservatively.
+    """Interpret WATI's template-send response conservatively.
 
-    A successful HTTP response is API acceptance unless WATI supplies concrete
-    failure evidence. A bare ``result: false`` or an ``errors`` object whose
-    nested values are all empty is not failure evidence. Final delivery/read/
-    failure remains asynchronous and is reconciled through WATI webhooks.
+    A successful HTTP response means API acceptance unless WATI supplies concrete
+    failure evidence. Final delivery/read/failure remains asynchronous and is
+    reconciled through WATI webhooks.
     """
     if not isinstance(payload, dict):
         return False
@@ -102,11 +101,11 @@ def _wati_payload_has_hard_failure(payload):
     return False
 
 
-class WatiAutomationResponseFix(models.Model):
+class WatiAutomationResponse(models.Model):
     _inherit = "wati.automation.rule"
 
     def _send_template(self, record, phone, custom_params):
-        """Send and distinguish API acceptance from final WhatsApp delivery."""
+        """Send a template and distinguish API acceptance from final delivery."""
         self.ensure_one()
         Log = self.env["wati.automation.log"].sudo()
 
@@ -116,7 +115,8 @@ class WatiAutomationResponseFix(models.Model):
                     record,
                     "failed",
                     phone=phone,
-                    error_message=self.template_validation_message or "The template is not valid for submission.",
+                    error_message=self.template_validation_message
+                    or _("The template is not valid for sending."),
                 )
             )
             return False
@@ -136,9 +136,9 @@ class WatiAutomationResponseFix(models.Model):
                     "failed",
                     phone=phone,
                     error_message=(
-                        "Not called WATI Because the following template variables are worthless: "
-                        + ", ".join(filter(None, empty_params))
-                        + ". Link it to a field Odoo Or set a reserve value."
+                        _("WATI was not called because these template variables are empty: %s. ")
+                        % ", ".join(filter(None, empty_params))
+                        + _("Map each variable to an Odoo field or configure a fallback value.")
                     ),
                 )
             )
@@ -167,7 +167,7 @@ class WatiAutomationResponseFix(models.Model):
                     record,
                     "failed",
                     phone=phone,
-                    error_message="Settings WATI API Incomplete.",
+                    error_message=_("WATI API settings are incomplete."),
                 )
             )
             return False
@@ -180,9 +180,9 @@ class WatiAutomationResponseFix(models.Model):
                         "failed",
                         phone=phone,
                         error_message=(
-                            f"WATI Refused to send ({exc.status_code})."
+                            _("WATI rejected the request (HTTP %s).") % exc.status_code
                             if exc.status_code
-                            else f"Unable to contact WATI: {detail}"
+                            else _("Unable to contact WATI: %s") % detail
                         ),
                         response_excerpt=detail,
                     ),
@@ -199,7 +199,11 @@ class WatiAutomationResponseFix(models.Model):
             payload = None
 
         if _wati_payload_has_hard_failure(payload):
-            summary = _error_summary(payload) if isinstance(payload, dict) else "WATI Returned an error in the request."
+            summary = (
+                _error_summary(payload)
+                if isinstance(payload, dict)
+                else _("WATI returned an error for the request.")
+            )
             Log.create(
                 {
                     **self._log_values(

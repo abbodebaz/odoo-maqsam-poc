@@ -165,7 +165,7 @@
 
                     <div id="watiToast" class="wati-toast" role="status"></div>
                 </div>
-                <script src="/wati_connector/static/src/inbox/crm_preselect_v1.js" defer="defer"></script>
+                <script src="/wati_connector/static/src/inbox/conversation_preselect.js" defer="defer"></script>
                 <script src="/wati_connector/static/src/inbox/inbox.js" defer="defer"></script>
                 <script src="/wati_connector/static/src/inbox/partner_enhance.js?v=3" defer="defer"></script>
                 <script src="/wati_connector/static/src/inbox/assignment_takeover.js?v=3" defer="defer"></script>

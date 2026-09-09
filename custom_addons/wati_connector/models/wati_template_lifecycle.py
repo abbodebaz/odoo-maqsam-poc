@@ -1,4 +1,3 @@
-import json
 import logging
 
 from odoo import _, api, fields, models
@@ -11,14 +10,9 @@ from ..services.template_catalog import clean, find_template_list, normalize_tem
 
 _logger = logging.getLogger(__name__)
 
-
 _LANGUAGE_NAME_ALIASES = {
     "arabic": "ar",
-    "Arabic": "ar",
-    "Arabic": "ar",
     "english": "en",
-    "English": "en",
-    "English": "en",
     "french": "fr",
     "spanish": "es",
 }
@@ -33,15 +27,15 @@ _REJECTION_KEYS = (
 )
 
 
-class WatiTemplateLifecycleFinal(models.Model):
-    """Final provider-truth layer for the WhatsApp template lifecycle.
+class WatiTemplateLifecycle(models.Model):
+    """Keep the Odoo template lifecycle aligned with provider truth.
 
-    Provider-created templates must never get stuck because a generic bulk
-    catalogue endpoint is stale or because WATI represents a language as
-    ``Arabic``/``ar-SA`` while the Odoo draft stores ``ar``. Lifecycle reads use
-    WATI v2's exact-name filter first, then fall back to the existing v1 bulk
-    catalogue. A small poller complements webhooks so approval/rejection state is
-    eventually correct even when a template webhook is delayed or not enabled.
+    Provider-created templates must not remain stale because a bulk catalogue
+    endpoint is delayed or because WATI represents a language differently from
+    the Odoo draft. Lifecycle reads use WATI v2's exact-name filter first and
+    fall back to the v1 catalogue. A small poller complements webhooks so
+    approval and rejection state eventually converge even when callbacks are
+    delayed or unavailable.
     """
 
     _inherit = "wati.template"
@@ -141,7 +135,7 @@ class WatiTemplateLifecycleFinal(models.Model):
                 payload = response.json()
             except ValueError as exc:
                 raise UserError(
-                    _("WATI It returned an unintelligible response while checking the template status.")
+                    _("WATI returned an unreadable response while checking the template status.")
                 ) from exc
             items = find_template_list(payload)
             if not items:
@@ -168,7 +162,6 @@ class WatiTemplateLifecycleFinal(models.Model):
                 clean(getattr(exc, "response_text", "") or str(exc))[:500],
             )
 
-        # Backward-compatible fallback for WATI accounts where v2 is unavailable.
         for item in self._fetch_remote_templates():
             normalized = self._normalize_lifecycle_item(item)
             if self._remote_identity_match(normalized):
@@ -185,7 +178,7 @@ class WatiTemplateLifecycleFinal(models.Model):
         )
         if status == "rejected":
             values["rejection_reason"] = reason or _(
-                "He refused Meta The template, however WATI The reason for the rejection was not returned via an interface API current."
+                "Meta rejected the template, but the current WATI API response did not include a rejection reason."
             )
         elif status in {
             "draft",
@@ -207,7 +200,7 @@ class WatiTemplateLifecycleFinal(models.Model):
         self.sudo().write(values)
         self._sync_readonly_variables(normalized.get("custom_params") or [])
         _logger.warning(
-            "WATI_TEMPLATE_FINAL_SYNC id=%s name=%r reason=%s remote_language=%r status=%r rejection=%r wati_id=%r meta_id=%r",
+            "WATI_TEMPLATE_LIFECYCLE_SYNC id=%s name=%r reason=%s remote_language=%r status=%r rejection=%r wati_id=%r meta_id=%r",
             self.id,
             self.name,
             reason,
@@ -230,11 +223,11 @@ class WatiTemplateLifecycleFinal(models.Model):
             self.sudo().write(
                 {
                     "last_synced_at": fields.Datetime.now(),
-                    "last_error": _("This template did not appear in a result WATI current."),
+                    "last_error": _("This template is not present in the current WATI catalogue response."),
                 }
             )
             _logger.warning(
-                "WATI_TEMPLATE_FINAL_SYNC_MISSING id=%s name=%r language=%r reason=%s",
+                "WATI_TEMPLATE_LIFECYCLE_MISSING id=%s name=%r language=%r reason=%s",
                 self.id,
                 self.name,
                 self.language,
@@ -261,8 +254,8 @@ class WatiTemplateLifecycleFinal(models.Model):
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
-                "title": _("Update template status"),
-                "message": _("has been updated %s Who %s Template from WATI.")
+                "title": _("Template status updated"),
+                "message": _("Updated %s of %s templates from WATI.")
                 % (len(found), len(self)),
                 "type": "success" if found else "warning",
                 "sticky": False,
@@ -288,13 +281,13 @@ class WatiTemplateLifecycleFinal(models.Model):
                     updated += 1
             except Exception:
                 _logger.exception(
-                    "WATI_TEMPLATE_POLLER_FAILED id=%s name=%r",
+                    "WATI_TEMPLATE_LIFECYCLE_POLL_FAILED id=%s name=%r",
                     record.id,
                     record.name,
                 )
         if records:
             _logger.warning(
-                "WATI_TEMPLATE_POLLER_DONE checked=%s updated=%s",
+                "WATI_TEMPLATE_LIFECYCLE_POLL_DONE checked=%s updated=%s",
                 len(records),
                 updated,
             )
@@ -302,6 +295,7 @@ class WatiTemplateLifecycleFinal(models.Model):
 
     @api.model
     def _repair_pending_template_lifecycle(self):
+        """Migration helper for pending templates created by earlier releases."""
         records = self.sudo().search(
             [
                 ("source", "=", "odoo"),
@@ -312,16 +306,16 @@ class WatiTemplateLifecycleFinal(models.Model):
         updated = 0
         for record in records:
             try:
-                if record._refresh_lifecycle_from_provider(reason="module_upgrade"):
+                if record._refresh_lifecycle_from_provider(reason="migration"):
                     updated += 1
             except Exception:
                 _logger.exception(
-                    "WATI_TEMPLATE_FINAL_REPAIR_FAILED id=%s name=%r",
+                    "WATI_TEMPLATE_LIFECYCLE_MIGRATION_FAILED id=%s name=%r",
                     record.id,
                     record.name,
                 )
         _logger.warning(
-            "WATI_TEMPLATE_FINAL_REPAIR_DONE checked=%s updated=%s ids=%s",
+            "WATI_TEMPLATE_LIFECYCLE_MIGRATION_DONE checked=%s updated=%s ids=%s",
             len(records),
             updated,
             records.ids,
@@ -329,7 +323,7 @@ class WatiTemplateLifecycleFinal(models.Model):
         return True
 
 
-class WatiTemplateWebhookFinal(models.Model):
+class WatiTemplateLifecycleWebhook(models.Model):
     _inherit = "wati.webhook.event"
 
     @api.model
@@ -344,9 +338,8 @@ class WatiTemplateWebhookFinal(models.Model):
 
     @api.model
     def ingest(self, payload):
-        # Existing handler covers the documented root payload. This additional
-        # pass catches providers that wrap the event in data/payload/event/body
-        # or vary only the eventType casing/separators.
+        # The base handler covers the documented root payload. This pass also
+        # accepts providers that wrap the event or vary eventType casing/separators.
         if isinstance(payload, dict):
             candidates = [payload]
             for key in ("data", "payload", "event", "body"):

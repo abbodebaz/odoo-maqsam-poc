@@ -1,24 +1,23 @@
 import logging
 from datetime import timedelta
 
-from odoo import fields, models
+from odoo import _, fields, models
 
 
 _logger = logging.getLogger(__name__)
 _PENDING_TTL_MINUTES = 10
 
 
-class WatiAutomationDedupFix(models.Model):
+class WatiAutomationDeduplication(models.Model):
     _inherit = "wati.automation.rule"
 
     def _execute_record(self, record):
         """Execute a rule with delivery-aware de-duplication.
 
-        Legacy `sent` rows from the old automation engine are intentionally NOT
-        treated as proof of delivery. Only a confirmed `delivered` row blocks a
-        record forever. A recent `accepted` row blocks a duplicate briefly while
-        WATI/Meta is still processing it; stale accepted rows are released for a
-        safe retry.
+        Legacy ``sent`` rows are not treated as proof of delivery. Only a
+        confirmed ``delivered`` row permanently blocks the record. A recent
+        ``accepted`` row blocks a duplicate briefly while WATI/Meta processes the
+        request; stale accepted rows are released for a safe retry.
         """
         self.ensure_one()
         if not self.active or not record or record._name != self.model_name:
@@ -67,15 +66,12 @@ class WatiAutomationDedupFix(models.Model):
                         )
                         return False
 
-                    # A request that stayed accepted too long is not proof of
-                    # delivery. Release it so the customer can be retried safely.
                     pending.write(
                         {
                             "status": "failed",
                             "delivery_status": "accepted_timeout",
-                            "error_message": (
-                                "The timeout for waiting for delivery confirmation has expired WATI; "
-                                "Automatic retry allowed."
+                            "error_message": _(
+                                "The WATI delivery-confirmation timeout expired; the record is eligible for retry."
                             ),
                         }
                     )
@@ -87,7 +83,7 @@ class WatiAutomationDedupFix(models.Model):
                         record,
                         "failed",
                         phone="",
-                        error_message="No number found WhatsApp In the register.",
+                        error_message=_("No WhatsApp number was found on the record."),
                     )
                 )
                 return False
