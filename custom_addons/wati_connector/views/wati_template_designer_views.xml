@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_template_form_designer" model="ir.ui.view">
+        <field name="name">wati.template.form.designer</field>
+        <field name="model">wati.template</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_template_form"/>
+        <field name="priority">80</field>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="replace">
+                <sheet class="o_wati_template_designer">
+                    <div class="o_wati_template_notice alert alert-info" role="status" invisible="source != 'wati'">
+                        <i class="fa fa-cloud-download me-2"/>
+                        <strong>قالب مستورد من WATI.</strong>
+                        هذه النسخة مرآة للقالب الحقيقي لدى WATI/Meta. استخدم «إنشاء نسخة جديدة» إذا أردت تعديل المحتوى.
+                    </div>
+                    <div class="o_wati_template_notice alert alert-danger" role="alert" invisible="status != 'rejected' or not rejection_reason">
+                        <i class="fa fa-exclamation-triangle me-2"/>
+                        <strong>رفض Meta القالب:</strong>
+                        <field name="rejection_reason" class="d-inline"/>
+                    </div>
+                    <div class="o_wati_template_notice alert alert-danger" role="alert" invisible="not last_error">
+                        <i class="fa fa-bug me-2"/>
+                        <strong>آخر مشكلة:</strong>
+                        <field name="last_error" class="d-inline"/>
+                    </div>
+
+                    <div class="o_wati_template_designer_grid">
+                        <main class="o_wati_template_editor">
+                            <section class="o_wati_template_section o_wati_template_intro">
+                                <div>
+                                    <span class="o_wati_template_eyebrow">WHATSAPP TEMPLATE</span>
+                                    <h1>إنشاء قالب WhatsApp</h1>
+                                    <p>جهّز القالب في خطوات واضحة، راجعه بصريًا، ثم أرسله إلى WATI وMeta للموافقة.</p>
+                                </div>
+                                <div class="o_wati_template_state">
+                                    <span class="o_wati_template_state_label">الحالة الحالية</span>
+                                    <field name="status" widget="badge" class="o_wati_template_state_badge"/>
+                                </div>
+                            </section>
+
+                            <section class="o_wati_template_section">
+                                <div class="o_wati_template_section_title">
+                                    <div class="o_wati_template_step">1</div>
+                                    <div>
+                                        <h2>بيانات القالب</h2>
+                                        <p>حدد الاسم، التصنيف واللغة قبل كتابة المحتوى.</p>
+                                    </div>
+                                </div>
+                                <div class="o_wati_template_identity_grid">
+                                    <div class="o_wati_template_field">
+                                        <label for="name">اسم القالب</label>
+                                        <field name="name"
+                                               placeholder="order_ready_ar"
+                                               readonly="status != 'draft' or source != 'odoo'"/>
+                                        <small>نحوّل المسافات والشرطات تلقائيًا إلى (_). استخدم اسمًا واضحًا مثل order_ready_ar.</small>
+                                    </div>
+                                    <div class="o_wati_template_field">
+                                        <label for="category">التصنيف</label>
+                                        <field name="category" readonly="status != 'draft' or source != 'odoo'"/>
+                                        <small>Utility للرسائل الخدمية، وMarketing للرسائل التسويقية.</small>
+                                    </div>
+                                    <div class="o_wati_template_field">
+                                        <label for="language">اللغة</label>
+                                        <field name="language" placeholder="ar" readonly="status != 'draft' or source != 'odoo'"/>
+                                        <small>مثال: ar للعربية أو en للإنجليزية.</small>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section class="o_wati_template_section">
+                                <div class="o_wati_template_section_title">
+                                    <div class="o_wati_template_step">2</div>
+                                    <div>
+                                        <h2>نوع القالب</h2>
+                                        <p>النسخة الآمنة للإنشاء من Odoo تدعم Standard حاليًا، بينما نستورد الأنواع المتقدمة من WATI للمتابعة.</p>
+                                    </div>
+                                </div>
+                                <div class="o_wati_template_type_row">
+                                    <div class="o_wati_template_type_card is-active">
+                                        <i class="fa fa-file-text-o"/>
+                                        <strong>Standard</strong>
+                                        <span>رسالة نصية قياسية</span>
+                                    </div>
+                                    <div class="o_wati_template_type_card is-disabled">
+                                        <i class="fa fa-picture-o"/>
+                                        <strong>Catalog / Carousel</strong>
+                                        <span>يظهر عند الاستيراد — إنشاءه من Odoo لاحقًا</span>
+                                    </div>
+                                    <div class="o_wati_template_type_card is-disabled">
+                                        <i class="fa fa-clock-o"/>
+                                        <strong>Limited-time offer</strong>
+                                        <span>محجوز للتوسعة القادمة</span>
+                                    </div>
+                                </div>
+                                <field name="sub_category" class="o_wati_template_subcategory" readonly="1"/>
+                            </section>
+
+                            <section class="o_wati_template_section">
+                                <div class="o_wati_template_section_title">
+                                    <div class="o_wati_template_step">3</div>
+                                    <div>
+                                        <h2>ترويسة الرسالة <span>اختياري</span></h2>
+                                        <p>مثل WATI: يمكن أن تكون بدون ترويسة أو نص/صورة/فيديو/مستند. الإنشاء الحالي من Odoo يبقى بدون Media Header حتى نوثق عقد الإرسال المتقدم بالكامل.</p>
+                                    </div>
+                                </div>
+                                <div class="o_wati_template_choice_row" invisible="source != 'odoo'">
+                                    <div class="o_wati_template_choice is-active"><i class="fa fa-ban"/><span>بدون</span></div>
+                                    <div class="o_wati_template_choice is-disabled"><i class="fa fa-font"/><span>نص</span></div>
+                                    <div class="o_wati_template_choice is-disabled"><i class="fa fa-image"/><span>صورة</span></div>
+                                    <div class="o_wati_template_choice is-disabled"><i class="fa fa-video-camera"/><span>فيديو</span></div>
+                                    <div class="o_wati_template_choice is-disabled"><i class="fa fa-file-pdf-o"/><span>مستند</span></div>
+                                </div>
+                                <div class="o_wati_template_imported_component" invisible="not header_type and not header_text">
+                                    <field name="header_type"/>
+                                    <field name="header_text" invisible="not header_text"/>
+                                </div>
+                            </section>
+
+                            <section class="o_wati_template_section">
+                                <div class="o_wati_template_section_title">
+                                    <div class="o_wati_template_step">4</div>
+                                    <div>
+                                        <h2>نص الرسالة</h2>
+                                        <p>اكتب محتوى واضحًا، واستخدم متغيرات مثل <code>{{name}}</code> لتخصيص الرسالة.</p>
+                                    </div>
+                                    <div class="o_wati_template_counter">حد أقصى 1024 حرفًا</div>
+                                </div>
+                                <div class="o_wati_template_body_box">
+                                    <field name="body"
+                                           string="نص الرسالة"
+                                           placeholder="مرحبًا {{name}}، طلبك أصبح جاهزًا."
+                                           readonly="status != 'draft' or source != 'odoo'"
+                                           nolabel="1"/>
+                                </div>
+
+                                <div class="o_wati_template_variables" invisible="not variable_count">
+                                    <div class="o_wati_template_inline_title">
+                                        <div>
+                                            <h3>المتغيرات</h3>
+                                            <p>أدخل قيمة مثال لكل متغير حتى تكون المعاينة والمراجعة واضحتين.</p>
+                                        </div>
+                                        <span><field name="variable_count" readonly="1"/> متغير</span>
+                                    </div>
+                                    <field name="variable_ids" readonly="status != 'draft' or source != 'odoo'" nolabel="1">
+                                        <list editable="bottom" create="false" delete="false">
+                                            <field name="position" string="#" readonly="1"/>
+                                            <field name="name" string="المتغير" readonly="1"/>
+                                            <field name="sample_value" string="قيمة مثال" required="1"/>
+                                        </list>
+                                    </field>
+                                </div>
+                            </section>
+
+                            <section class="o_wati_template_section">
+                                <div class="o_wati_template_section_title">
+                                    <div class="o_wati_template_step">5</div>
+                                    <div>
+                                        <h2>التذييل <span>اختياري</span></h2>
+                                        <p>نص قصير أسفل الرسالة، بحد أقصى 60 حرفًا.</p>
+                                    </div>
+                                </div>
+                                <field name="footer"
+                                       placeholder="مثال: شكرًا لاستخدامك خدمتنا"
+                                       readonly="status != 'draft' or source != 'odoo'"
+                                       nolabel="1"/>
+                            </section>
+
+                            <section class="o_wati_template_section">
+                                <div class="o_wati_template_section_title">
+                                    <div class="o_wati_template_step">6</div>
+                                    <div>
+                                        <h2>الأزرار <span>اختياري</span></h2>
+                                        <p>Quick Reply وVisit Website وغيرها ستدخل في مرحلة المكونات المتقدمة بعد تثبيت عقد WATI لها. القوالب المستوردة تعرض أزرارها الحالية بدون فقد البيانات.</p>
+                                    </div>
+                                </div>
+                                <div class="o_wati_template_choice_row" invisible="source != 'odoo'">
+                                    <div class="o_wati_template_choice is-active"><i class="fa fa-ban"/><span>بدون أزرار</span></div>
+                                    <div class="o_wati_template_choice is-disabled"><i class="fa fa-reply"/><span>رد سريع</span></div>
+                                    <div class="o_wati_template_choice is-disabled"><i class="fa fa-external-link"/><span>زيارة موقع</span></div>
+                                    <div class="o_wati_template_choice is-disabled"><i class="fa fa-phone"/><span>اتصال</span></div>
+                                </div>
+                                <field name="buttons_json"
+                                       widget="text"
+                                       nolabel="1"
+                                       invisible="buttons_json in [False, '', '[]']"/>
+                            </section>
+
+                            <section class="o_wati_template_section o_wati_template_provider_section" invisible="status == 'draft' and source == 'odoo'">
+                                <div class="o_wati_template_section_title">
+                                    <div class="o_wati_template_step"><i class="fa fa-check"/></div>
+                                    <div>
+                                        <h2>Meta / WATI</h2>
+                                        <p>بيانات الاعتماد والمزامنة لهذه النسخة.</p>
+                                    </div>
+                                </div>
+                                <div class="o_wati_template_provider_grid">
+                                    <div><span>الحالة</span><field name="status" widget="badge"/></div>
+                                    <div><span>الجودة</span><field name="quality" widget="badge"/></div>
+                                    <div><span>آخر مزامنة</span><field name="last_synced_at"/></div>
+                                    <div><span>أرسل للمراجعة</span><field name="submitted_at"/></div>
+                                </div>
+                                <details class="o_wati_template_technical_details">
+                                    <summary>معرفات المزود</summary>
+                                    <div class="o_wati_template_provider_grid mt-3">
+                                        <div><span>WATI Template ID</span><field name="wati_template_id"/></div>
+                                        <div><span>Meta Template ID</span><field name="meta_template_id"/></div>
+                                        <div><span>WABA ID</span><field name="waba_id"/></div>
+                                        <div><span>قناة WhatsApp</span><field name="channel_phone_number"/></div>
+                                    </div>
+                                </details>
+                            </section>
+
+                            <details class="o_wati_template_technical_details" groups="base.group_system">
+                                <summary>تفاصيل تقنية للمسؤول</summary>
+                                <div class="o_wati_template_technical_payloads">
+                                    <field name="provider_request" widget="text"/>
+                                    <field name="provider_response" widget="text"/>
+                                    <field name="last_error" widget="text"/>
+                                </div>
+                            </details>
+                        </main>
+
+                        <aside class="o_wati_template_preview_panel">
+                            <div class="o_wati_template_preview_sticky">
+                                <div class="o_wati_template_preview_heading">
+                                    <div>
+                                        <span>معاينة مباشرة</span>
+                                        <strong>كيف ستظهر الرسالة؟</strong>
+                                    </div>
+                                    <i class="fa fa-whatsapp"/>
+                                </div>
+                                <div class="o_wati_phone">
+                                    <div class="o_wati_phone_topbar">
+                                        <span>9:41</span>
+                                        <div><i class="fa fa-signal"/> <i class="fa fa-wifi"/> <i class="fa fa-battery-three-quarters"/></div>
+                                    </div>
+                                    <div class="o_wati_phone_chat_header">
+                                        <i class="fa fa-chevron-right"/>
+                                        <div class="o_wati_phone_avatar"><i class="fa fa-whatsapp"/></div>
+                                        <div><strong>WhatsApp Business</strong><span>حساب أعمال</span></div>
+                                    </div>
+                                    <div class="o_wati_phone_chat">
+                                        <div class="o_wati_phone_security">هذه المحادثة محمية بواسطة WhatsApp.</div>
+                                        <div class="o_wati_message_bubble">
+                                            <div class="o_wati_preview_header" invisible="not header_text">
+                                                <field name="header_text" readonly="1" nolabel="1"/>
+                                            </div>
+                                            <field name="preview_text" readonly="1" nolabel="1" class="o_wati_preview_body"/>
+                                            <div class="o_wati_preview_footer" invisible="not footer">
+                                                <field name="footer" readonly="1" nolabel="1"/>
+                                            </div>
+                                            <div class="o_wati_preview_time">13:05 <i class="fa fa-check-double"/></div>
+                                        </div>
+                                        <div class="o_wati_preview_buttons" invisible="buttons_json in [False, '', '[]']">
+                                            <span><i class="fa fa-hand-pointer-o"/> القالب يحتوي على أزرار محفوظة من WATI</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="o_wati_template_preview_hint">
+                                    <i class="fa fa-lightbulb-o"/>
+                                    <span>المعاينة تستخدم قيم الأمثلة للمتغيرات، لذلك راجعها قبل إرسال القالب للموافقة.</span>
+                                </div>
+                            </div>
+                        </aside>
+                    </div>
+                </sheet>
+            </xpath>
+        </field>
+    </record>
+</odoo>
