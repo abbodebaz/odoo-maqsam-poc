@@ -46,3 +46,4 @@ from . import wati_template_button_contract
 from . import wati_template_custom_params_contract
 from . import wati_template_lifecycle_final
 from . import wati_template_lifecycle_provider_scope
+from . import wati_message_identity
