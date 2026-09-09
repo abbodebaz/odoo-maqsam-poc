@@ -137,7 +137,21 @@ def template_language(item):
     if isinstance(raw, str):
         return raw.strip()
     if isinstance(raw, dict):
-        return first(raw, ("code", "languageCode", "locale", "name"))
+        # WATI v2 currently returns language objects such as
+        # {"key": "Arabic", "value": "ar", "text": "Arabic"}.
+        # Prefer the machine-readable value before human labels.
+        return first(
+            raw,
+            (
+                "value",
+                "code",
+                "languageCode",
+                "locale",
+                "key",
+                "name",
+                "text",
+            ),
+        )
     return first(item, ("languageCode", "locale"))
 
 

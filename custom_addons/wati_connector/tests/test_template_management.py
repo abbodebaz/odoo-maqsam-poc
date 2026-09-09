@@ -41,6 +41,19 @@ class TestWatiTemplateCatalog(TransactionCase):
         self.assertEqual(normalized["meta_template_id"], "meta-1")
         self.assertEqual(normalized["wati_template_id"], "wati-1")
 
+    def test_normalize_wati_v2_language_object_uses_machine_value(self):
+        normalized = normalize_template(
+            {
+                "elementName": "order_ready_test",
+                "language": {"key": "Arabic", "value": "ar", "text": "Arabic"},
+                "status": "REJECTED",
+                "wabaId": "324395694078934",
+            }
+        )
+        self.assertEqual(normalized["language"], "ar")
+        self.assertEqual(normalized["status"], "rejected")
+        self.assertEqual(normalized["waba_id"], "324395694078934")
+
 
 class TestWatiTemplateModel(TransactionCase):
 
