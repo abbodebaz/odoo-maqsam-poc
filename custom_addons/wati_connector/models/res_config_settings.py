@@ -4,6 +4,13 @@ from odoo.exceptions import UserError
 from ..services.client import WatiClient
 from ..services.config import WatiConfig
 from ..services.exceptions import WatiConfigurationError, WatiRequestError
+from ..services.feature_access import sync_feature_access_controls
+
+
+_FEATURE_ACCESS_SELECTION = [
+    ("all", "كل مستخدمي WhatsApp"),
+    ("admin", "مشرفو WhatsApp فقط"),
+]
 
 
 class ResConfigSettings(models.TransientModel):
@@ -48,6 +55,45 @@ class ResConfigSettings(models.TransientModel):
         help="إظهار زر WhatsApp في شريط Odoo لفتح نافذة محادثات سريعة بدون مغادرة الشاشة الحالية.",
     )
 
+    # Workspace feature access. These are intentionally policy fields rather than
+    # per-user toggles: the company chooses who may use each feature, while users
+    # receive the WATI User / Administrator role from Odoo access rights.
+    wati_access_conversations = fields.Selection(
+        _FEATURE_ACCESS_SELECTION,
+        string="سجل المحادثات",
+        config_parameter="wati_connector.access_conversations",
+        default="all",
+        required=True,
+    )
+    wati_access_messages = fields.Selection(
+        _FEATURE_ACCESS_SELECTION,
+        string="سجل الرسائل",
+        config_parameter="wati_connector.access_messages",
+        default="all",
+        required=True,
+    )
+    wati_access_automation = fields.Selection(
+        _FEATURE_ACCESS_SELECTION,
+        string="مركز الأتمتة",
+        config_parameter="wati_connector.access_automation",
+        default="admin",
+        required=True,
+    )
+    wati_access_automation_logs = fields.Selection(
+        _FEATURE_ACCESS_SELECTION,
+        string="سجل التشغيل",
+        config_parameter="wati_connector.access_automation_logs",
+        default="admin",
+        required=True,
+    )
+    wati_access_monitor = fields.Selection(
+        _FEATURE_ACCESS_SELECTION,
+        string="مراقبة Webhook",
+        config_parameter="wati_connector.access_monitor",
+        default="admin",
+        required=True,
+    )
+
     @api.depends("wati_webhook_token")
     def _compute_wati_webhook_url(self):
         base_url = (
@@ -58,6 +104,16 @@ class ResConfigSettings(models.TransientModel):
             record.wati_webhook_url = (
                 f"{base_url}/wati/webhook/{token}" if base_url and token else ""
             )
+
+    @api.model
+    def _sync_wati_feature_access(self):
+        """Re-apply policy after module install/upgrade and settings changes."""
+        return sync_feature_access_controls(self.env)
+
+    def set_values(self):
+        result = super().set_values()
+        sync_feature_access_controls(self.env)
+        return result
 
     def _normalize_wati_endpoint(self, value):
         try:
