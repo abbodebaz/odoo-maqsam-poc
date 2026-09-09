@@ -19,7 +19,8 @@
                 <separator/>
                 <filter name="odoo_source" string="أنشئت في Odoo" domain="[('source', '=', 'odoo')]"/>
                 <filter name="wati_source" string="مستوردة من WATI" domain="[('source', '=', 'wati')]"/>
-                <group expand="0" string="تجميع حسب">
+                <separator/>
+                <group>
                     <filter name="group_status" string="الحالة" context="{'group_by': 'status'}"/>
                     <filter name="group_category" string="التصنيف" context="{'group_by': 'category'}"/>
                     <filter name="group_language" string="اللغة" context="{'group_by': 'language'}"/>
