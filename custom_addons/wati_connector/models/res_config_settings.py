@@ -55,9 +55,8 @@ class ResConfigSettings(models.TransientModel):
         help="إظهار زر WhatsApp في شريط Odoo لفتح نافذة محادثات سريعة بدون مغادرة الشاشة الحالية.",
     )
 
-    # Workspace feature access. These are intentionally policy fields rather than
-    # per-user toggles: the company chooses who may use each feature, while users
-    # receive the WATI User / Administrator role from Odoo access rights.
+    # Workspace feature access. These are company-level policies. Individual
+    # users receive the WATI role separately in Odoo access rights.
     wati_access_conversations = fields.Selection(
         _FEATURE_ACCESS_SELECTION,
         string="سجل المحادثات",
@@ -70,6 +69,13 @@ class ResConfigSettings(models.TransientModel):
         string="سجل الرسائل",
         config_parameter="wati_connector.access_messages",
         default="all",
+        required=True,
+    )
+    wati_access_templates = fields.Selection(
+        _FEATURE_ACCESS_SELECTION,
+        string="مركز القوالب",
+        config_parameter="wati_connector.access_templates",
+        default="admin",
         required=True,
     )
     wati_access_automation = fields.Selection(
