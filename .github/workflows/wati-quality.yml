@@ -55,6 +55,7 @@ jobs:
           print(f'WATI_ARABIC_SOURCE_FILES={len(by_file)}')
           for path, lines in sorted(by_file.items()):
               line_list = ','.join(map(str, lines))
+              print(f'WATI_ARABIC_FILE={path} LINES={line_list}')
               print(f'::warning file={path},line={lines[0]}::Arabic runtime source lines: {line_list}')
           PY
 
