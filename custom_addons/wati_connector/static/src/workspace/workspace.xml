@@ -188,7 +188,7 @@
                             <h2 t-esc="selected.article.title"/>
                             <p class="o_wati_article_summary" t-esc="selected.article.summary"/>
 
-                            <div class="o_wati_article_steps" t-if="selected.article.steps && selected.article.steps.length">
+                            <div class="o_wati_article_steps" t-if="selected.article.steps &amp;&amp; selected.article.steps.length">
                                 <h3>الخطوات</h3>
                                 <ol>
                                     <li t-foreach="selected.article.steps" t-as="step" t-key="step_index">
@@ -198,7 +198,7 @@
                                 </ol>
                             </div>
 
-                            <div class="o_wati_article_tips" t-if="selected.article.tips && selected.article.tips.length">
+                            <div class="o_wati_article_tips" t-if="selected.article.tips &amp;&amp; selected.article.tips.length">
                                 <div class="o_wati_tip_heading"><i class="fa fa-lightbulb-o"/> ملاحظات مهمة</div>
                                 <ul>
                                     <li t-foreach="selected.article.tips" t-as="tip" t-key="tip_index" t-esc="tip"/>
