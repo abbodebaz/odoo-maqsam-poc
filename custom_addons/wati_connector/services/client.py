@@ -1,5 +1,7 @@
-import requests
+import json as jsonlib
 from urllib.parse import quote
+
+import requests
 
 from .config import WatiConfig
 from .exceptions import WatiConfigurationError, WatiRequestError
@@ -79,6 +81,43 @@ class WatiClient:
             )
         return response
 
+    def _ensure_application_success(self, response, operation):
+        """Reject HTTP-200 responses that still contain an application error.
+
+        Some WATI endpoints can transport a structured failure inside a successful
+        HTTP response. Template lifecycle operations must never be marked as
+        successful until both transport and payload agree.
+        """
+        try:
+            payload = response.json()
+        except ValueError:
+            return response
+        if not isinstance(payload, dict):
+            return response
+
+        semantic_failure = (
+            payload.get("success") is False
+            or payload.get("result") is False
+        )
+        error = payload.get("error")
+        if isinstance(error, str):
+            semantic_failure = semantic_failure or bool(error.strip())
+        elif error not in (None, False, {}, []):
+            semantic_failure = True
+
+        errors = payload.get("errors")
+        if errors not in (None, False, "", {}, []):
+            semantic_failure = True
+
+        if semantic_failure:
+            detail = jsonlib.dumps(payload, ensure_ascii=False, default=str)[:1500]
+            raise WatiRequestError(
+                f"WATI {operation} failed: {detail}",
+                status_code=response.status_code,
+                response_text=detail,
+            )
+        return response
+
     def get(self, path, **kwargs):
         return self._request("GET", path, **kwargs)
 
@@ -143,11 +182,12 @@ class WatiClient:
 
     def create_whatsapp_template(self, payload):
         """Create a WhatsApp template through WATI's documented template endpoint."""
-        return self.post(
+        response = self.post(
             "api/v1/whatsApp/templates",
             json=payload,
             timeout=45,
         )
+        return self._ensure_application_success(response, "template creation")
 
     def delete_whatsapp_template(self, waba_id, name, language=None):
         """Delete one template language, or all languages when language is omitted."""
@@ -156,7 +196,8 @@ class WatiClient:
         path = f"api/v1/whatsApp/templates/{safe_waba}/{safe_name}"
         if language:
             path += f"/{quote(str(language).strip(), safe='')}"
-        return self.delete(path, timeout=45)
+        response = self.delete(path, timeout=45)
+        return self._ensure_application_success(response, "template deletion")
 
     def send_template_messages(self, payload):
         return self.post(
