@@ -64,8 +64,6 @@ def _pick_status(messages):
 
     if ranked:
         best = max(ranked)
-        # A failure after Accepted/Sent is meaningful, but it must never downgrade a
-        # message already known to have been Delivered/Read/Replied.
         if failed and best[0] < 2:
             return max(failed)[1]
         return best[2]
@@ -107,13 +105,7 @@ class WatiMessageIdentity(models.Model):
         )
 
     def _wati_merge_identity_group(self):
-        """Merge records proven to represent the same logical WhatsApp message.
-
-        Exact WhatsApp message ids are authoritative. A shared localMessageId is also
-        safe only while it maps to zero or one distinct WhatsApp message id. If one
-        local id ever maps to two provider ids, keep both rows because that is evidence
-        of two real provider messages rather than a presentation duplicate.
-        """
+        """Merge records proven to represent the same logical WhatsApp message."""
         records = self.sudo().exists()
         if len(records) <= 1:
             return records
@@ -181,15 +173,11 @@ class WatiMessageIdentity(models.Model):
             "read_at": _earliest(ordered, "read_at"),
             "failed_at": _earliest(ordered, "failed_at"),
             "status_updated_at": _latest(ordered, "status_updated_at"),
-            # Sent callbacks usually contain richer media/template metadata than later
-            # status callbacks, so keep the richest raw payload rather than merely the
-            # newest callback body.
             "raw_payload": max(raw_candidates, key=len)
             if raw_candidates
             else canonical.raw_payload,
         }
 
-        # Preserve webhook-monitor links before removing duplicate rows.
         events = self.env["wati.webhook.event"].sudo().search(
             [("linked_message_id", "in", duplicates.ids)]
         )
@@ -225,8 +213,6 @@ class WatiMessageIdentity(models.Model):
             if _clean(message.local_message_id)
         }
 
-        # Provider id is globally authoritative: every row with the same wamid is one
-        # WhatsApp message regardless of which callback variant produced the row.
         for whatsapp_id in whatsapp_ids:
             group = self.sudo().search(
                 [("whatsapp_message_id", "=", whatsapp_id)], order="id asc"
@@ -234,8 +220,6 @@ class WatiMessageIdentity(models.Model):
             if len(group) > 1:
                 result = group._wati_merge_identity_group()
 
-        # localMessageId connects Odoo's immediate Accepted row with WATI's later
-        # provider row. Never collapse it if it points at two distinct wamids.
         for local_id in local_ids:
             group = self.sudo().search(
                 [("local_message_id", "=", local_id)], order="id asc"
@@ -261,27 +245,15 @@ class WatiMessageIdentity(models.Model):
 
     @api.model
     def _wati_repair_duplicate_identities(self):
-        """Upgrade repair for historical rows with provably identical identities."""
+        """Fast upgrade repair for Odoo-originated sends with a local identity.
+
+        Historical provider-only callback duplicates can be numerous and must not make
+        application startup depend on a large maintenance sweep. Runtime reconciliation
+        still collapses exact WhatsApp identities whenever new lifecycle callbacks arrive.
+        The startup repair therefore targets only duplicate localMessageId groups, which
+        is the authoritative bridge for Mini/Full Inbox sends initiated by this Odoo.
+        """
         count_before = self.sudo().search_count([])
-
-        self.env.cr.execute(
-            """
-            SELECT whatsapp_message_id
-              FROM wati_message
-             WHERE COALESCE(whatsapp_message_id, '') <> ''
-             GROUP BY whatsapp_message_id
-            HAVING COUNT(*) > 1
-             ORDER BY MIN(id)
-            """
-        )
-        whatsapp_ids = [row[0] for row in self.env.cr.fetchall()]
-        for whatsapp_id in whatsapp_ids:
-            group = self.sudo().search(
-                [("whatsapp_message_id", "=", whatsapp_id)], order="id asc"
-            )
-            if len(group) > 1:
-                group._wati_merge_identity_group()
-
         self.env.cr.execute(
             """
             SELECT local_message_id
@@ -293,6 +265,8 @@ class WatiMessageIdentity(models.Model):
             """
         )
         local_ids = [row[0] for row in self.env.cr.fetchall()]
+        repaired = conflicts = 0
+
         for local_id in local_ids:
             group = self.sudo().search(
                 [("local_message_id", "=", local_id)], order="id asc"
@@ -302,14 +276,27 @@ class WatiMessageIdentity(models.Model):
                 for message in group
                 if _clean(message.whatsapp_message_id)
             }
-            if len(group) > 1 and len(provider_ids) <= 1:
-                group._wati_merge_identity_group()
+            if len(provider_ids) > 1:
+                conflicts += 1
+                _logger.warning(
+                    "WATI_MESSAGE_IDENTITY_REPAIR_SKIP local=%s whatsapp=%s ids=%s",
+                    local_id,
+                    sorted(provider_ids),
+                    group.ids,
+                )
+                continue
+            if len(group) > 1:
+                before = len(group)
+                merged = group._wati_merge_identity_group()
+                repaired += max(0, before - len(merged))
 
         count_after = self.sudo().search_count([])
-        removed = max(0, count_before - count_after)
         _logger.warning(
-            "WATI_MESSAGE_IDENTITY_REPAIR removed=%s before=%s after=%s",
-            removed,
+            "WATI_MESSAGE_IDENTITY_REPAIR mode=local_message_id groups=%s repaired=%s "
+            "conflicts=%s before=%s after=%s",
+            len(local_ids),
+            repaired,
+            conflicts,
             count_before,
             count_after,
         )
