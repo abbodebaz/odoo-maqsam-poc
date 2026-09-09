@@ -14,13 +14,27 @@
                                    placeholder="employee@company.com"/>
                             <div class="text-muted">
                                 أدخل إيميل الموظف كما هو مسجل داخل WATI Team Inbox.
-                                صلاحيات WATI تُدار من مجموعات المستخدم: User / Agent / Supervisor / Administrator.
                             </div>
                         </group>
+                        <group string="أدوار WhatsApp">
+                            <div class="text-muted">
+                                <strong>WATI User / Agent:</strong> للاستخدام اليومي وخدمة العملاء.<br/>
+                                <strong>WATI Supervisor:</strong> للإشراف على الفريق ونقل المحادثات.<br/>
+                                <strong>WATI Administrator:</strong> هو «مشرف WhatsApp» الذي تعتمد عليه إعدادات صلاحيات الخدمات مثل مركز الأتمتة وسجل التشغيل ومراقبة Webhook.
+                            </div>
+                        </group>
+                    </group>
+                    <group>
                         <group string="طريقة العمل">
                             <div class="text-muted">
                                 المحادثة غير المسندة يستطيع Agent استلامها. بعد الاستلام لا يستطيع موظف آخر الرد عليها.
                                 نقل المحادثة بين الموظفين متاح لمشرف WATI أو Administrator، وجميع عمليات النقل تُحفظ في سجل الإسناد.
+                            </div>
+                        </group>
+                        <group string="ملاحظة أمنية">
+                            <div class="alert alert-light border" role="status">
+                                لا تمنح المديرة صلاحية «مدير Odoo» فقط لكي تدير WhatsApp. استخدم دور
+                                <strong>WATI Administrator</strong> ليكون وصولها محصورًا في مساحة WhatsApp والصلاحيات التي اخترتها للشركة.
                             </div>
                         </group>
                     </group>
