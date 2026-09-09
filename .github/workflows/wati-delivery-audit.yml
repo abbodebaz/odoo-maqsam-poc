@@ -17,6 +17,24 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Audit tracked repository artifacts
+        run: |
+          python - <<'PY'
+          import subprocess
+
+          tracked = subprocess.check_output(['git', 'ls-files'], text=True).splitlines()
+          bad = [
+              path for path in tracked
+              if '/__pycache__/' in f'/{path}/'
+              or path.endswith(('.pyc', '.pyo'))
+              or path.endswith('/.DS_Store')
+              or path == '.DS_Store'
+          ]
+          if bad:
+              raise SystemExit('Tracked generated artifacts:\n' + '\n'.join(bad))
+          print('No generated Python/macOS artifacts are tracked.')
+          PY
+
       - name: Compile Python
         run: |
           for module in custom_addons/wati_connector*; do
@@ -50,12 +68,13 @@ jobs:
           from pathlib import Path
           import ast
           import re
+          import subprocess
 
-          roots = [p for p in Path('custom_addons').glob('wati_connector*') if p.is_dir()]
+          tracked = subprocess.check_output(['git', 'ls-files', 'custom_addons/wati_connector*'], text=True).splitlines()
           runtime_ext = {'.py', '.js', '.xml'}
           skip = {'tests', 'docs', 'migrations', 'i18n'}
           hard_fail = []
-          warnings = []
+          notes = []
 
           debug_patterns = {
               'python print': re.compile(r'(^|[^\w])print\s*\('),
@@ -66,20 +85,17 @@ jobs:
           }
           note_pattern = re.compile(r'\b(TODO|FIXME|XXX|HACK|TEMPORARY|DEBUG ONLY)\b', re.I)
 
-          for root in roots:
-              for path in root.rglob('*'):
-                  if not path.is_file():
-                      continue
-                  if path.name in {'.DS_Store'} or path.suffix in {'.pyc', '.pyo'} or '__pycache__' in path.parts:
-                      hard_fail.append(f'artifact: {path}')
-                  if path.suffix not in runtime_ext or skip.intersection(path.parts):
-                      continue
-                  text = path.read_text(encoding='utf-8')
+          for raw in tracked:
+              path = Path(raw)
+              if path.suffix not in runtime_ext or skip.intersection(path.parts):
+                  continue
+              text = path.read_text(encoding='utf-8')
+              for line_no, line in enumerate(text.splitlines(), 1):
                   for label, pattern in debug_patterns.items():
-                      if pattern.search(text):
-                          hard_fail.append(f'{label}: {path}')
-                  if note_pattern.search(text):
-                      warnings.append(f'development marker: {path}')
+                      if pattern.search(line):
+                          hard_fail.append(f'{label}: {path}:{line_no}')
+                  if note_pattern.search(line):
+                      notes.append(f'{path}:{line_no}: {line.strip()}')
 
           core = Path('custom_addons/wati_connector')
           manifest = ast.literal_eval((core / '__manifest__.py').read_text(encoding='utf-8'))
@@ -92,22 +108,32 @@ jobs:
           for path in (core / 'models').glob('*.py'):
               if any(path.name.endswith(token) for token in tokens):
                   suspicious_names.append(str(path))
-          print('SUSPICIOUS_MODEL_FILES=' + str(len(suspicious_names)))
+
+          print(f'SUSPICIOUS_MODEL_FILES={len(suspicious_names)}')
           for item in suspicious_names:
               print('SUSPICIOUS_MODEL=' + item)
-          for item in warnings:
-              print('WARNING=' + item)
+          print(f'DEVELOPMENT_MARKERS={len(notes)}')
+          for item in notes:
+              print('DEVELOPMENT_MARKER=' + item)
           if hard_fail:
               raise SystemExit('Delivery hygiene failures:\n' + '\n'.join(hard_fail))
           print('Delivery hygiene passed')
           PY
 
+      - name: Ruff correctness smoke
+        run: |
+          python -m pip install --quiet ruff
+          ruff check custom_addons/wati_connector custom_addons/wati_connector_crm custom_addons/wati_connector_sale custom_addons/wati_connector_account custom_addons/wati_connector_project \
+            --select E9,F63,F7,F82,T20 \
+            --exclude tests,migrations \
+            --output-format concise
+
       - name: Report architecture inventory
         if: always()
         run: |
           echo '--- largest WATI Python files ---'
-          find custom_addons/wati_connector -name '*.py' -type f -printf '%s %p\n' | sort -nr | head -20
+          find custom_addons/wati_connector -name '*.py' -type f -not -path '*/__pycache__/*' -printf '%s %p\n' | sort -nr | head -20
           echo '--- repair/data files ---'
           find custom_addons/wati_connector/data -type f -maxdepth 1 -print | sort
           echo '--- migrations ---'
-          find custom_addons/wati_connector/migrations -type f -print 2>/dev/null | sort || true
+          find custom_addons/wati_connector/migrations -type f -not -path '*/__pycache__/*' -print 2>/dev/null | sort || true
