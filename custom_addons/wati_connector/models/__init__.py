@@ -36,3 +36,4 @@ from . import wati_workspace_access
 from . import wati_template
 from . import wati_template_policy
 from . import wati_template_webhook
+from . import wati_template_compat

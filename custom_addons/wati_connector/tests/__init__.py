@@ -10,3 +10,4 @@ from . import test_response_truth
 from . import test_workspace
 from . import test_feature_access
 from . import test_template_management
+from . import test_template_button_compat
