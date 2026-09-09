@@ -4,12 +4,12 @@ from .wati_models import _clean_text, _payload_message_identity
 
 
 _MEDIA_PREVIEWS = {
-    "image": "📷 صورة",
-    "video": "🎥 فيديو",
-    "audio": "🎵 ملف صوتي",
-    "voice": "🎙️ رسالة صوتية",
-    "document": "📎 مستند",
-    "sticker": "🪄 ملصق",
+    "image": "📷 Image",
+    "video": "🎥 Video",
+    "audio": "🎵 Audio file",
+    "voice": "🎙️ Voice message",
+    "document": "📎 Document",
+    "sticker": "🪄 Poster",
 }
 
 

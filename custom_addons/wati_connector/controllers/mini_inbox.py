@@ -155,7 +155,7 @@ class WatiMiniInboxController(http.Controller):
     @http.route("/wati/mini/conversation", type="jsonrpc", auth="user")
     def conversation(self, conversation_id=None):
         if not _mini_enabled():
-            return {"ok": False, "message": "المحادثات السريعة غير مفعلة."}
+            return {"ok": False, "message": "Quick conversations are disabled."}
 
         try:
             conversation_id = int(conversation_id or 0)
@@ -164,7 +164,7 @@ class WatiMiniInboxController(http.Controller):
 
         conversation = request.env["wati.conversation"].browse(conversation_id).exists()
         if not conversation:
-            return {"ok": False, "message": "المحادثة غير موجودة."}
+            return {"ok": False, "message": "The conversation does not exist."}
 
         current_user = request.env.user
         assigned = conversation.assigned_user_id
@@ -187,7 +187,7 @@ class WatiMiniInboxController(http.Controller):
     @http.route("/wati/mini/assign", type="jsonrpc", auth="user")
     def assign(self, conversation_id=None, force=False):
         if not _mini_enabled():
-            return {"ok": False, "message": "المحادثات السريعة غير مفعلة."}
+            return {"ok": False, "message": "Quick conversations are disabled."}
 
         try:
             conversation_id = int(conversation_id or 0)
@@ -196,7 +196,7 @@ class WatiMiniInboxController(http.Controller):
 
         conversation = request.env["wati.conversation"].browse(conversation_id).exists()
         if not conversation:
-            return {"ok": False, "message": "المحادثة غير موجودة."}
+            return {"ok": False, "message": "The conversation does not exist."}
 
         current_user = request.env.user
         previous_user = conversation.assigned_user_id
@@ -209,7 +209,7 @@ class WatiMiniInboxController(http.Controller):
         ):
             return {
                 "ok": False,
-                "message": "نقل محادثة موظف آخر متاح فقط لمشرف WATI أو Administrator.",
+                "message": "Transferring another employee’s conversation is only available to a supervisor WATI Or Administrator.",
             }
 
         try:
@@ -223,21 +223,21 @@ class WatiMiniInboxController(http.Controller):
         if conversation.assigned_user_id != current_user:
             return {
                 "ok": False,
-                "message": "تعذر تثبيت إسناد المحادثة. حاول مرة أخرى.",
+                "message": "Unable to install conversation attribution. Try again.",
             }
 
         return {
             "ok": True,
             "assigned_user_name": current_user.name,
-            "message": "تم استلام المحادثة ✅"
+            "message": "Conversation received ✅"
             if not previous_user
-            else "تم نقل المحادثة إليك ✅",
+            else "The conversation has been moved to you ✅",
         }
 
     @http.route("/wati/mini/send", type="jsonrpc", auth="user")
     def send(self, conversation_id=None, message=None, request_id=None):
         if not _mini_enabled():
-            return {"ok": False, "message": "المحادثات السريعة غير مفعلة."}
+            return {"ok": False, "message": "Quick conversations are disabled."}
 
         try:
             conversation_id = int(conversation_id or 0)
@@ -246,11 +246,11 @@ class WatiMiniInboxController(http.Controller):
 
         text = (message or "").strip()
         if not text:
-            return {"ok": False, "message": "اكتب الرسالة أولًا."}
+            return {"ok": False, "message": "Write the message first."}
 
         conversation = request.env["wati.conversation"].browse(conversation_id).exists()
         if not conversation:
-            return {"ok": False, "message": "المحادثة غير موجودة."}
+            return {"ok": False, "message": "The conversation does not exist."}
 
         idem = WatiIdempotency(request.env)
         scope = f"outbound:mini-text:user:{request.env.user.id}"
@@ -258,7 +258,7 @@ class WatiMiniInboxController(http.Controller):
         if not idem.acquire_durable(scope, key, ttl_seconds=120):
             return {
                 "ok": True,
-                "message": "تم تجاهل إعادة إرسال مكررة.",
+                "message": "Duplicate resubmission was ignored.",
                 "duplicate_suppressed": True,
             }
 
@@ -275,4 +275,4 @@ class WatiMiniInboxController(http.Controller):
             # Odoo's automatic transaction retry a no-op instead of a 2nd send.
             raise
 
-        return {"ok": True, "message": "تم إرسال الرسالة إلى WATI ✅"}
+        return {"ok": True, "message": "The message has been sent to WATI ✅"}

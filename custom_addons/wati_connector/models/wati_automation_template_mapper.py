@@ -18,24 +18,24 @@ class WatiAutomationRuleTemplateMapper(models.Model):
     _inherit = "wati.automation.rule"
 
     template_parameter_count = fields.Integer(
-        string="عدد متغيرات القالب",
+        string="Number of template variables",
         compute="_compute_template_mapping_progress",
     )
     template_mapped_count = fields.Integer(
-        string="المتغيرات المربوطة",
+        string="Bound variables",
         compute="_compute_template_mapping_progress",
     )
     template_mapping_state = fields.Selection(
         [
-            ("empty", "لا توجد متغيرات"),
-            ("partial", "يحتاج ربط"),
-            ("ready", "جاهز"),
+            ("empty", "There are no variables"),
+            ("partial", "Needs connection"),
+            ("ready", "Ready"),
         ],
-        string="حالة ربط القالب",
+        string="Template binding status",
         compute="_compute_template_mapping_progress",
     )
     template_mapping_progress = fields.Char(
-        string="تقدم ربط القالب",
+        string="Provide template binding",
         compute="_compute_template_mapping_progress",
     )
 
@@ -88,20 +88,20 @@ class WatiAutomationRuleTemplateMapper(models.Model):
             rule.template_mapped_count = mapped
             if not total:
                 rule.template_mapping_state = "empty"
-                rule.template_mapping_progress = "لا توجد متغيرات في هذا القالب"
+                rule.template_mapping_progress = "There are no variables in this template"
             elif mapped == total:
                 rule.template_mapping_state = "ready"
-                rule.template_mapping_progress = f"{mapped} من {total} جاهزة"
+                rule.template_mapping_progress = f"{mapped} Who {total} Ready"
             else:
                 rule.template_mapping_state = "partial"
-                rule.template_mapping_progress = f"تم ربط {mapped} من {total}"
+                rule.template_mapping_progress = f"has been linked {mapped} Who {total}"
 
 
 class WatiAutomationParameterTemplateMapper(models.Model):
     _inherit = "wati.automation.parameter"
 
     template_variable_label = fields.Char(
-        string="متغير الرسالة",
+        string="Message variable",
         compute="_compute_template_variable_label",
     )
 

@@ -17,73 +17,73 @@ class WatiAutomationRule(models.Model):
     _description = "WATI WhatsApp Automation Rule"
     _order = "sequence, id"
 
-    name = fields.Char(string="اسم القاعدة", required=True)
+    name = fields.Char(string="Rule name", required=True)
     sequence = fields.Integer(default=10)
-    active = fields.Boolean(string="مفعلة", default=True)
+    active = fields.Boolean(string="Activated", default=True)
 
     model_id = fields.Many2one(
         "ir.model",
-        string="التطبيق / الموديل",
+        string="Application / Model",
         required=True,
         ondelete="cascade",
         domain=[("transient", "=", False)],
-        help="اختر نموذج الأعمال الذي تريد مراقبته مثل CRM أو أوامر البيع أو الفواتير.",
+        help="Select the business model you want to monitor e.g CRM Or sales orders or invoices.",
     )
     model_name = fields.Char(related="model_id.model", store=True, readonly=True)
     trigger_field_id = fields.Many2one(
         "ir.model.fields",
-        string="الحقل المراقَب",
+        string="Monitored field",
         required=True,
         ondelete="cascade",
         domain="[('model_id', '=', model_id), ('store', '=', True)]",
-        help="لن تعمل القاعدة إلا عندما يتغير هذا الحقل.",
+        help="The rule will only work when this field changes.",
     )
     condition_operator = fields.Selection(
         [
-            ("eq", "يساوي"),
-            ("ne", "لا يساوي"),
-            ("contains", "يحتوي"),
-            ("gt", "أكبر من"),
-            ("gte", "أكبر من أو يساوي"),
-            ("lt", "أقل من"),
-            ("lte", "أقل من أو يساوي"),
-            ("is_set", "له قيمة"),
-            ("is_not_set", "بدون قيمة"),
+            ("eq", "equals"),
+            ("ne", "Not equal"),
+            ("contains", "Contains"),
+            ("gt", "Greater than"),
+            ("gte", "Greater than or equal to"),
+            ("lt", "less than"),
+            ("lte", "Less than or equal to"),
+            ("is_set", "It has value"),
+            ("is_not_set", "Without value"),
         ],
-        string="الشرط",
+        string="Condition",
         required=True,
         default="eq",
     )
     target_value = fields.Char(
-        string="القيمة المطلوبة",
-        help="اكتب القيمة كما تظهر في Odoo. في الحقول المرتبطة يمكن كتابة الاسم أو الرقم الداخلي.",
+        string="Required value",
+        help="Type the value as it appears in Odoo. In the associated fields, you can write the name or extension number.",
     )
 
     recipient_field_id = fields.Many2one(
         "ir.model.fields",
-        string="حقل رقم WhatsApp",
+        string="Number field WhatsApp",
         ondelete="set null",
         domain="[('model_id', '=', model_id)]",
-        help="اختر حقل الهاتف مباشرة إذا كان موجودًا في نفس السجل.",
+        help="Select the Phone field directly if it exists in the same record.",
     )
     recipient_path = fields.Char(
-        string="مسار رقم بديل",
-        help="اختياري. مثال: partner_id.mobile أو partner_id.phone. إذا تركته فارغًا سيجرب النظام الحقول الشائعة تلقائيًا.",
+        string="Alternate number path",
+        help="Optional. Example: partner_id.mobile Or partner_id.phone. If you leave it blank the system will try common fields automatically.",
     )
 
-    template_name = fields.Char(string="اسم WATI Template", required=True)
-    channel_number = fields.Char(string="Channel Number", help="اختياري؛ يترك فارغًا لاستخدام الرقم الموجود في إعدادات WATI.")
-    once_per_record = fields.Boolean(string="إرسال مرة واحدة لكل سجل", default=True)
+    template_name = fields.Char(string="Name WATI Template", required=True)
+    channel_number = fields.Char(string="Channel Number", help="Optional; Leave blank to use the number in Settings WATI.")
+    once_per_record = fields.Boolean(string="Send once per record", default=True)
 
-    parameter_ids = fields.One2many("wati.automation.parameter", "rule_id", string="متغيرات القالب")
-    log_ids = fields.One2many("wati.automation.log", "rule_id", string="سجل التنفيذ")
+    parameter_ids = fields.One2many("wati.automation.parameter", "rule_id", string="Template variables")
+    log_ids = fields.One2many("wati.automation.log", "rule_id", string="Execution log")
 
     base_automation_id = fields.Many2one("base.automation", string="Odoo Automation", readonly=True, copy=False, ondelete="set null")
     server_action_id = fields.Many2one("ir.actions.server", string="Server Action", readonly=True, copy=False, ondelete="set null")
 
-    run_count = fields.Integer(string="عدد التشغيلات", compute="_compute_counts")
-    success_count = fields.Integer(string="ناجحة", compute="_compute_counts")
-    failure_count = fields.Integer(string="فاشلة", compute="_compute_counts")
+    run_count = fields.Integer(string="Number of runs", compute="_compute_counts")
+    success_count = fields.Integer(string="Successful", compute="_compute_counts")
+    failure_count = fields.Integer(string="Failed", compute="_compute_counts")
 
     @api.depends("log_ids", "log_ids.status")
     def _compute_counts(self):
@@ -97,9 +97,9 @@ class WatiAutomationRule(models.Model):
     def _check_fields_belong_to_model(self):
         for rule in self:
             if rule.trigger_field_id and rule.trigger_field_id.model_id != rule.model_id:
-                raise ValidationError(_("الحقل المراقَب لا ينتمي إلى الموديل المختار."))
+                raise ValidationError(_("The monitored field does not belong to the selected model."))
             if rule.recipient_field_id and rule.recipient_field_id.model_id != rule.model_id:
-                raise ValidationError(_("حقل رقم WhatsApp لا ينتمي إلى الموديل المختار."))
+                raise ValidationError(_("Number field WhatsApp It does not belong to the selected model."))
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -131,7 +131,7 @@ class WatiAutomationRule(models.Model):
             "tag": "display_notification",
             "params": {
                 "title": _("WhatsApp Automation"),
-                "message": _("تمت مزامنة القاعدة مع محرك Odoo بنجاح."),
+                "message": _("The base is synchronized with the drive Odoo Successfully."),
                 "type": "success",
                 "sticky": False,
             },
@@ -295,7 +295,7 @@ class WatiAutomationRule(models.Model):
             path = line.source_field_id.name
         value = self._resolve_path(record, path)
         if isinstance(value, bool):
-            return "نعم" if value else "لا"
+            return "Yes" if value else "No"
         if value is None or value is False:
             return ""
         return str(value)
@@ -319,7 +319,7 @@ class WatiAutomationRule(models.Model):
 
             phone = self._recipient_phone(record)
             if not phone:
-                Log.create(self._log_values(record, "failed", phone="", error_message="لم يتم العثور على رقم WhatsApp في السجل."))
+                Log.create(self._log_values(record, "failed", phone="", error_message="No number found WhatsApp In the register."))
                 return False
 
             custom_params = [
@@ -363,7 +363,7 @@ class WatiAutomationRule(models.Model):
                 record,
                 "failed",
                 phone=phone,
-                error_message="إعدادات WATI API غير مكتملة.",
+                error_message="Settings WATI API Incomplete.",
             ))
             return False
         except WatiRequestError as exc:
@@ -373,9 +373,9 @@ class WatiAutomationRule(models.Model):
                 "failed",
                 phone=phone,
                 error_message=(
-                    f"WATI رفض الإرسال ({exc.status_code})."
+                    f"WATI Refused to send ({exc.status_code})."
                     if exc.status_code
-                    else f"تعذر الاتصال بـ WATI: {detail}"
+                    else f"Unable to contact WATI: {detail}"
                 ),
                 response_excerpt=detail,
             ))
@@ -408,26 +408,26 @@ class WatiAutomationParameter(models.Model):
     sequence = fields.Integer(default=10)
     rule_id = fields.Many2one("wati.automation.rule", required=True, ondelete="cascade")
     model_id = fields.Many2one(related="rule_id.model_id", store=True, readonly=True)
-    param_name = fields.Char(string="متغير WATI", required=True)
+    param_name = fields.Char(string="variable WATI", required=True)
     source_type = fields.Selection(
         [
-            ("field", "حقل من Odoo"),
-            ("static", "قيمة ثابتة"),
-            ("record_id", "رقم السجل"),
-            ("record_name", "اسم السجل"),
+            ("field", "field of Odoo"),
+            ("static", "Fixed value"),
+            ("record_id", "Registration number"),
+            ("record_name", "Record name"),
         ],
-        string="مصدر القيمة",
+        string="Source of value",
         default="field",
         required=True,
     )
     source_field_id = fields.Many2one(
         "ir.model.fields",
-        string="حقل Odoo",
+        string="Field Odoo",
         ondelete="set null",
         domain="[('model_id', '=', model_id)]",
     )
-    source_path = fields.Char(string="مسار حقل متقدم", help="اختياري، مثال: partner_id.name")
-    static_value = fields.Char(string="قيمة ثابتة")
+    source_path = fields.Char(string="Advanced field path", help="Optional, example: partner_id.name")
+    static_value = fields.Char(string="Fixed value")
 
 
 class WatiAutomationLog(models.Model):
@@ -436,17 +436,17 @@ class WatiAutomationLog(models.Model):
     _order = "create_date desc, id desc"
 
     rule_id = fields.Many2one("wati.automation.rule", required=True, ondelete="cascade", index=True)
-    model_name = fields.Char(string="الموديل", index=True)
-    res_id = fields.Integer(string="رقم السجل", index=True)
-    res_name = fields.Char(string="السجل")
-    phone = fields.Char(string="رقم WhatsApp")
+    model_name = fields.Char(string="Model", index=True)
+    res_id = fields.Integer(string="Registration number", index=True)
+    res_name = fields.Char(string="Record")
+    phone = fields.Char(string="No WhatsApp")
     template_name = fields.Char(string="Template")
     status = fields.Selection(
-        [("sent", "تم الإرسال"), ("failed", "فشل")],
-        string="الحالة",
+        [("sent", "Sent"), ("failed", "Failed")],
+        string="Status",
         required=True,
         index=True,
     )
-    error_message = fields.Text(string="الخطأ")
-    response_excerpt = fields.Text(string="استجابة WATI")
-    triggered_by_id = fields.Many2one("res.users", string="شغّلها", readonly=True)
+    error_message = fields.Text(string="Error")
+    response_excerpt = fields.Text(string="response WATI")
+    triggered_by_id = fields.Many2one("res.users", string="Play it", readonly=True)

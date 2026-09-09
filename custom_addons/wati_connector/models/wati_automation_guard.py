@@ -189,33 +189,33 @@ def _payload_template_name(payload):
 class WatiAutomationRuleGuard(models.Model):
     _inherit = "wati.automation.rule"
 
-    template_status = fields.Char(string="حالة القالب", readonly=True, copy=False)
-    template_language = fields.Char(string="لغة القالب", readonly=True, copy=False)
-    template_channel_number = fields.Char(string="قناة القالب", readonly=True, copy=False)
+    template_status = fields.Char(string="Mold status", readonly=True, copy=False)
+    template_language = fields.Char(string="Template language", readonly=True, copy=False)
+    template_channel_number = fields.Char(string="Template channel", readonly=True, copy=False)
     template_validation_state = fields.Selection(
         [
-            ("unverified", "غير مفحوص"),
-            ("valid", "متحقق"),
-            ("invalid", "غير صالح"),
+            ("unverified", "Unexamined"),
+            ("valid", "Verified"),
+            ("invalid", "Invalid"),
         ],
-        string="تحقق القالب",
+        string="Check template",
         default="unverified",
         readonly=True,
         copy=False,
         index=True,
     )
     template_validation_message = fields.Text(
-        string="نتيجة فحص القالب",
+        string="Mold inspection result",
         readonly=True,
         copy=False,
     )
     template_verified_at = fields.Datetime(
-        string="آخر فحص للقالب",
+        string="Last check of the mold",
         readonly=True,
         copy=False,
     )
     accepted_count = fields.Integer(
-        string="قيد الإرسال",
+        string="Being sent",
         compute="_compute_counts",
     )
 
@@ -258,13 +258,13 @@ class WatiAutomationRuleGuard(models.Model):
                 continue
             current = rule.readiness_message or ""
             if rule.template_validation_state == "valid":
-                details = ["✅ القالب متحقق Live من WATI"]
+                details = ["✅ The template is verified Live Who WATI"]
                 if rule.template_status:
-                    details.append(f"الحالة: {rule.template_status}")
+                    details.append(f"Status: {rule.template_status}")
                 if rule.template_language:
-                    details.append(f"اللغة: {rule.template_language}")
+                    details.append(f"Language: {rule.template_language}")
                 if rule.template_channel_number:
-                    details.append(f"القناة: {rule.template_channel_number}")
+                    details.append(f"Channel: {rule.template_channel_number}")
                 line = " · ".join(details)
                 if line not in current:
                     rule.readiness_message = (current + "\n" + line).strip()
@@ -272,14 +272,14 @@ class WatiAutomationRuleGuard(models.Model):
                 rule.readiness_state = "incomplete"
                 line = "❌ " + (
                     rule.template_validation_message
-                    or "القالب غير صالح للإرسال من قناة WATI الحالية."
+                    or "The template is not valid for sending from a channel WATI current."
                 )
                 if line not in current:
                     rule.readiness_message = (current + "\n" + line).strip()
             else:
                 if rule.readiness_state == "ready":
                     rule.readiness_state = "warning"
-                line = "⚠️ القالب لم يُفحص Live من WATI بعد."
+                line = "⚠️ The template was not checked Live Who WATI After."
                 if line not in current:
                     rule.readiness_message = (current + "\n" + line).strip()
 
@@ -320,22 +320,22 @@ class WatiAutomationRuleGuard(models.Model):
                 )
             except WatiConfigurationError as exc:
                 raise UserError(
-                    _("إعدادات WATI API غير مكتملة. راجع Settings → WATI WhatsApp.")
+                    _("Settings WATI API Incomplete. See Settings → WATI WhatsApp.")
                 ) from exc
             except WatiRequestError as exc:
                 detail = (exc.response_text or str(exc) or "").strip()[:900]
                 if exc.status_code:
                     raise UserError(
-                        _("WATI رفض فحص القوالب (%(status)s): %(detail)s")
+                        _("WATI Refusal to inspect templates (%(status)s): %(detail)s")
                         % {"status": exc.status_code, "detail": detail}
                     ) from exc
-                raise UserError(_("تعذر الاتصال بـ WATI للتحقق من القالب: %s") % detail) from exc
+                raise UserError(_("Unable to contact WATI To verify the template: %s") % detail) from exc
 
             try:
                 page_rows = _find_template_list(response.json())
             except ValueError as exc:
                 raise UserError(
-                    _("WATI أعاد استجابة غير مفهومة أثناء فحص القوالب.")
+                    _("WATI He returned an unintelligible response while examining the templates.")
                 ) from exc
 
             if not page_rows:
@@ -350,12 +350,12 @@ class WatiAutomationRuleGuard(models.Model):
         self.ensure_one()
         wanted = (self.template_name or "").strip()
         if not wanted:
-            return None, _("اختر قالب WATI أولًا.")
+            return None, _("Choose a template WATI First.")
 
         effective_channel = self._effective_channel()
         if not effective_channel:
             return None, _(
-                "لا يوجد رقم قناة WATI. حدده في إعدادات WATI أو داخل الأتمتة قبل التفعيل."
+                "There is no channel number WATI. Select it in settings WATI Or within automation before activation."
             )
 
         templates = templates if templates is not None else self._fetch_wati_templates_guarded()
@@ -366,7 +366,7 @@ class WatiAutomationRuleGuard(models.Model):
         ]
         if not candidates:
             return None, _(
-                "القالب «%s» غير موجود في حساب WATI المتصل حاليًا." % wanted
+                "Template «%s» Not found in account WATI Currently online." % wanted
             )
 
         channel_aware = [item for item in candidates if _template_channel(item)]
@@ -381,8 +381,8 @@ class WatiAutomationRuleGuard(models.Model):
                     sorted({_template_channel(item) for item in channel_aware if _template_channel(item)})
                 )
                 return None, _(
-                    "القالب «%(name)s» موجود، لكنه ليس على قناة WATI الحالية %(channel)s. "
-                    "القنوات الموجودة للقالب: %(available)s"
+                    "Template «%(name)s» It exists, but it is not on a channel WATI current %(channel)s. "
+                    "Existing channels of the template: %(available)s"
                 ) % {
                     "name": wanted,
                     "channel": effective_channel,
@@ -401,11 +401,11 @@ class WatiAutomationRuleGuard(models.Model):
         elif any(statuses):
             visible = ", ".join(sorted({status for status in statuses if status}))
             return None, _(
-                "القالب «%(name)s» موجود لكن حالته غير معتمدة للإرسال: %(status)s"
+                "Template «%(name)s» Exists but its status is not approved for sending: %(status)s"
             ) % {"name": wanted, "status": visible or "Unknown"}
         else:
             return None, _(
-                "WATI لم يُرجع حالة اعتماد للقالب «%s»، لذلك تم منع التفعيل احترازيًا."
+                "WATI No approval status was returned for the template «%s»Therefore, activation has been prevented as a precaution."
                 % wanted
             )
 
@@ -430,7 +430,7 @@ class WatiAutomationRuleGuard(models.Model):
     def _store_template_validation(self, item=None, error=""):
         self.ensure_one()
         if item:
-            message = _("القالب موجود ومعتمد على قناة WATI الحالية.")
+            message = _("The template exists and is based on a channel WATI current.")
             vals = {
                 "template_status": _template_status(item) or "APPROVED",
                 "template_language": _template_language(item) or False,
@@ -443,7 +443,7 @@ class WatiAutomationRuleGuard(models.Model):
         else:
             vals = {
                 "template_validation_state": "invalid",
-                "template_validation_message": error or _("تعذر التحقق من القالب."),
+                "template_validation_message": error or _("The template could not be verified."),
                 "template_verified_at": fields.Datetime.now(),
             }
         self.with_context(wati_guard_internal=True).write(vals)
@@ -464,7 +464,7 @@ class WatiAutomationRuleGuard(models.Model):
             self._store_template_validation(error=error)
             if raise_error:
                 raise ValidationError(
-                    _("لا يمكن تفعيل/إرسال الأتمتة:\n%s") % (error or _("القالب غير صالح."))
+                    _("Cannot activate/Submit automation:\n%s") % (error or _("The template is invalid."))
                 )
             return False
 
@@ -478,7 +478,7 @@ class WatiAutomationRuleGuard(models.Model):
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
-                "title": _("فحص القالب"),
+                "title": _("Mold inspection"),
                 "message": self.template_validation_message,
                 "type": "success",
                 "sticky": False,
@@ -502,8 +502,8 @@ class WatiAutomationRuleGuard(models.Model):
         if not effective_channel:
             raise UserError(
                 _(
-                    "حدد رقم قناة WATI في الإعدادات أولًا. "
-                    "لن نعرض قوالب قبل معرفة القناة التي سترسل الرسالة."
+                    "Select a channel number WATI In settings first. "
+                    "We will not display templates until we know which channel will send the message."
                 )
             )
 
@@ -538,8 +538,8 @@ class WatiAutomationRuleGuard(models.Model):
         if not values:
             raise UserError(
                 _(
-                    "لم أجد أي قالب Approved صالح للقناة %s. "
-                    "راجع القوالب في WATI ثم حدّث الصفحة."
+                    "I couldn’t find any template Approved Valid for the channel %s. "
+                    "See templates in WATI Then refresh the page."
                 )
                 % effective_channel
             )
@@ -556,7 +556,7 @@ class WatiAutomationRuleGuard(models.Model):
 
         return {
             "type": "ir.actions.act_window",
-            "name": _("اختر قالب WATI المعتمد"),
+            "name": _("Choose a template WATI Approved"),
             "res_model": "wati.automation.template.choice",
             "view_mode": "list",
             "views": [
@@ -604,16 +604,16 @@ class WatiAutomationRuleGuard(models.Model):
         self._auto_map_parameters()
 
         if not param_names:
-            message = _("تم التحقق من القالب ولا توجد متغيرات BODY واضحة فيه.")
+            message = _("The template is verified and there are no variables BODY Clear in it.")
             notification_type = "success"
         elif created:
             message = _(
-                "تم التحقق من القالب وجلب %(total)s متغيرًا، وإضافة %(created)s جديد."
+                "The template has been verified and fetched %(total)s variable, and addition %(created)s New."
             ) % {"total": len(param_names), "created": created}
             notification_type = "success"
         else:
             message = _(
-                "القالب متحقق وكل متغيراته (%s) موجودة بالفعل."
+                "The template and all its variables are verified (%s) already exist."
             ) % len(param_names)
             notification_type = "success"
 
@@ -621,7 +621,7 @@ class WatiAutomationRuleGuard(models.Model):
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
-                "title": _("قالب WATI"),
+                "title": _("Template WATI"),
                 "message": message,
                 "type": notification_type,
                 "sticky": False,
@@ -657,7 +657,7 @@ class WatiAutomationRuleGuard(models.Model):
                         record,
                         "failed",
                         phone="",
-                        error_message="لم يتم العثور على رقم WhatsApp في السجل.",
+                        error_message="No number found WhatsApp In the register.",
                     )
                 )
                 return False
@@ -695,7 +695,7 @@ class WatiAutomationRuleGuard(models.Model):
                     "failed",
                     phone=phone,
                     error_message=self.template_validation_message
-                    or "القالب غير صالح للإرسال.",
+                    or "The template is not valid for submission.",
                 )
             )
             return False
@@ -710,7 +710,7 @@ class WatiAutomationRuleGuard(models.Model):
                     record,
                     "failed",
                     phone=phone,
-                    error_message="رقم قناة WATI غير مكتمل.",
+                    error_message="Channel number WATI Incomplete.",
                 )
             )
             return False
@@ -727,9 +727,9 @@ class WatiAutomationRuleGuard(models.Model):
                     "failed",
                     phone=phone,
                     error_message=(
-                        "لم يتم استدعاء WATI لأن متغيرات القالب التالية بدون قيمة: "
+                        "Not called WATI Because the following template variables are worthless: "
                         + ", ".join(filter(None, empty_params))
-                        + ". اربطها بحقل Odoo أو ضع قيمة احتياطية."
+                        + ". Link it to a field Odoo Or set a reserve value."
                     ),
                 )
             )
@@ -757,7 +757,7 @@ class WatiAutomationRuleGuard(models.Model):
                     record,
                     "failed",
                     phone=phone,
-                    error_message="إعدادات WATI API غير مكتملة.",
+                    error_message="Settings WATI API Incomplete.",
                 )
             )
             return False
@@ -770,9 +770,9 @@ class WatiAutomationRuleGuard(models.Model):
                         "failed",
                         phone=phone,
                         error_message=(
-                            f"WATI رفض الإرسال ({exc.status_code})."
+                            f"WATI Refused to send ({exc.status_code})."
                             if exc.status_code
-                            else f"تعذر الاتصال بـ WATI: {detail}"
+                            else f"Unable to contact WATI: {detail}"
                         ),
                         response_excerpt=detail,
                     ),
@@ -830,8 +830,8 @@ class WatiAutomationLogGuard(models.Model):
 
     status = fields.Selection(
         selection_add=[
-            ("accepted", "تم قبول الطلب"),
-            ("delivered", "تم التسليم"),
+            ("accepted", "The request has been accepted"),
+            ("delivered", "Delivered"),
         ],
         ondelete={
             "accepted": "cascade",
@@ -849,7 +849,7 @@ class WatiAutomationLogGuard(models.Model):
         index=True,
     )
     delivery_status = fields.Char(
-        string="حالة التسليم",
+        string="Delivery status",
         readonly=True,
         index=True,
     )
@@ -858,8 +858,8 @@ class WatiAutomationLogGuard(models.Model):
 class WatiAutomationTemplateChoiceGuard(models.TransientModel):
     _inherit = "wati.automation.template.choice"
 
-    language = fields.Char(string="اللغة", readonly=True)
-    channel_number = fields.Char(string="قناة WATI", readonly=True)
+    language = fields.Char(string="Language", readonly=True)
+    channel_number = fields.Char(string="channel WATI", readonly=True)
 
     def action_select(self):
         self.ensure_one()
@@ -1011,7 +1011,7 @@ class WatiWebhookEventAutomationGuard(models.Model):
             )
         elif is_failed:
             error_text = _payload_error_text(payload) or (
-                "فشل تسليم الرسالة في WATI/WhatsApp: " + status_raw
+                "Message delivery failed WATI/WhatsApp: " + status_raw
             )
             values.update(
                 {
@@ -1036,8 +1036,8 @@ class WatiWebhookEventAutomationGuard(models.Model):
         )
         if template_failure:
             message = (
-                "تم إيقاف الأتمتة تلقائيًا لأن WhatsApp/WATI رفض القالب "
-                f"«{log.template_name}». السبب: {values.get('error_message') or status_raw}"
+                "Automation was automatically turned off because WhatsApp/WATI Template rejection "
+                f"«{log.template_name}». The reason: {values.get('error_message') or status_raw}"
             )[:1500]
             log.rule_id.with_context(wati_guard_internal=True).write(
                 {

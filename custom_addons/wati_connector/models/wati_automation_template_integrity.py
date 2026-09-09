@@ -101,7 +101,7 @@ class WatiAutomationRuleTemplateIntegrity(models.Model):
         self.ensure_one()
         if not self.template_name:
             from odoo.exceptions import UserError
-            raise UserError(_("اختر قالب WATI أولًا."))
+            raise UserError(_("Choose a template WATI First."))
 
         self._hard_rebuild_template_parameters(reason="manual_resync")
         mapped = 0
@@ -118,9 +118,9 @@ class WatiAutomationRuleTemplateIntegrity(models.Model):
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
-                "title": _("تمت مزامنة القالب"),
+                "title": _("The template has been synchronized"),
                 "message": _(
-                    "تم اعتماد نص القالب نفسه كمصدر للمتغيرات: %s متغير. تم اقتراح %s ربط تلقائي.",
+                    "The template text itself is used as the source of the variables: %s variable. been suggested %s Automatic connection.",
                     count,
                     mapped,
                 ),

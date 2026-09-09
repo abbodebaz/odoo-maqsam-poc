@@ -9,10 +9,10 @@
             <xpath expr="//div[hasclass('wati_presets_section')]" position="replace"/>
 
             <xpath expr="//div[hasclass('wati_builder_step')][@invisible=&quot;setup_step != 'trigger'&quot;]/div[hasclass('wati_builder_step_head')]/div/h2" position="replace">
-                <h2>متى تريد أن تبدأ الأتمتة؟</h2>
+                <h2>When do you want to start automating?</h2>
             </xpath>
             <xpath expr="//div[hasclass('wati_builder_step')][@invisible=&quot;setup_step != 'trigger'&quot;]/div[hasclass('wati_builder_step_head')]/div/p" position="replace">
-                <p>ابدأ من التطبيق الذي تعرفه، ثم اختر ما تريد مراقبته داخله، وبعدها عرّف الحدث.</p>
+                <p>Start with the app you know, choose what you want to monitor within it, and then define the event.</p>
             </xpath>
 
             <xpath expr="//div[hasclass('wati_trigger_builder')]" position="replace">
@@ -23,26 +23,26 @@
 
                     <div class="wati_universal_event_intro">
                         <div>
-                            <span class="wati_section_label">ابنِ الحدث</span>
-                            <h3>اختيار بسيط بنفس طريقة استخدامك لـ Odoo</h3>
-                            <p>التطبيقات وأنواع السجلات تُكتشف تلقائيًا من القوائم الموجودة فعليًا في بيئة Odoo، بما فيها التطبيقات المخصصة.</p>
+                            <span class="wati_section_label">Build the event</span>
+                            <h3>Simple selection in the same way as you would use to Odoo</h3>
+                            <p>Applications and record types are automatically discovered from lists that are physically present in an environment Odoo, including custom applications.</p>
                         </div>
-                        <span class="wati_dynamic_badge">ديناميكي من Odoo</span>
+                        <span class="wati_dynamic_badge">dynamic of Odoo</span>
                     </div>
 
                     <div class="wati_event_question">
                         <span class="wati_event_question_no">1</span>
                         <div class="wati_event_question_body">
-                            <div class="wati_event_question_title">اختر التطبيق</div>
-                            <div class="wati_event_question_help">اختر التطبيق كما يظهر لك في قائمة تطبيقات Odoo.</div>
+                            <div class="wati_event_question_title">Select the application</div>
+                            <div class="wati_event_question_help">Select the application as it appears in the applications list Odoo.</div>
                             <div class="wati_event_field_box wati_event_primary_box">
                                 <field name="app_menu_id"
                                        nolabel="1"
                                        domain="[('id', 'in', available_app_menu_ids)]"
                                        options="{'no_create': True, 'no_open': True}"
-                                       placeholder="مثال: CRM، المبيعات، المشاريع..."/>
+                                       placeholder="Example: CRMSales, projects..."/>
                             </div>
-                            <div class="wati_event_meta">لن تظهر هنا أسماء تقنية مثل Server Action أو Automation Rule؛ هذه قائمة التطبيقات التي يستطيع المستخدم الوصول إليها.</div>
+                            <div class="wati_event_meta">Technical names such as Server Action Or Automation Rule; This is the list of applications that the user can access.</div>
                         </div>
                     </div>
 
@@ -53,16 +53,16 @@
                     <div class="wati_event_question" invisible="not app_menu_id">
                         <span class="wati_event_question_no">2</span>
                         <div class="wati_event_question_body">
-                            <div class="wati_event_question_title">ماذا تريد مراقبته داخل التطبيق؟</div>
-                            <div class="wati_event_question_help">نعرض أنواع السجلات المرتبطة فعليًا بقوائم هذا التطبيق فقط.</div>
+                            <div class="wati_event_question_title">What do you want to monitor within the app?</div>
+                            <div class="wati_event_question_help">We only display record types that are actually associated with lists for this application.</div>
                             <div class="wati_event_field_box">
                                 <field name="model_id"
                                        nolabel="1"
                                        domain="[('id', 'in', available_model_ids)]"
                                        options="{'no_create': True, 'no_open': True}"
-                                       placeholder="مثال: الفرص، الطلبات، التذاكر..."/>
+                                       placeholder="Example: Opportunities, requests, tickets..."/>
                             </div>
-                            <div class="wati_event_meta">إذا كان لدى العميل تطبيق مخصص وقوائم مخصصة، ستظهر أنواع سجلاته هنا تلقائيًا.</div>
+                            <div class="wati_event_meta">If a customer has a custom application and custom lists, their record types will appear here automatically.</div>
                         </div>
                     </div>
 
@@ -73,8 +73,8 @@
                     <div class="wati_event_question" invisible="not model_id">
                         <span class="wati_event_question_no">3</span>
                         <div class="wati_event_question_body">
-                            <div class="wati_event_question_title">متى يبدأ الإرسال؟</div>
-                            <div class="wati_event_question_help">اختر نوع الحدث الذي يجب أن يجعل Odoo يشغّل الأتمتة.</div>
+                            <div class="wati_event_question_title">When does transmission start?</div>
+                            <div class="wati_event_question_help">Choose the type of event you should make Odoo Turns on automation.</div>
                             <div class="wati_event_field_box wati_event_type_box">
                                 <field name="event_type" nolabel="1"/>
                             </div>
@@ -90,14 +90,14 @@
                          invisible="not model_id or event_type != 'field_condition'">
                         <span class="wati_event_question_no">4</span>
                         <div class="wati_event_question_body">
-                            <div class="wati_event_question_title">أي حقل نراقب؟</div>
-                            <div class="wati_event_question_help">ستظهر الحقول المحفوظة التابعة لنوع السجل الذي اخترته.</div>
+                            <div class="wati_event_question_title">Which field are we monitoring?</div>
+                            <div class="wati_event_question_help">The saved fields for the record type you chose will appear.</div>
                             <div class="wati_event_field_box">
                                 <field name="trigger_field_id"
                                        nolabel="1"
                                        domain="[('model_id', '=', model_id), ('store', '=', True), ('name', 'not in', ['id', 'create_uid', 'create_date', 'write_uid', 'write_date'])]"
                                        options="{'no_create': True, 'no_open': True}"
-                                       placeholder="اختر الحقل الذي سيبدأ الحدث..."/>
+                                       placeholder="Choose the field that will start the event..."/>
                             </div>
                         </div>
                     </div>
@@ -111,8 +111,8 @@
                          invisible="event_type != 'field_condition' or not trigger_field_id">
                         <span class="wati_event_question_no">5</span>
                         <div class="wati_event_question_body">
-                            <div class="wati_event_question_title">ما الشرط والقيمة؟</div>
-                            <div class="wati_event_question_help">القيمة تتكيّف تلقائيًا مع نوع الحقل: قائمة جاهزة إذا كانت القيم معروفة، أو إدخال مباشر إذا كانت مفتوحة.</div>
+                            <div class="wati_event_question_title">What is the condition and value?</div>
+                            <div class="wati_event_question_help">The value automatically adapts to the field type: A ready list if the values are known, or a direct entry if they are open.</div>
                             <div class="wati_event_condition_grid">
                                 <div class="wati_event_field_box wati_event_operator_box">
                                     <field name="condition_operator" nolabel="1"/>
@@ -122,7 +122,7 @@
                                     <field name="target_value"
                                            nolabel="1"
                                            widget="wati_smart_target"
-                                           placeholder="اختر أو اكتب القيمة المطلوبة"/>
+                                           placeholder="Choose or type the desired value"/>
                                 </div>
                             </div>
                         </div>
@@ -131,7 +131,7 @@
                     <div class="wati_event_live_summary" invisible="not model_id">
                         <span class="wati_event_live_icon">⚡</span>
                         <div>
-                            <strong>هكذا سيعمل الحدث</strong>
+                            <strong>This is how the event will work</strong>
                             <field name="event_summary" nolabel="1" readonly="1"/>
                         </div>
                     </div>
@@ -140,7 +140,7 @@
 
             <xpath expr="//div[hasclass('wati_builder_hint')]" position="replace">
                 <div class="wati_builder_hint wati_universal_hint">
-                    التطبيق هنا هو التطبيق الحقيقي الظاهر في Odoo، وما بداخله يُستخرج من قوائمه وسجلاته تلقائيًا؛ لذلك لا نحتاج ربط الإضافة بأسماء تطبيقات محددة.
+                    The application here is the real application shown in Odoo, and what is inside it is extracted from its lists and records automatically; Therefore, we do not need to link the extension to specific application names.
                 </div>
             </xpath>
         </field>

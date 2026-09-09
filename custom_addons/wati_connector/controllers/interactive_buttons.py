@@ -48,13 +48,13 @@ class WatiInteractiveButtonsController(http.Controller):
         conversation = request.env["wati.conversation"].browse(conversation_id).exists()
         if not conversation:
             return request.make_json_response(
-                {"ok": False, "message": "المحادثة غير موجودة."}, status=404
+                {"ok": False, "message": "The conversation does not exist."}, status=404
             )
 
         current_user = request.env.user
         if not conversation.assigned_user_id:
             return request.make_json_response(
-                {"ok": False, "message": "استلم المحادثة أولًا قبل إرسال رسالة تفاعلية."},
+                {"ok": False, "message": "Receive the chat first before sending an interactive message."},
                 status=409,
             )
         if conversation.assigned_user_id != current_user:
@@ -62,15 +62,15 @@ class WatiInteractiveButtonsController(http.Controller):
                 {
                     "ok": False,
                     "message": (
-                        f"المحادثة مستلمة بواسطة {conversation.assigned_user_id.name}. "
-                        "انقل المحادثة إليك أولًا."
+                        f"Conversation received by {conversation.assigned_user_id.name}. "
+                        "Move the conversation to you first."
                     ),
                 },
                 status=409,
             )
         if not conversation.wa_id:
             return request.make_json_response(
-                {"ok": False, "message": "لا يوجد رقم WhatsApp لهذه المحادثة."},
+                {"ok": False, "message": "There is no number WhatsApp for this conversation."},
                 status=400,
             )
 
@@ -80,36 +80,36 @@ class WatiInteractiveButtonsController(http.Controller):
         buttons = _parse_buttons(buttons_json)
         if not body:
             return request.make_json_response(
-                {"ok": False, "message": "اكتب نص الرسالة التفاعلية."}, status=400
+                {"ok": False, "message": "Type the text of the interactive message."}, status=400
             )
         if len(header) > 60:
             return request.make_json_response(
-                {"ok": False, "message": "عنوان الرسالة يجب ألا يتجاوز 60 حرفًا."},
+                {"ok": False, "message": "The message title must not exceed 60 A letter."},
                 status=400,
             )
         if len(body) > 1024:
             return request.make_json_response(
-                {"ok": False, "message": "نص الرسالة يجب ألا يتجاوز 1024 حرفًا."},
+                {"ok": False, "message": "The text of the message must not exceed 1024 A letter."},
                 status=400,
             )
         if len(footer) > 60:
             return request.make_json_response(
-                {"ok": False, "message": "تذييل الرسالة يجب ألا يتجاوز 60 حرفًا."},
+                {"ok": False, "message": "The footer of the message must not exceed 60 A letter."},
                 status=400,
             )
         if not 1 <= len(buttons) <= 3:
             return request.make_json_response(
-                {"ok": False, "message": "أضف من زر واحد إلى 3 أزرار."}, status=400
+                {"ok": False, "message": "Add from one button to 3 Buttons."}, status=400
             )
         if any(len(text) > 20 for text in buttons):
             return request.make_json_response(
-                {"ok": False, "message": "نص كل زر يجب ألا يتجاوز 20 حرفًا."},
+                {"ok": False, "message": "The text of each button must not exceed 20 A letter."},
                 status=400,
             )
         normalized = [text.casefold() for text in buttons]
         if len(set(normalized)) != len(normalized):
             return request.make_json_response(
-                {"ok": False, "message": "اجعل نص كل زر مختلفًا عن الآخر."},
+                {"ok": False, "message": "Make each button’s text different from the other."},
                 status=400,
             )
 
@@ -129,7 +129,7 @@ class WatiInteractiveButtonsController(http.Controller):
                 {
                     "ok": True,
                     "duplicate_suppressed": True,
-                    "message": "تم تجاهل إعادة إرسال مكررة.",
+                    "message": "Duplicate resubmission was ignored.",
                 },
                 status=200,
             )
@@ -139,7 +139,7 @@ class WatiInteractiveButtonsController(http.Controller):
         except WatiConfigurationError:
             idem.release(scope, key)
             return request.make_json_response(
-                {"ok": False, "message": "إعدادات WATI API غير مكتملة."}, status=503
+                {"ok": False, "message": "Settings WATI API Incomplete."}, status=503
             )
         except WatiRequestError as exc:
             idem.release(scope, key)
@@ -148,7 +148,7 @@ class WatiInteractiveButtonsController(http.Controller):
             return request.make_json_response(
                 {
                     "ok": False,
-                    "message": f"WATI رفض الرسالة التفاعلية ({status}): {detail}",
+                    "message": f"WATI Reject the interactive message ({status}): {detail}",
                 },
                 status=status,
             )
@@ -157,7 +157,7 @@ class WatiInteractiveButtonsController(http.Controller):
             {
                 "ok": True,
                 "accepted": True,
-                "message": "تم قبول الرسالة التفاعلية في WATI ✅",
+                "message": "Interactive message accepted in WATI ✅",
             },
             status=200,
         )

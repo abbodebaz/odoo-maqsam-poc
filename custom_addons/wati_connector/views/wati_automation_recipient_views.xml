@@ -14,71 +14,71 @@
                     <div class="wati_builder_step_head">
                         <span class="wati_builder_step_no">2</span>
                         <div>
-                            <h2>لمن نرسل الرسالة؟</h2>
-                            <p>اختر الطريقة الأقرب لك، والنظام يكتشف حقول الهاتف والعلاقات الموجودة في Odoo تلقائيًا.</p>
+                            <h2>To whom do we send the message?</h2>
+                            <p>Choose the method closest to you, and the system detects the phone fields and relationships in Odoo Automatically.</p>
                         </div>
                     </div>
 
                     <div class="wati_recipient_mode_box">
-                        <span class="wati_section_label">طريقة اختيار رقم المستلم</span>
+                        <span class="wati_section_label">How to choose the recipient number</span>
                         <field name="recipient_mode" widget="radio" options="{'horizontal': True}" nolabel="1"/>
                     </div>
 
                     <div class="wati_recipient_context" invisible="recipient_mode != 'auto'">
                         <div class="wati_recipient_context_icon">✓</div>
                         <div>
-                            <strong>دع Odoo يختار الرقم الأنسب</strong>
-                            <p>سيبحث أولًا في حقول الهاتف الواضحة، ثم في السجلات المرتبطة، بدون إعداد تقني منك.</p>
+                            <strong>Let Odoo Choose the most appropriate number</strong>
+                            <p>It will first search the obvious phone fields, then the associated records, without any technical setup on your part.</p>
                         </div>
                     </div>
 
                     <div class="wati_recipient_context" invisible="recipient_mode == 'auto'">
                         <div class="wati_recipient_context_icon">↳</div>
                         <div class="wati_recipient_select_wrap">
-                            <strong invisible="recipient_mode != 'direct'">اختر رقمًا من نفس السجل</strong>
-                            <strong invisible="recipient_mode != 'related'">اختر رقمًا من سجل مرتبط</strong>
-                            <p invisible="recipient_mode != 'direct'">نعرض فقط حقول الهاتف الموجودة مباشرة في نوع السجل الذي اخترته.</p>
-                            <p invisible="recipient_mode != 'related'">نعرض مسارات مفهومة مثل: العميل المرتبط ← الجوال، بدون إظهار أسماء Odoo التقنية.</p>
+                            <strong invisible="recipient_mode != 'direct'">Choose a number from the same record</strong>
+                            <strong invisible="recipient_mode != 'related'">Choose a number from a linked record</strong>
+                            <p invisible="recipient_mode != 'direct'">We only display phone fields that are directly in the record type you chose.</p>
+                            <p invisible="recipient_mode != 'related'">We show understandable paths such as: Associated client ← Mobile phone, without showing names Odoo Technology.</p>
                             <field name="recipient_path"
                                    widget="wati_smart_recipient"
                                    nolabel="1"
-                                   placeholder="اختر رقم المستلم"/>
+                                   placeholder="Choose the recipient number"/>
                         </div>
                     </div>
 
                     <div class="wati_recipient_preview">
                         <span class="wati_recipient_preview_icon">📱</span>
                         <div>
-                            <strong>سيتم إرسال الرسالة إلى</strong>
+                            <strong>The message will be sent to</strong>
                             <field name="recipient_summary" nolabel="1" readonly="1"/>
                             <field name="recipient_preview_note" nolabel="1" readonly="1"/>
                         </div>
                     </div>
 
                     <div class="wati_policy_box wati_recipient_dedup">
-                        <div class="wati_policy_title">منع التكرار</div>
-                        <field name="once_per_record" string="لا ترسل نفس الأتمتة أكثر من مرة لنفس السجل"/>
-                        <p>مفيد إذا رجع السجل لنفس الحالة أو تم تعديله عدة مرات بعد تحقق الشرط.</p>
+                        <div class="wati_policy_title">Prevent recurrence</div>
+                        <field name="once_per_record" string="Don’t send the same automation more than once to the same record"/>
+                        <p>Useful if the record returns to the same condition or is modified multiple times after the condition is met.</p>
                     </div>
 
                     <details class="wati_recipient_advanced" groups="base.group_system">
-                        <summary>إعدادات متقدمة</summary>
+                        <summary>Advanced settings</summary>
                         <div class="wati_recipient_advanced_body">
                             <group>
                                 <field name="recipient_advanced_path"
-                                       string="مسار رقم مخصص"
+                                       string="Custom number path"
                                        placeholder="partner_id.mobile"/>
                                 <field name="channel_number"
-                                       string="قناة WATI محددة"
-                                       placeholder="اختياري"/>
+                                       string="channel WATI Specific"
+                                       placeholder="Optional"/>
                             </group>
-                            <p>هذه الخيارات للمسؤول التقني فقط. في أغلب الحالات لن تحتاج تعديلها.</p>
+                            <p>These options are for technical administrators only. In most cases you will not need to modify it.</p>
                         </div>
                     </details>
 
                     <div class="wati_builder_nav">
-                        <button name="action_previous_step" type="object" string="السابق" icon="fa-arrow-right" class="btn-secondary"/>
-                        <button name="action_next_step" type="object" string="التالي: الرسالة" icon="fa-arrow-left" class="btn-primary wati_builder_next"/>
+                        <button name="action_previous_step" type="object" string="Previous" icon="fa-arrow-right" class="btn-secondary"/>
+                        <button name="action_next_step" type="object" string="Next: The message" icon="fa-arrow-left" class="btn-primary wati_builder_next"/>
                     </div>
                 </div>
             </xpath>

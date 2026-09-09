@@ -13,19 +13,19 @@ class WatiUniversalTimelineWizard(models.TransientModel):
     _name = "wati.universal.timeline.wizard"
     _description = "Universal WhatsApp Timeline"
 
-    rule_id = fields.Many2one("wati.smart.button.location", string="مكان الزر", readonly=True)
-    source_model = fields.Char(string="الموديل", readonly=True)
-    source_res_id = fields.Integer(string="رقم السجل", readonly=True)
-    record_name = fields.Char(string="السجل", readonly=True)
-    partner_id = fields.Many2one("res.partner", string="العميل", readonly=True)
-    phone = fields.Char(string="رقم WhatsApp", readonly=True)
+    rule_id = fields.Many2one("wati.smart.button.location", string="Button location", readonly=True)
+    source_model = fields.Char(string="Model", readonly=True)
+    source_res_id = fields.Integer(string="Registration number", readonly=True)
+    record_name = fields.Char(string="Record", readonly=True)
+    partner_id = fields.Many2one("res.partner", string="Customer", readonly=True)
+    phone = fields.Char(string="No WhatsApp", readonly=True)
     message_ids = fields.Many2many(
         "wati.message",
         string="WhatsApp Timeline",
         compute="_compute_timeline",
     )
-    message_count = fields.Integer(string="عدد الرسائل", compute="_compute_timeline")
-    last_message_at = fields.Datetime(string="آخر تواصل", compute="_compute_timeline")
+    message_count = fields.Integer(string="Number of messages", compute="_compute_timeline")
+    last_message_at = fields.Datetime(string="Last communication", compute="_compute_timeline")
 
     @api.model
     def default_get(self, field_list):
@@ -98,7 +98,7 @@ class WatiSmartButtonTimeline(models.Model):
         arch = super()._generated_arch()
         action = self.env.ref("wati_connector.action_wati_universal_timeline")
         timeline_button = (
-            f'<button name="{action.id}" type="action" string="سجل WhatsApp" '
+            f'<button name="{action.id}" type="action" string="Register WhatsApp" '
             'icon="fa-history" class="btn-secondary" '
             'groups="wati_connector.group_wati_agent,base.group_system" '
             f'context="{{\'wati_button_rule_id\': {self.id}}}"/>'

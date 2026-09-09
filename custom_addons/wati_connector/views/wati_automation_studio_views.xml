@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <record id="action_wati_automation_studio" model="ir.actions.client">
-        <field name="name">مركز الأتمتة</field>
+        <field name="name">Automation Center</field>
         <field name="tag">wati_connector.automation_studio</field>
     </record>
 
     <record id="action_wati_automation_rules" model="ir.actions.act_window">
-        <field name="name">قواعد الأتمتة</field>
+        <field name="name">Automation rules</field>
     </record>
 
     <record id="action_wati_automation_logs" model="ir.actions.act_window">
-        <field name="name">سجل التشغيل</field>
+        <field name="name">Run Log</field>
     </record>
 
-    <menuitem id="menu_wati_automation_rules" name="⚡ مركز الأتمتة" parent="menu_wati_root" action="action_wati_automation_studio" sequence="30"/>
-    <menuitem id="menu_wati_automation_logs" name="سجل التشغيل" parent="menu_wati_root" action="action_wati_automation_logs" sequence="35"/>
+    <menuitem id="menu_wati_automation_rules" name="⚡ Automation Center" parent="menu_wati_root" action="action_wati_automation_studio" sequence="30"/>
+    <menuitem id="menu_wati_automation_logs" name="Run Log" parent="menu_wati_root" action="action_wati_automation_logs" sequence="35"/>
 </odoo>

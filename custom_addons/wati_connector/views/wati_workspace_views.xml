@@ -6,12 +6,12 @@
     </record>
 
     <record id="action_wati_help_center" model="ir.actions.client">
-        <field name="name">مركز المساعدة</field>
+        <field name="name">Help Center</field>
         <field name="tag">wati_connector.help_center</field>
     </record>
 
     <record id="action_wati_settings" model="ir.actions.act_window">
-        <field name="name">إعدادات WhatsApp</field>
+        <field name="name">Settings WhatsApp</field>
         <field name="res_model">res.config.settings</field>
         <field name="view_mode">form</field>
         <field name="target">current</field>
@@ -25,7 +25,7 @@
 
     <menuitem
         id="menu_wati_home"
-        name="الرئيسية"
+        name="Home"
         parent="wati_connector.menu_wati_root"
         action="wati_connector.action_wati_workspace"
         sequence="1"
@@ -33,7 +33,7 @@
 
     <menuitem
         id="menu_wati_help"
-        name="مركز المساعدة"
+        name="Help Center"
         parent="wati_connector.menu_wati_root"
         action="wati_connector.action_wati_help_center"
         sequence="95"
@@ -41,7 +41,7 @@
 
     <menuitem
         id="menu_wati_settings"
-        name="الإعدادات"
+        name="Settings"
         parent="wati_connector.menu_wati_root"
         action="wati_connector.action_wati_settings"
         groups="base.group_system"

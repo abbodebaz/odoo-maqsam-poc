@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <record id="ir_cron_wati_template_lifecycle_refresh" model="ir.cron">
-        <field name="name">WATI: تحديث حالات القوالب المعلقة</field>
+        <field name="name">WATI: Update statuses of pending templates</field>
         <field name="model_id" ref="model_wati_template"/>
         <field name="state">code</field>
         <field name="code">model._cron_refresh_pending_template_lifecycle()</field>

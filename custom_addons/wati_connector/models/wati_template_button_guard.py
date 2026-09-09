@@ -51,7 +51,7 @@ class WatiTemplateButtonGuard(models.Model):
             record.sudo().write(
                 {
                     "status": "draft",
-                    "last_error": _("رفض WATI إنشاء القالب: %s") % message,
+                    "last_error": _("He refused WATI Create the template: %s") % message,
                 }
             )
             repaired += 1

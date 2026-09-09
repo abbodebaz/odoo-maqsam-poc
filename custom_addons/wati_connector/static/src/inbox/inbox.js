@@ -54,8 +54,8 @@
     function conversationTitle(conversation) {
         const phone = phoneLabel(conversation);
         const name = String(conversation?.name || "").trim();
-        if (!name || ["whatsapp", "wati", "عميل واتساب"].includes(name.toLowerCase())) {
-            return phone || "رقم غير متوفر";
+        if (!name || ["whatsapp", "wati", "WhatsApp client"].includes(name.toLowerCase())) {
+            return phone || "Number not available";
         }
         return name;
     }
@@ -107,13 +107,13 @@
 
     function placeholderForType(type) {
         const clean = String(type || "").toLowerCase();
-        if (clean.includes("image")) return "📷 صورة";
-        if (clean.includes("video")) return "🎥 فيديو";
-        if (clean.includes("audio")) return "🎵 رسالة صوتية";
-        if (clean.includes("document") || clean.includes("file")) return "📎 ملف";
-        if (clean.includes("location")) return "📍 موقع";
-        if (clean.includes("template")) return "رسالة قالب";
-        return "رسالة";
+        if (clean.includes("image")) return "📷 Image";
+        if (clean.includes("video")) return "🎥 Video";
+        if (clean.includes("audio")) return "🎵 Voice message";
+        if (clean.includes("document") || clean.includes("file")) return "📎 File";
+        if (clean.includes("location")) return "📍 Location";
+        if (clean.includes("template")) return "Template message";
+        return "Message";
     }
 
     function selectedConversation() {
@@ -144,14 +144,14 @@
     function renderConversations() {
         const rows = filteredConversations();
         conversationList.replaceChildren();
-        conversationCount.textContent = `${rows.length} من ${state.conversations.length} محادثة`;
+        conversationCount.textContent = `${rows.length} Who ${state.conversations.length} Conversation`;
 
         if (!rows.length) {
             const empty = document.createElement("div");
             empty.className = "wati-list-empty";
             empty.textContent = state.query || state.filter !== "all"
-                ? "لا توجد محادثات مطابقة."
-                : "لا توجد محادثات WhatsApp حتى الآن.";
+                ? "There are no matching conversations."
+                : "There are no conversations WhatsApp Until now.";
             conversationList.appendChild(empty);
             return;
         }
@@ -178,12 +178,12 @@
 
             const phoneLine = document.createElement("div");
             phoneLine.className = "wati-conversation-phone";
-            phoneLine.textContent = phone || "رقم غير متوفر";
+            phoneLine.textContent = phone || "Number not available";
             phoneLine.dir = "ltr";
 
             const preview = document.createElement("div");
             preview.className = "wati-conversation-preview";
-            preview.textContent = conversation.last_message || "بدون رسائل";
+            preview.textContent = conversation.last_message || "No messages";
             main.append(title, phoneLine, preview);
 
             const side = document.createElement("div");
@@ -220,12 +220,12 @@
         chatContent.classList.remove("is-hidden");
         chatAvatar.textContent = initials(title);
         chatName.textContent = title;
-        chatNumber.textContent = phone || "رقم غير متوفر";
+        chatNumber.textContent = phone || "Number not available";
         chatNumber.dir = "ltr";
         chatStatus.textContent = conversation.status || "";
         chatOperator.textContent = conversation.assigned_user_name
-            ? `الموظف: ${conversation.assigned_user_name}`
-            : (conversation.operator_name ? `الموظف: ${conversation.operator_name}` : "");
+            ? `Employee: ${conversation.assigned_user_name}`
+            : (conversation.operator_name ? `Employee: ${conversation.operator_name}` : "");
     }
 
     function renderMessages(force = false) {
@@ -242,7 +242,7 @@
         if (!state.messages.length) {
             const empty = document.createElement("div");
             empty.className = "wati-list-empty";
-            empty.textContent = "لا توجد رسائل محفوظة لهذه المحادثة.";
+            empty.textContent = "There are no saved messages for this conversation.";
             messageList.appendChild(empty);
             return;
         }
@@ -306,7 +306,7 @@
             });
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const payload = await response.json();
-            if (!payload.ok) throw new Error(payload.message || "تعذر تحميل المحادثات");
+            if (!payload.ok) throw new Error(payload.message || "Unable to load conversations");
 
             state.conversations = Array.isArray(payload.conversations) ? payload.conversations : [];
             state.messages = Array.isArray(payload.messages) ? payload.messages : [];
@@ -319,7 +319,7 @@
             renderMessages(forceMessages);
         } catch (error) {
             console.error("WATI Inbox load error", error);
-            if (!silent) showToast("تعذر تحديث صندوق WhatsApp. حاول مرة أخرى.", true);
+            if (!silent) showToast("Unable to update box WhatsApp. Try again.", true);
         } finally {
             state.loading = false;
             refreshButton.disabled = false;
@@ -343,7 +343,7 @@
 
         state.sending = true;
         sendButton.disabled = true;
-        sendButton.textContent = "جاري الإرسال...";
+        sendButton.textContent = "Sending...";
         try {
             const body = new URLSearchParams({
                 csrf_token: csrfToken,
@@ -361,22 +361,22 @@
             });
             const payload = await response.json().catch(() => ({}));
             if (!response.ok || !payload.ok) {
-                throw new Error(payload.message || `فشل الإرسال (${response.status})`);
+                throw new Error(payload.message || `Transmission failed (${response.status})`);
             }
 
             messageInput.value = "";
             resizeComposer();
-            showToast("تم إرسال الرسالة إلى WATI ✅");
+            showToast("The message has been sent to WATI ✅");
             state.messageSignature = "";
             window.setTimeout(() => loadData({ forceMessages: true, silent: true }), 600);
             window.setTimeout(() => loadData({ forceMessages: true, silent: true }), 1800);
         } catch (error) {
             console.error("WATI send error", error);
-            showToast(error.message || "تعذر إرسال الرسالة.", true);
+            showToast(error.message || "The message could not be sent.", true);
         } finally {
             state.sending = false;
             sendButton.disabled = false;
-            sendButton.innerHTML = "إرسال <span>➤</span>";
+            sendButton.innerHTML = "Send <span>➤</span>";
             messageInput.focus();
         }
     }

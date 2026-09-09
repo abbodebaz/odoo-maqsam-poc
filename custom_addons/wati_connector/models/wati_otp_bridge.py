@@ -22,19 +22,19 @@ _OTP_TOKENS = (
     "passcode",
     "pin_code",
     "pin",
-    "رمز التحقق",
-    "رمز تحقق",
-    "رمز",
+    "Verification code",
+    "Verification code",
+    "Symbol",
 )
 _PHONE_TOKENS = (
     "mobile",
     "whatsapp",
     "wa_id",
     "phone",
-    "الجوال",
-    "جوال",
-    "واتساب",
-    "الهاتف",
+    "Mobile",
+    "Mobile",
+    "WhatsApp",
+    "Phone",
 )
 
 
@@ -58,39 +58,39 @@ class WatiOtpBridge(models.Model):
     _description = "WATI OTP Bridge"
     _order = "sequence, id"
 
-    name = fields.Char(string="اسم الربط", required=True)
+    name = fields.Char(string="Link name", required=True)
     technical_key = fields.Char(
-        string="مفتاح التكامل",
+        string="Integration key",
         required=True,
         index=True,
-        help="مفتاح ثابت يستخدمه المطور عند الربط البرمجي، مثال: driver_login.",
+        help="A fixed key used by the developer when linking, e.g: driver_login.",
     )
     sequence = fields.Integer(default=10)
-    active = fields.Boolean(string="مفعّل", default=False)
+    active = fields.Boolean(string="Activated", default=False)
     trigger_mode = fields.Selection(
         [
-            ("field", "بدون برمجة — عند تغيّر حقل OTP"),
-            ("hook", "Integration Hook — التطبيق يمرّر OTP"),
+            ("field", "Without programming — When a field changes OTP"),
+            ("hook", "Integration Hook — The application passes OTP"),
         ],
-        string="طريقة الربط",
+        string="Linking method",
         required=True,
         default="field",
     )
 
     app_menu_id = fields.Many2one(
         "ir.ui.menu",
-        string="التطبيق",
+        string="Application",
         ondelete="set null",
-        help="اختياري في Integration Hook. مطلوب في التجربة No-Code لتسهيل الوصول للموديل الصحيح.",
+        help="Optional in Integration Hook. Required in the experiment No-Code To facilitate access to the correct model.",
     )
     available_app_menu_ids = fields.Many2many(
         "ir.ui.menu",
         compute="_compute_available_app_menu_ids",
-        string="التطبيقات المتاحة",
+        string="Available applications",
     )
     model_id = fields.Many2one(
         "ir.model",
-        string="الموديل / نوع السجل",
+        string="Model / Record type",
         ondelete="cascade",
         domain=[("transient", "=", False)],
     )
@@ -98,47 +98,47 @@ class WatiOtpBridge(models.Model):
     available_model_ids = fields.Many2many(
         "ir.model",
         compute="_compute_available_model_ids",
-        string="الموديلات المتاحة",
+        string="Available models",
     )
 
     otp_field_id = fields.Many2one(
         "ir.model.fields",
-        string="حقل OTP",
+        string="Field OTP",
         ondelete="set null",
         domain="[('model_id', '=', model_id), ('store', '=', True), ('ttype', 'in', ['char', 'text', 'integer'])]",
-        help="الحقل الذي ينشئه تطبيق الشركة ويحمل رمز OTP. لا يقوم WATI Connector بتوليد الرمز.",
+        help="The field that the company application creates and carries a symbol OTP. He doesn’t get up WATI Connector By generating the code.",
     )
     phone_field_id = fields.Many2one(
         "ir.model.fields",
-        string="حقل رقم الجوال",
+        string="Mobile number field",
         ondelete="set null",
         domain="[('model_id', '=', model_id), ('ttype', 'in', ['char', 'text'])]",
     )
     phone_path = fields.Char(
-        string="مسار رقم الجوال",
-        help="اختياري عند وجود الرقم داخل علاقة، مثال: partner_id.mobile أو driver_id.mobile.",
+        string="Mobile number path",
+        help="Optional when the number is within a relationship, e.g: partner_id.mobile Or driver_id.mobile.",
     )
 
     template_id = fields.Many2one(
         "wati.template",
-        string="قالب OTP في WATI",
+        string="Template OTP In WATI",
         ondelete="restrict",
         domain="[('category', '=', 'AUTHENTICATION'), ('status', '=', 'approved'), ('active', '=', True)]",
-        help="يجب أن يكون قالب Authentication معتمدًا ومستورَدًا من WATI.",
+        help="It must be a template Authentication Certified and imported from WATI.",
     )
     code_param_name = fields.Char(
-        string="متغير OTP في القالب",
+        string="variable OTP In the template",
         default="1",
-        help="اسم المتغير الذي يستقبل الرمز داخل القالب. يتم اقتراحه تلقائيًا من متغيرات القالب.",
+        help="The name of the variable that receives the code within the template. It is automatically suggested from template variables.",
     )
     channel_number = fields.Char(
-        string="قناة WhatsApp",
-        help="اختياري. عند تركه فارغًا يستخدم قناة القالب ثم القناة العامة في إعدادات WATI.",
+        string="channel WhatsApp",
+        help="Optional. When left blank it uses the Template channel and then the General channel in Settings WATI.",
     )
     dedup_seconds = fields.Integer(
-        string="منع تكرار نفس OTP (ثانية)",
+        string="Preventing the same repetition OTP (Again)",
         default=300,
-        help="يحمي من إعادة تنفيذ Transaction أو كتابة نفس الرمز أكثر من مرة. لا يغيّر صلاحية OTP في تطبيق الشركة.",
+        help="Protects against re-execution Transaction Or write the same code more than once. Does not change validity OTP In the company application.",
     )
 
     base_automation_id = fields.Many2one(
@@ -156,17 +156,17 @@ class WatiOtpBridge(models.Model):
         ondelete="set null",
     )
 
-    log_ids = fields.One2many("wati.otp.log", "bridge_id", string="سجل OTP")
-    run_count = fields.Integer(string="المحاولات", compute="_compute_counts")
-    sent_count = fields.Integer(string="تم الإرسال", compute="_compute_counts")
-    failure_count = fields.Integer(string="فشل", compute="_compute_counts")
-    skipped_count = fields.Integer(string="منع تكرار", compute="_compute_counts")
+    log_ids = fields.One2many("wati.otp.log", "bridge_id", string="Register OTP")
+    run_count = fields.Integer(string="Attempts", compute="_compute_counts")
+    sent_count = fields.Integer(string="Sent", compute="_compute_counts")
+    failure_count = fields.Integer(string="Failed", compute="_compute_counts")
+    skipped_count = fields.Integer(string="Prevent recurrence", compute="_compute_counts")
     mapping_state = fields.Selection(
-        [("incomplete", "غير مكتمل"), ("ready", "جاهز")],
-        string="حالة الربط",
+        [("incomplete", "Incomplete"), ("ready", "Ready")],
+        string="Linkage status",
         compute="_compute_mapping_state",
     )
-    mapping_summary = fields.Text(string="ملخص الربط", compute="_compute_mapping_state")
+    mapping_summary = fields.Text(string="Link summary", compute="_compute_mapping_state")
 
     @api.depends_context("uid")
     def _compute_available_app_menu_ids(self):
@@ -235,21 +235,21 @@ class WatiOtpBridge(models.Model):
             missing = []
             if bridge.trigger_mode == "field":
                 if not bridge.model_id:
-                    missing.append("الموديل")
+                    missing.append("Model")
                 if not bridge.otp_field_id:
-                    missing.append("حقل OTP")
+                    missing.append("Field OTP")
             if bridge.model_id and not bridge.phone_field_id and not _clean(bridge.phone_path):
-                missing.append("مصدر رقم الجوال")
+                missing.append("Mobile number source")
             if not bridge.template_id:
-                missing.append("قالب Authentication")
+                missing.append("Template Authentication")
             elif bridge.template_id.category != "AUTHENTICATION" or bridge.template_id.status != "approved":
-                missing.append("قالب Authentication معتمد")
+                missing.append("Template Authentication Certified")
             if not _clean(bridge.code_param_name):
-                missing.append("متغير OTP في القالب")
+                missing.append("variable OTP In the template")
 
             bridge.mapping_state = "incomplete" if missing else "ready"
             if missing:
-                bridge.mapping_summary = "أكمل: " + "، ".join(missing)
+                bridge.mapping_summary = "Complete: " + ", ".join(missing)
                 continue
 
             template = bridge.template_id.name
@@ -261,12 +261,12 @@ class WatiOtpBridge(models.Model):
                     else bridge.phone_path
                 )
                 bridge.mapping_summary = (
-                    f"عند تغيّر «{source}» في {bridge.model_id.name} ← أرسل «{template}» إلى {phone}."
+                    f"When it changes «{source}» In {bridge.model_id.name} ← Send «{template}» To {phone}."
                 )
             else:
-                scope = bridge.model_id.name if bridge.model_id else "أي تطبيق مصرح له"
+                scope = bridge.model_id.name if bridge.model_id else "Any authorized application"
                 bridge.mapping_summary = (
-                    f"Integration Hook «{bridge.technical_key}» يستقبل OTP من {scope} ثم يرسل «{template}»."
+                    f"Integration Hook «{bridge.technical_key}» receives OTP Who {scope} Then send «{template}»."
                 )
 
     @api.onchange("app_menu_id")
@@ -301,21 +301,21 @@ class WatiOtpBridge(models.Model):
             key = _clean(bridge.technical_key)
             if not _TECHNICAL_KEY_RE.fullmatch(key):
                 raise ValidationError(
-                    _("مفتاح التكامل يجب أن يبدأ بحرف صغير ويحتوي أحرفًا إنجليزية صغيرة وأرقامًا وشرطة سفلية فقط.")
+                    _("The integral key must start with a lowercase letter and contain only lowercase letters, numbers, and underscores.")
                 )
             duplicate = self.search_count(
                 [("id", "!=", bridge.id), ("technical_key", "=", key)], limit=1
             )
             if duplicate:
-                raise ValidationError(_("مفتاح التكامل مستخدم في OTP Bridge آخر."))
+                raise ValidationError(_("The integration key is used in OTP Bridge Another."))
 
     @api.constrains("model_id", "otp_field_id", "phone_field_id")
     def _check_fields_model(self):
         for bridge in self:
             if bridge.otp_field_id and bridge.otp_field_id.model_id != bridge.model_id:
-                raise ValidationError(_("حقل OTP لا ينتمي إلى الموديل المختار."))
+                raise ValidationError(_("Field OTP It does not belong to the selected model."))
             if bridge.phone_field_id and bridge.phone_field_id.model_id != bridge.model_id:
-                raise ValidationError(_("حقل الجوال لا ينتمي إلى الموديل المختار."))
+                raise ValidationError(_("The mobile field does not belong to the selected model."))
 
     @api.constrains("template_id")
     def _check_auth_template(self):
@@ -323,15 +323,15 @@ class WatiOtpBridge(models.Model):
             if not bridge.template_id:
                 continue
             if bridge.template_id.category != "AUTHENTICATION":
-                raise ValidationError(_("OTP Bridge يقبل قوالب Authentication فقط."))
+                raise ValidationError(_("OTP Bridge Accepts templates Authentication Only."))
             if bridge.template_id.status != "approved":
-                raise ValidationError(_("اختر قالب Authentication معتمدًا من Meta."))
+                raise ValidationError(_("Choose a template Authentication Certified by Meta."))
 
     @api.constrains("dedup_seconds")
     def _check_dedup_seconds(self):
         for bridge in self:
             if bridge.dedup_seconds < 30 or bridge.dedup_seconds > 3600:
-                raise ValidationError(_("مدة منع التكرار يجب أن تكون بين 30 و3600 ثانية."))
+                raise ValidationError(_("The duration of prevention of recurrence should be between 30 And3600 Again."))
 
     @api.constrains("active", "trigger_mode", "model_id", "otp_field_id", "template_id")
     def _check_active_mapping(self):
@@ -339,9 +339,9 @@ class WatiOtpBridge(models.Model):
             if not bridge.active:
                 continue
             if not bridge.template_id or not _clean(bridge.code_param_name):
-                raise ValidationError(_("أكمل قالب OTP ومتغير الرمز قبل التفعيل."))
+                raise ValidationError(_("Complete a template OTP And the symbol variable before activation."))
             if bridge.trigger_mode == "field" and (not bridge.model_id or not bridge.otp_field_id):
-                raise ValidationError(_("وضع No-Code يحتاج موديلًا وحقل OTP قبل التفعيل."))
+                raise ValidationError(_("put No-Code Requires a model and field OTP Before activation."))
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -428,7 +428,7 @@ class WatiOtpBridge(models.Model):
             "tag": "display_notification",
             "params": {
                 "title": _("OTP Bridge"),
-                "message": _("تمت مزامنة الربط مع محرك Odoo."),
+                "message": _("The binding is synchronized with the drive Odoo."),
                 "type": "success",
                 "sticky": False,
             },
@@ -453,7 +453,7 @@ class WatiOtpBridge(models.Model):
     def action_auto_detect_fields(self):
         self.ensure_one()
         if not self.model_id:
-            raise UserError(_("اختر التطبيق ثم الموديل أولًا."))
+            raise UserError(_("Choose the application and then the model first."))
 
         Field = self.env["ir.model.fields"].sudo()
         candidates = Field.search(
@@ -514,19 +514,19 @@ class WatiOtpBridge(models.Model):
         if self.otp_field_id:
             found.append("OTP: " + (self.otp_field_id.field_description or self.otp_field_id.name))
         if self.phone_field_id:
-            found.append("الجوال: " + (self.phone_field_id.field_description or self.phone_field_id.name))
+            found.append("Mobile: " + (self.phone_field_id.field_description or self.phone_field_id.name))
         elif self.phone_path:
-            found.append("الجوال: " + self.phone_path)
+            found.append("Mobile: " + self.phone_path)
 
         return {
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
-                "title": _("اكتشاف الحقول"),
+                "title": _("Discover fields"),
                 "message": (
-                    _("تم اقتراح: %s") % " · ".join(found)
+                    _("been suggested: %s") % " · ".join(found)
                     if found
-                    else _("لم نجد حقولًا واضحة تلقائيًا. اختر الحقول يدويًا أو استخدم Integration Hook.")
+                    else _("We did not automatically find clear fields. Choose fields manually or use Integration Hook.")
                 ),
                 "type": "success" if found else "warning",
                 "sticky": False,
@@ -659,7 +659,7 @@ class WatiOtpBridge(models.Model):
                     phone=phone,
                     source=source,
                     status="failed",
-                    error_message="رمز OTP فارغ؛ لم يتم إرسال أي رسالة.",
+                    error_message="Symbol OTP empty; No message sent.",
                 )
             )
             return False
@@ -671,7 +671,7 @@ class WatiOtpBridge(models.Model):
                     code=code,
                     source=source,
                     status="failed",
-                    error_message="قيمة OTP أطول من الحد الآمن المسموح.",
+                    error_message="Value OTP Longer than the permissible safe limit.",
                 )
             )
             return False
@@ -682,7 +682,7 @@ class WatiOtpBridge(models.Model):
                     code=code,
                     source=source,
                     status="failed",
-                    error_message="لم يتم العثور على رقم WhatsApp صالح.",
+                    error_message="No number found WhatsApp Saleh.",
                 )
             )
             return False
@@ -698,7 +698,7 @@ class WatiOtpBridge(models.Model):
                     code=code,
                     source=source,
                     status="failed",
-                    error_message="قالب OTP غير موجود أو ليس Authentication معتمدًا.",
+                    error_message="Template OTP Not present or not Authentication Certified.",
                 )
             )
             return False
@@ -726,7 +726,7 @@ class WatiOtpBridge(models.Model):
                     code=code,
                     source=source,
                     status="skipped",
-                    error_message="تم منع إعادة إرسال نفس OTP خلال نافذة الحماية.",
+                    error_message="Retransmission of the same has been prevented OTP During the protection window.",
                 )
             )
             return False
@@ -763,7 +763,7 @@ class WatiOtpBridge(models.Model):
                     code=code,
                     source=source,
                     status="failed",
-                    error_message="إعدادات WATI API غير مكتملة.",
+                    error_message="Settings WATI API Incomplete.",
                 )
             )
             _logger.warning("WATI_OTP_CONFIG_ERROR bridge=%s error=%s", self.id, exc)
@@ -779,9 +779,9 @@ class WatiOtpBridge(models.Model):
                     source=source,
                     status="failed",
                     error_message=(
-                        f"WATI رفض إرسال OTP ({exc.status_code})."
+                        f"WATI Refused to send OTP ({exc.status_code})."
                         if exc.status_code
-                        else "تعذر الوصول إلى WATI لإرسال OTP."
+                        else "Unable to access WATI To send OTP."
                     ),
                     provider_excerpt=detail,
                 )
@@ -796,7 +796,7 @@ class WatiOtpBridge(models.Model):
                     code=code,
                     source=source,
                     status="failed",
-                    error_message="حدث خطأ غير متوقع أثناء إرسال OTP. راجع سجل الخادم.",
+                    error_message="An unexpected error occurred while sending OTP. Review the server log.",
                 )
             )
             return False
@@ -820,7 +820,7 @@ class WatiOtpBridge(models.Model):
         self.ensure_one()
         return {
             "type": "ir.actions.act_window",
-            "name": _("اختبار OTP Bridge"),
+            "name": _("Test OTP Bridge"),
             "res_model": "wati.otp.test.wizard",
             "view_mode": "form",
             "target": "new",
@@ -841,21 +841,21 @@ class WatiOtpLog(models.Model):
     _order = "create_date desc, id desc"
 
     bridge_id = fields.Many2one("wati.otp.bridge", required=True, ondelete="cascade", index=True)
-    model_name = fields.Char(string="الموديل", index=True)
-    res_id = fields.Integer(string="رقم السجل", index=True)
-    res_name = fields.Char(string="السجل")
-    phone_masked = fields.Char(string="رقم الجوال")
-    template_name = fields.Char(string="قالب WATI")
+    model_name = fields.Char(string="Model", index=True)
+    res_id = fields.Integer(string="Registration number", index=True)
+    res_name = fields.Char(string="Record")
+    phone_masked = fields.Char(string="Mobile Number")
+    template_name = fields.Char(string="Template WATI")
     source = fields.Selection(
-        [("field", "No-Code"), ("hook", "Integration Hook"), ("test", "اختبار يدوي")],
-        string="المصدر",
+        [("field", "No-Code"), ("hook", "Integration Hook"), ("test", "Manual testing")],
+        string="Source",
         required=True,
         default="field",
         index=True,
     )
     status = fields.Selection(
-        [("sent", "تم الإرسال"), ("failed", "فشل"), ("skipped", "تم منع التكرار")],
-        string="الحالة",
+        [("sent", "Sent"), ("failed", "Failed"), ("skipped", "Recurrence prevented")],
+        string="Status",
         required=True,
         index=True,
     )
@@ -863,11 +863,11 @@ class WatiOtpLog(models.Model):
         string="OTP Fingerprint",
         readonly=True,
         groups="base.group_system",
-        help="بصمة SHA-256 فقط. لا يتم حفظ رمز OTP نفسه في سجل WATI Connector.",
+        help="Imprint SHA-256 Only. The code is not saved OTP Same in a log WATI Connector.",
     )
-    error_message = fields.Text(string="الخطأ")
-    provider_excerpt = fields.Text(string="استجابة WATI المنقحة")
-    triggered_by_id = fields.Many2one("res.users", string="شغّلها", readonly=True)
+    error_message = fields.Text(string="Error")
+    provider_excerpt = fields.Text(string="response WATI Revised")
+    triggered_by_id = fields.Many2one("res.users", string="Play it", readonly=True)
 
 
 class WatiOtpTestWizard(models.TransientModel):
@@ -875,8 +875,8 @@ class WatiOtpTestWizard(models.TransientModel):
     _description = "Test WATI OTP Bridge"
 
     bridge_id = fields.Many2one("wati.otp.bridge", required=True, readonly=True)
-    phone = fields.Char(string="رقم WhatsApp للاختبار", required=True)
-    code = fields.Char(string="OTP تجريبي", required=True)
+    phone = fields.Char(string="No WhatsApp For testing", required=True)
+    code = fields.Char(string="OTP Demo", required=True)
 
     def action_send(self):
         self.ensure_one()
@@ -888,13 +888,13 @@ class WatiOtpTestWizard(models.TransientModel):
             force=True,
         )
         if not ok:
-            raise UserError(_("فشل اختبار OTP. افتح سجل OTP لمعرفة السبب."))
+            raise UserError(_("Test failed OTP. Open a record OTP To find out why."))
         return {
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
                 "title": _("OTP Bridge"),
-                "message": _("تم إرسال OTP التجريبي عبر WATI بنجاح."),
+                "message": _("has been sent OTP demo via WATI Successfully."),
                 "type": "success",
                 "sticky": False,
             },

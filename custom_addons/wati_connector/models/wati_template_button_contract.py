@@ -34,14 +34,14 @@ class WatiTemplateButtonContract(models.Model):
         url = clean(value)
         if not url:
             if required:
-                raise UserError(_("أدخل رابط زر زيارة الموقع."))
+                raise UserError(_("Enter the link to the visit website button."))
             return ""
         if "://" not in url:
             url = "https://%s" % url
         parsed = urlparse(url)
         if parsed.scheme not in {"http", "https"} or not parsed.netloc:
             raise ValidationError(
-                _("رابط الزر غير صالح. استخدم رابطًا كاملًا مثل https://example.com")
+                _("The button link is invalid. Use a full link e.g https://example.com")
             )
         return url
 
@@ -50,11 +50,11 @@ class WatiTemplateButtonContract(models.Model):
         phone = re.sub(r"[\s\-()]+", "", clean(value))
         if not phone:
             if required:
-                raise UserError(_("أدخل رقم الهاتف الخاص بزر الاتصال."))
+                raise UserError(_("Enter the phone number for the call button."))
             return ""
         if not _PHONE_RE.fullmatch(phone):
             raise ValidationError(
-                _("رقم الاتصال غير صالح. استخدم رقمًا دوليًا مثل +966500000000.")
+                _("The contact number is invalid. Use an international number such as: +966500000000.")
             )
         return phone
 

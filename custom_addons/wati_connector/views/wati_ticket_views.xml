@@ -4,7 +4,7 @@
         <field name="name">wati.support.ticket.list</field>
         <field name="model">wati.support.ticket</field>
         <field name="arch" type="xml">
-            <list string="تذاكر خدمة العملاء">
+            <list string="Customer service tickets">
                 <field name="name"/>
                 <field name="subject"/>
                 <field name="partner_id"/>
@@ -20,14 +20,14 @@
         <field name="name">wati.support.ticket.form</field>
         <field name="model">wati.support.ticket</field>
         <field name="arch" type="xml">
-            <form string="تذكرة خدمة العملاء">
+            <form string="Customer service ticket">
                 <header>
                     <field name="status" widget="statusbar" statusbar_visible="new,in_progress,waiting,done"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
                         <label for="subject"/>
-                        <h1><field name="subject" placeholder="موضوع التذكرة..."/></h1>
+                        <h1><field name="subject" placeholder="Ticket subject..."/></h1>
                     </div>
                     <group>
                         <group>
@@ -43,7 +43,7 @@
                         </group>
                     </group>
                     <group>
-                        <field name="description" placeholder="اكتب تفاصيل المشكلة أو الطلب..."/>
+                        <field name="description" placeholder="Write the details of the problem or request..."/>
                     </group>
                 </sheet>
             </form>
@@ -51,7 +51,7 @@
     </record>
 
     <record id="action_wati_support_tickets" model="ir.actions.act_window">
-        <field name="name">التذاكر</field>
+        <field name="name">Tickets</field>
         <field name="res_model">wati.support.ticket</field>
         <field name="view_mode">list,form</field>
         <field name="context">{'search_default_my_tickets': 0}</field>
@@ -61,7 +61,7 @@
          removed from the commercial WhatsApp navigation. -->
     <menuitem
         id="menu_wati_support_tickets"
-        name="التذاكر"
+        name="Tickets"
         parent="wati_connector.menu_wati_root"
         action="action_wati_support_tickets"
         sequence="30"

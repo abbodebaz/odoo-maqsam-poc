@@ -10,8 +10,8 @@
                 <div class="alert alert-light border mt-2 mb-3" role="status" invisible="not template_name">
                     <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
                         <div>
-                            <strong>تطابق القالب مع WATI</strong>
-                            <div class="text-muted small">نتحقق من اسم كل متغير الذي سيُرسل فعليًا إلى WATI، وليس شكله داخل الرسالة فقط.</div>
+                            <strong>Match the template with WATI</strong>
+                            <div class="text-muted small">We check the name of each variable that will actually be sent to WATIAnd not just its form within the message.</div>
                         </div>
                         <field name="template_contract_state" widget="badge" readonly="1"
                                decoration-success="template_contract_state == 'valid'"
@@ -24,7 +24,7 @@
             </xpath>
 
             <xpath expr="//field[@name='parameter_ids']/list/field[@name='template_variable_label']" position="after">
-                <field name="api_param_name" string="اسم WATI API" optional="hide" readonly="1" groups="base.group_system"/>
+                <field name="api_param_name" string="Name WATI API" optional="hide" readonly="1" groups="base.group_system"/>
                 <field name="placeholder_token" column_invisible="True"/>
             </xpath>
 

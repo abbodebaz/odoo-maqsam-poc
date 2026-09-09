@@ -9,16 +9,16 @@ class WatiConversationCrm(models.Model):
 
     crm_lead_id = fields.Many2one(
         "crm.lead",
-        string="فرصة / Lead CRM",
+        string="Chance / Lead CRM",
         ondelete="set null",
         index=True,
-        help="سجل CRM المرتبط بهذه محادثة WhatsApp.",
+        help="Register CRM Related to this conversation WhatsApp.",
     )
 
     def action_open_crm_lead(self):
         self.ensure_one()
         if not self.crm_lead_id:
-            raise UserError(_("لا توجد فرصة CRM مرتبطة بهذه المحادثة."))
+            raise UserError(_("No chance CRM Related to this conversation."))
         return {
             "type": "ir.actions.act_window",
             "name": self.crm_lead_id.display_name,
@@ -32,11 +32,11 @@ class WatiConversationCrm(models.Model):
 class CrmLeadWati(models.Model):
     _inherit = "crm.lead"
 
-    wati_conversation_count = fields.Integer(string="محادثات WhatsApp", compute="_compute_wati_summary")
-    wati_message_count = fields.Integer(string="رسائل WhatsApp", compute="_compute_wati_summary")
-    wati_last_message = fields.Text(string="آخر رسالة WhatsApp", compute="_compute_wati_summary")
-    wati_last_message_at = fields.Datetime(string="آخر نشاط WhatsApp", compute="_compute_wati_summary")
-    wati_last_status = fields.Char(string="آخر حالة WhatsApp", compute="_compute_wati_summary")
+    wati_conversation_count = fields.Integer(string="Conversations WhatsApp", compute="_compute_wati_summary")
+    wati_message_count = fields.Integer(string="Messages WhatsApp", compute="_compute_wati_summary")
+    wati_last_message = fields.Text(string="Last message WhatsApp", compute="_compute_wati_summary")
+    wati_last_message_at = fields.Datetime(string="Latest activity WhatsApp", compute="_compute_wati_summary")
+    wati_last_status = fields.Char(string="Latest case WhatsApp", compute="_compute_wati_summary")
 
     def _wati_phone_values(self):
         self.ensure_one()
@@ -108,7 +108,7 @@ class CrmLeadWati(models.Model):
             return candidate
         phone = self._wati_primary_phone()
         if not phone:
-            raise UserError(_("أضف رقم جوال أو هاتف للفرصة/العميل قبل فتح WhatsApp."))
+            raise UserError(_("Add a mobile or telephone number to the opportunity/Client before opening WhatsApp."))
         display_name = self.partner_id.display_name if self.partner_id else (self.contact_name or self.partner_name or self.name or phone)
         return Conversation.create({
             "name": display_name,
@@ -161,7 +161,7 @@ class CrmLeadWati(models.Model):
         self._wati_get_or_create_conversation()
         return {
             "type": "ir.actions.act_window",
-            "name": _("محادثات WhatsApp"),
+            "name": _("Conversations WhatsApp"),
             "res_model": "wati.conversation",
             "view_mode": "list,form",
             "domain": [("crm_lead_id", "=", self.id)],
@@ -177,22 +177,22 @@ class WatiAutomationRuleCrmPresets(models.Model):
         definitions = dict(super()._wati_preset_definitions())
         definitions.update({
             "crm_qualified": {
-                "label": _("CRM · عند التأهيل Qualified"),
+                "label": _("CRM · Upon qualification Qualified"),
                 "model": "crm.lead",
                 "field": "stage_id",
                 "target": "Qualified",
                 "recipient_fields": ("mobile", "phone"),
                 "recipient_path": "partner_id.phone",
-                "name": _("CRM · إرسال عند Qualified"),
+                "name": _("CRM · Send at Qualified"),
             },
             "crm_won": {
-                "label": _("CRM · عند الفوز Won"),
+                "label": _("CRM · When you win Won"),
                 "model": "crm.lead",
                 "field": "stage_id",
                 "target": "Won",
                 "recipient_fields": ("mobile", "phone"),
                 "recipient_path": "partner_id.phone",
-                "name": _("CRM · إرسال عند Won"),
+                "name": _("CRM · Send at Won"),
             },
         })
         return definitions

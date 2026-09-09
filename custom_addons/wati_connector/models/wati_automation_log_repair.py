@@ -11,24 +11,24 @@ class WatiAutomationLogRepair(models.Model):
 
     ui_state = fields.Selection(
         [
-            ("accepted", "تم قبول الطلب"),
-            ("sent", "تم الإرسال"),
-            ("delivered", "تم التسليم"),
-            ("read", "تمت القراءة"),
-            ("failed", "فشل"),
-            ("pending", "قيد المتابعة"),
+            ("accepted", "The request has been accepted"),
+            ("sent", "Sent"),
+            ("delivered", "Delivered"),
+            ("read", "Read done"),
+            ("failed", "Failed"),
+            ("pending", "Under follow-up"),
         ],
-        string="النتيجة",
+        string="Result",
         compute="_compute_log_experience",
     )
     ui_kind = fields.Selection(
-        [("test", "تجريبي"), ("live", "فعلي")],
-        string="نوع التشغيل",
+        [("test", "Demo"), ("live", "Actual")],
+        string="Operating type",
         compute="_compute_log_experience",
     )
-    ui_summary = fields.Char(string="الملخص", compute="_compute_log_experience")
-    ui_timeline = fields.Char(string="مسار الرسالة", compute="_compute_log_experience")
-    ui_has_error = fields.Boolean(string="يوجد خطأ", compute="_compute_log_experience")
+    ui_summary = fields.Char(string="Summary", compute="_compute_log_experience")
+    ui_timeline = fields.Char(string="Message path", compute="_compute_log_experience")
+    ui_has_error = fields.Boolean(string="There is an error", compute="_compute_log_experience")
 
     @api.depends(
         "status",
@@ -50,39 +50,39 @@ class WatiAutomationLogRepair(models.Model):
 
             if raw_status == "read" or "read" in webhook:
                 state = "read"
-                summary = _("وصلت الرسالة وتمت قراءتها على WhatsApp.")
+                summary = _("The message arrived and was read on WhatsApp.")
             elif raw_status == "delivered" or "delivered" in webhook:
                 state = "delivered"
-                summary = _("تم تسليم الرسالة إلى WhatsApp بنجاح.")
+                summary = _("The message has been delivered to WhatsApp Successfully.")
             elif raw_status == "sent" or "sent" in webhook:
                 state = "sent"
-                summary = _("تم إرسال الرسالة من WATI، وننتظر تحديث التسليم.")
+                summary = _("The message was sent from WATIWe are waiting for the delivery update.")
             elif raw_status == "accepted" or delivery.startswith("accepted"):
                 state = "accepted"
-                summary = _("استلم WATI طلب الإرسال بنجاح، وننتظر تحديث حالة التسليم.")
+                summary = _("Received WATI The dispatch request was successful, and we are waiting for the delivery status update.")
             elif raw_status == "failed":
                 state = "failed"
-                summary = (log.error_message or _("تعذر إرسال الرسالة.")).strip()
+                summary = (log.error_message or _("The message could not be sent.")).strip()
             else:
                 state = "pending"
-                summary = _("التشغيل قيد المتابعة.")
+                summary = _("Playback is in progress.")
 
             milestones = []
             if log.accepted_at or state in ("accepted", "sent", "delivered", "read"):
-                milestones.append(_("قُبل"))
+                milestones.append(_("He accepted"))
             if log.sent_at or state in ("sent", "delivered", "read"):
-                milestones.append(_("أُرسل"))
+                milestones.append(_("Sent"))
             if log.delivered_at or state in ("delivered", "read"):
-                milestones.append(_("تم التسليم"))
+                milestones.append(_("Delivered"))
             if log.read_at or state == "read":
-                milestones.append(_("تمت القراءة"))
+                milestones.append(_("Read done"))
             if state == "failed":
-                milestones.append(_("فشل"))
+                milestones.append(_("Failed"))
 
             log.ui_state = state
             log.ui_kind = "test" if log.is_test else "live"
             log.ui_summary = summary[:500]
-            log.ui_timeline = " ← ".join(milestones) if milestones else _("بانتظار تحديث WATI")
+            log.ui_timeline = " ← ".join(milestones) if milestones else _("Waiting for an update WATI")
             log.ui_has_error = state == "failed"
 
     @api.model

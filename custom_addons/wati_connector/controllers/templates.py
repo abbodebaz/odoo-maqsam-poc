@@ -104,15 +104,15 @@ class WatiTemplateController(http.Controller):
         try:
             response = WatiClient(request.env).get_message_templates(page_size=200, page_number=1)
         except WatiConfigurationError:
-            return request.make_json_response({"ok": False, "message": "إعدادات WATI API غير مكتملة."}, status=503)
+            return request.make_json_response({"ok": False, "message": "Settings WATI API Incomplete."}, status=503)
         except WatiRequestError as exc:
             detail = (exc.response_text or str(exc) or "").strip()[:600]
             status = exc.status_code or 502
-            return request.make_json_response({"ok": False, "message": f"WATI رفض جلب القوالب ({status}): {detail}"}, status=status)
+            return request.make_json_response({"ok": False, "message": f"WATI Refuse to bring templates ({status}): {detail}"}, status=status)
         try:
             payload = response.json()
         except ValueError:
-            return request.make_json_response({"ok": False, "message": "WATI أعاد استجابة غير مفهومة عند جلب القوالب."}, status=502)
+            return request.make_json_response({"ok": False, "message": "WATI Returned an unintelligible response when fetching templates."}, status=502)
         rows = [row for row in (_normalize_template(item) for item in _find_template_list(payload)) if row]
         rows.sort(key=lambda row: (row["name"].lower(), row["language"].lower()))
         return request.make_json_response({"ok": True, "templates": rows}, status=200)
@@ -125,19 +125,19 @@ class WatiTemplateController(http.Controller):
             conversation_id = 0
         conversation = request.env["wati.conversation"].browse(conversation_id).exists()
         if not conversation:
-            return request.make_json_response({"ok": False, "message": "المحادثة غير موجودة."}, status=404)
+            return request.make_json_response({"ok": False, "message": "The conversation does not exist."}, status=404)
 
         current_user = request.env.user
         if not conversation.assigned_user_id:
-            return request.make_json_response({"ok": False, "message": "استلم المحادثة أولًا قبل إرسال قالب."}, status=409)
+            return request.make_json_response({"ok": False, "message": "Receive the chat first before sending a template."}, status=409)
         if conversation.assigned_user_id != current_user:
-            return request.make_json_response({"ok": False, "message": f"المحادثة عند {conversation.assigned_user_id.name}. انقل المحادثة إليك أولًا."}, status=409)
+            return request.make_json_response({"ok": False, "message": f"Conversation at {conversation.assigned_user_id.name}. Move the conversation to you first."}, status=409)
 
         template_name = (template_name or "").strip()
         if not template_name:
-            return request.make_json_response({"ok": False, "message": "اختر قالبًا أولًا."}, status=400)
+            return request.make_json_response({"ok": False, "message": "Choose a template first."}, status=400)
         if not conversation.wa_id:
-            return request.make_json_response({"ok": False, "message": "لا يوجد رقم WhatsApp للمحادثة."}, status=400)
+            return request.make_json_response({"ok": False, "message": "There is no number WhatsApp For conversation."}, status=400)
 
         try:
             values = json.loads(params_json or "[]")
@@ -157,7 +157,7 @@ class WatiTemplateController(http.Controller):
         scope = f"outbound:template:user:{current_user.id}"
         key = (request_id or "").strip() or idem.digest(conversation.id, template_name, params_json or "", channel_number or "")
         if not idem.acquire(scope, key, ttl_seconds=180):
-            return request.make_json_response({"ok": True, "duplicate_suppressed": True, "message": "تم تجاهل إعادة إرسال مكررة."}, status=200)
+            return request.make_json_response({"ok": True, "duplicate_suppressed": True, "message": "Duplicate resubmission was ignored."}, status=200)
 
         client = WatiClient(request.env)
         body = {
@@ -173,11 +173,11 @@ class WatiTemplateController(http.Controller):
             client.send_template_messages(body)
         except WatiConfigurationError:
             idem.release(scope, key)
-            return request.make_json_response({"ok": False, "message": "إعدادات WATI API غير مكتملة."}, status=503)
+            return request.make_json_response({"ok": False, "message": "Settings WATI API Incomplete."}, status=503)
         except WatiRequestError as exc:
             idem.release(scope, key)
             detail = (exc.response_text or str(exc) or "").strip()[:1000]
             status = exc.status_code or 502
-            return request.make_json_response({"ok": False, "message": f"WATI رفض إرسال القالب ({status}): {detail}"}, status=status)
+            return request.make_json_response({"ok": False, "message": f"WATI Template submission refused ({status}): {detail}"}, status=status)
 
-        return request.make_json_response({"ok": True, "message": "تم إرسال القالب إلى WATI."}, status=200)
+        return request.make_json_response({"ok": True, "message": "The template has been sent to WATI."}, status=200)

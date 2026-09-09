@@ -8,33 +8,33 @@
             <xpath expr="//notebook" position="inside">
                 <page string="WhatsApp / WATI" name="wati_user_integration">
                     <group>
-                        <group string="ربط حساب الموظف">
+                        <group string="Link the employee account">
                             <field name="wati_operator_email"
                                    string="WATI Operator Email"
                                    placeholder="employee@company.com"/>
                             <div class="text-muted">
-                                أدخل إيميل الموظف كما هو مسجل داخل WATI Team Inbox.
+                                Enter the employee’s email as registered inside WATI Team Inbox.
                             </div>
                         </group>
-                        <group string="أدوار WhatsApp">
+                        <group string="Roles WhatsApp">
                             <div class="text-muted">
-                                <strong>WATI User / Agent:</strong> للاستخدام اليومي وخدمة العملاء.<br/>
-                                <strong>WATI Supervisor:</strong> للإشراف على الفريق ونقل المحادثات.<br/>
-                                <strong>WATI Administrator:</strong> هو «مشرف WhatsApp» الذي تعتمد عليه إعدادات صلاحيات الخدمات مثل مركز الأتمتة وسجل التشغيل ومراقبة Webhook.
+                                <strong>WATI User / Agent:</strong> For everyday use and customer service.<br/>
+                                <strong>WATI Supervisor:</strong> To supervise the team and relay conversations.<br/>
+                                <strong>WATI Administrator:</strong> He «Supervisor WhatsApp» On which the permissions settings of services such as Automation Center, Operation Log, and Monitoring depend Webhook.
                             </div>
                         </group>
                     </group>
                     <group>
-                        <group string="طريقة العمل">
+                        <group string="How it works">
                             <div class="text-muted">
-                                المحادثة غير المسندة يستطيع Agent استلامها. بعد الاستلام لا يستطيع موظف آخر الرد عليها.
-                                نقل المحادثة بين الموظفين متاح لمشرف WATI أو Administrator، وجميع عمليات النقل تُحفظ في سجل الإسناد.
+                                Unpredicated conversation can Agent Receive it. After receipt, no other employee can respond to it.
+                                Conversation transfer between employees is available to a moderator WATI Or AdministratorAll transfers are saved in the attribution log.
                             </div>
                         </group>
-                        <group string="ملاحظة أمنية">
+                        <group string="Security note">
                             <div class="alert alert-light border" role="status">
-                                لا تمنح المديرة صلاحية «مدير Odoo» فقط لكي تدير WhatsApp. استخدم دور
-                                <strong>WATI Administrator</strong> ليكون وصولها محصورًا في مساحة WhatsApp والصلاحيات التي اخترتها للشركة.
+                                The director is not granted authority «Administrator Odoo» Just to manage WhatsApp. Use role
+                                <strong>WATI Administrator</strong> Its access is limited to a space WhatsApp And the powers you have chosen for the company.
                             </div>
                         </group>
                     </group>

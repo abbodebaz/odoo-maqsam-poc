@@ -37,7 +37,7 @@ class WatiAutomationRuleChannelAuto(models.Model):
         self.ensure_one()
         wanted = (self.template_name or "").strip()
         if not wanted:
-            return None, _("اختر قالب WATI أولًا.")
+            return None, _("Choose a template WATI First.")
 
         templates = templates if templates is not None else self._fetch_wati_templates_guarded()
         candidates = [
@@ -46,7 +46,7 @@ class WatiAutomationRuleChannelAuto(models.Model):
             if _template_name(item).strip().casefold() == wanted.casefold()
         ]
         if not candidates:
-            return None, _("القالب «%s» غير موجود في حساب WATI المتصل حاليًا.") % wanted
+            return None, _("Template «%s» Not found in account WATI Currently online.") % wanted
 
         statuses = [_template_status(item).strip() for item in candidates]
         approved = [
@@ -59,11 +59,11 @@ class WatiAutomationRuleChannelAuto(models.Model):
         elif any(statuses):
             visible = ", ".join(sorted({status for status in statuses if status}))
             return None, _(
-                "القالب «%(name)s» موجود لكن حالته غير معتمدة للإرسال: %(status)s"
+                "Template «%(name)s» Exists but its status is not approved for sending: %(status)s"
             ) % {"name": wanted, "status": visible or "Unknown"}
         else:
             return None, _(
-                "WATI لم يُرجع حالة اعتماد للقالب «%s»، لذلك تم منع التفعيل احترازيًا."
+                "WATI No approval status was returned for the template «%s»Therefore, activation has been prevented as a precaution."
             ) % wanted
 
         effective_channel = self._effective_channel()
@@ -79,8 +79,8 @@ class WatiAutomationRuleChannelAuto(models.Model):
                     sorted({_template_channel(item) for item in channel_aware if _template_channel(item)})
                 )
                 return None, _(
-                    "القالب «%(name)s» موجود، لكنه ليس على قناة WATI الحالية %(channel)s. "
-                    "القنوات الموجودة للقالب: %(available)s"
+                    "Template «%(name)s» It exists, but it is not on a channel WATI current %(channel)s. "
+                    "Existing channels of the template: %(available)s"
                 ) % {
                     "name": wanted,
                     "channel": effective_channel,
@@ -92,8 +92,8 @@ class WatiAutomationRuleChannelAuto(models.Model):
             channels = sorted({_template_channel(item) for item in candidates if _template_channel(item)})
             if len(channels) > 1:
                 return None, _(
-                    "القالب «%(name)s» موجود في أكثر من قناة WATI (%(channels)s). "
-                    "اختر القالب من زر «اختيار من WATI» لتحديد القناة الصحيحة."
+                    "Template «%(name)s» Available on more than one channel WATI (%(channels)s). "
+                    "Select template from button «Choose from WATI» To select the correct channel."
                 ) % {"name": wanted, "channels": ", ".join(channels)}
             if len(channels) == 1:
                 candidates = [
@@ -115,8 +115,8 @@ class WatiAutomationRuleChannelAuto(models.Model):
             languages = sorted({_template_language(item) for item in candidates if _template_language(item)})
             if len(languages) > 1:
                 return None, _(
-                    "القالب «%(name)s» لديه أكثر من لغة معتمدة (%(languages)s). "
-                    "اختر النسخة المطلوبة من زر «اختيار من WATI» حتى لا نرسل ترجمة خاطئة."
+                    "Template «%(name)s» Has more than one supported language (%(languages)s). "
+                    "Select the desired version from the button «Choose from WATI» So as not to send a wrong translation."
                 ) % {"name": wanted, "languages": ", ".join(languages)}
 
         candidates.sort(
@@ -171,9 +171,9 @@ class WatiAutomationRuleChannelAuto(models.Model):
 
         if not values:
             message = (
-                _("لم أجد أي قالب Approved صالح للقناة %s.") % effective_channel
+                _("I couldn’t find any template Approved Valid for the channel %s.") % effective_channel
                 if effective_channel
-                else _("لم أجد أي قالب Approved في حساب WATI المتصل حاليًا.")
+                else _("I couldn’t find any template Approved In an account WATI Currently online.")
             )
             raise UserError(message)
 
@@ -188,7 +188,7 @@ class WatiAutomationRuleChannelAuto(models.Model):
         Choice.create(list(unique.values()))
         return {
             "type": "ir.actions.act_window",
-            "name": _("اختر قالب WATI المعتمد"),
+            "name": _("Choose a template WATI Approved"),
             "res_model": "wati.automation.template.choice",
             "view_mode": "list",
             "views": [(self.env.ref("wati_connector.view_wati_automation_template_choice_list").id, "list")],
@@ -204,7 +204,7 @@ class WatiAutomationRuleChannelAuto(models.Model):
                     record,
                     "failed",
                     phone=phone,
-                    error_message=self.template_validation_message or "القالب غير صالح للإرسال.",
+                    error_message=self.template_validation_message or "The template is not valid for submission.",
                 )
             )
             return False
@@ -222,9 +222,9 @@ class WatiAutomationRuleChannelAuto(models.Model):
                     "failed",
                     phone=phone,
                     error_message=(
-                        "لم يتم استدعاء WATI لأن متغيرات القالب التالية بدون قيمة: "
+                        "Not called WATI Because the following template variables are worthless: "
                         + ", ".join(filter(None, empty_params))
-                        + ". اربطها بحقل Odoo أو ضع قيمة احتياطية."
+                        + ". Link it to a field Odoo Or set a reserve value."
                     ),
                 )
             )
@@ -248,7 +248,7 @@ class WatiAutomationRuleChannelAuto(models.Model):
                     record,
                     "failed",
                     phone=phone,
-                    error_message="إعدادات WATI API غير مكتملة.",
+                    error_message="Settings WATI API Incomplete.",
                 )
             )
             return False

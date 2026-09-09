@@ -7,12 +7,12 @@
     -->
 
     <menuitem id="menu_wati_conversations_group"
-              name="المحادثات"
+              name="Conversations"
               parent="wati_connector.menu_wati_root"
               sequence="10"/>
 
     <menuitem id="menu_wati_automation_group"
-              name="الأتمتة"
+              name="Automation"
               parent="wati_connector.menu_wati_root"
               sequence="30"/>
 
@@ -37,13 +37,13 @@
 
     <!-- Templates stays one click away because it is already a single center. -->
     <record id="wati_connector.menu_wati_templates" model="ir.ui.menu">
-        <field name="name">القوالب</field>
+        <field name="name">Templates</field>
         <field name="sequence">20</field>
     </record>
 
     <!-- Automation -->
     <record id="wati_connector.menu_wati_automation_rules" model="ir.ui.menu">
-        <field name="name">مركز الأتمتة</field>
+        <field name="name">Automation Center</field>
         <field name="parent_id" ref="wati_connector.menu_wati_automation_group"/>
         <field name="sequence">10</field>
     </record>
@@ -65,11 +65,11 @@
 
     <!-- Keep monitoring/help/settings as concise top-level destinations. -->
     <record id="wati_connector.menu_wati_webhook_events" model="ir.ui.menu">
-        <field name="name">المراقبة</field>
+        <field name="name">Monitor</field>
         <field name="sequence">50</field>
     </record>
     <record id="wati_connector.menu_wati_help" model="ir.ui.menu">
-        <field name="name">المساعدة</field>
+        <field name="name">Help</field>
         <field name="sequence">90</field>
     </record>
     <record id="wati_connector.menu_wati_settings" model="ir.ui.menu">

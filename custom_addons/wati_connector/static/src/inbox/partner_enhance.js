@@ -10,7 +10,7 @@
     let lastFetchAt = 0;
 
     function renderUnlinked() {
-        partnerStatus.textContent = "غير مربوط بعميل Odoo";
+        partnerStatus.textContent = "Not tied to a client Odoo";
         partnerLink.removeAttribute("href");
         partnerLink.classList.add("is-hidden");
     }
@@ -18,7 +18,7 @@
     async function refreshPartnerInfo(force = false) {
         const conversationId = Number(localStorage.getItem("watiInboxSelected") || 0);
         if (!conversationId) {
-            partnerStatus.textContent = "لم يتم اختيار محادثة";
+            partnerStatus.textContent = "No conversation selected";
             partnerLink.removeAttribute("href");
             partnerLink.classList.add("is-hidden");
             return;
@@ -46,8 +46,8 @@
 
             if (conversation.partner_id && conversation.partner_url) {
                 partnerStatus.textContent = conversation.partner_name
-                    ? `مربوط بـ ${conversation.partner_name}`
-                    : "مربوط بعميل Odoo";
+                    ? `linked to ${conversation.partner_name}`
+                    : "Linked to a client Odoo";
                 partnerLink.href = conversation.partner_url;
                 partnerLink.classList.remove("is-hidden");
             } else {

@@ -9,9 +9,9 @@ class WatiConversationSale(models.Model):
 
     sale_order_ids = fields.Many2many(
         "sale.order", "wati_sale_order_conversation_rel", "conversation_id", "sale_order_id",
-        string="عروض وأوامر البيع المرتبطة", copy=False,
+        string="Related sales offers and orders", copy=False,
     )
-    sale_order_count = fields.Integer(string="عدد عروض وأوامر البيع", compute="_compute_sale_order_count")
+    sale_order_count = fields.Integer(string="Number of offers and sales orders", compute="_compute_sale_order_count")
 
     def _compute_sale_order_count(self):
         for conversation in self:
@@ -20,10 +20,10 @@ class WatiConversationSale(models.Model):
     def action_open_sale_orders(self):
         self.ensure_one()
         if not self.sale_order_ids:
-            raise UserError(_("لا توجد عروض أو أوامر بيع مرتبطة بهذه المحادثة."))
+            raise UserError(_("There are no offers or sell orders associated with this conversation."))
         if len(self.sale_order_ids) == 1:
             return {"type": "ir.actions.act_window", "name": self.sale_order_ids.display_name, "res_model": "sale.order", "res_id": self.sale_order_ids.id, "view_mode": "form", "target": "current"}
-        return {"type": "ir.actions.act_window", "name": _("عروض / أوامر البيع"), "res_model": "sale.order", "view_mode": "list,form", "domain": [("id", "in", self.sale_order_ids.ids)], "target": "current"}
+        return {"type": "ir.actions.act_window", "name": _("Offers / Sell orders"), "res_model": "sale.order", "view_mode": "list,form", "domain": [("id", "in", self.sale_order_ids.ids)], "target": "current"}
 
 
 class SaleOrderWati(models.Model):
@@ -31,13 +31,13 @@ class SaleOrderWati(models.Model):
 
     wati_conversation_ids = fields.Many2many(
         "wati.conversation", "wati_sale_order_conversation_rel", "sale_order_id", "conversation_id",
-        string="سجل محادثات WhatsApp", copy=False,
+        string="Record conversations WhatsApp", copy=False,
     )
-    wati_conversation_count = fields.Integer(string="عدد محادثات WhatsApp", compute="_compute_wati_summary")
-    wati_message_count = fields.Integer(string="رسائل WhatsApp", compute="_compute_wati_summary")
-    wati_last_message = fields.Text(string="آخر رسالة WhatsApp", compute="_compute_wati_summary")
-    wati_last_message_at = fields.Datetime(string="آخر نشاط WhatsApp", compute="_compute_wati_summary")
-    wati_last_status = fields.Char(string="آخر حالة WhatsApp", compute="_compute_wati_summary")
+    wati_conversation_count = fields.Integer(string="Number of conversations WhatsApp", compute="_compute_wati_summary")
+    wati_message_count = fields.Integer(string="Messages WhatsApp", compute="_compute_wati_summary")
+    wati_last_message = fields.Text(string="Last message WhatsApp", compute="_compute_wati_summary")
+    wati_last_message_at = fields.Datetime(string="Latest activity WhatsApp", compute="_compute_wati_summary")
+    wati_last_status = fields.Char(string="Latest case WhatsApp", compute="_compute_wati_summary")
 
     def _wati_partner_phones(self):
         self.ensure_one()
@@ -76,7 +76,7 @@ class SaleOrderWati(models.Model):
         if not conversation:
             phones = self._wati_partner_phones()
             if not phones:
-                raise UserError(_("أضف رقم جوال أو هاتف للعميل قبل فتح WhatsApp."))
+                raise UserError(_("Add the customer’s mobile number or phone before unlocking WhatsApp."))
             phone = phones[0]
             display_name = self.partner_id.display_name or self.name or phone
             conversation = Conversation.create({"name": display_name, "wa_id": phone, "partner_id": self.partner_id.id, "sender_name": display_name, "status": "local", "last_message_at": fields.Datetime.now()})
@@ -117,7 +117,7 @@ class SaleOrderWati(models.Model):
     def action_open_wati_conversations(self):
         self.ensure_one()
         conversation = self._wati_get_or_create_conversation()
-        return {"type": "ir.actions.act_window", "name": _("محادثات WhatsApp"), "res_model": "wati.conversation", "view_mode": "list,form", "domain": [("id", "in", (self.wati_conversation_ids | conversation).ids)], "context": {"create": False}}
+        return {"type": "ir.actions.act_window", "name": _("Conversations WhatsApp"), "res_model": "wati.conversation", "view_mode": "list,form", "domain": [("id", "in", (self.wati_conversation_ids | conversation).ids)], "context": {"create": False}}
 
 
 class WatiAutomationRuleSalePresets(models.Model):
@@ -127,11 +127,11 @@ class WatiAutomationRuleSalePresets(models.Model):
     def _wati_preset_definitions(self):
         definitions = dict(super()._wati_preset_definitions())
         definitions["sale_confirmed"] = {
-            "label": _("المبيعات · عند تأكيد الطلب"),
+            "label": _("Sales · When the order is confirmed"),
             "model": "sale.order",
             "field": "state",
             "target": "sale",
             "recipient_path": "partner_id.phone",
-            "name": _("المبيعات · إرسال عند تأكيد الطلب"),
+            "name": _("Sales · Send when order confirmed"),
         }
         return definitions

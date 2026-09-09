@@ -6,10 +6,10 @@
         <field name="inherit_id" ref="wati_connector.res_config_settings_view_form_wati"/>
         <field name="arch" type="xml">
             <xpath expr="//div[@id='wati_smart_button_settings_slot']" position="replace">
-                <block title="زر WhatsApp الذكي وسجل العميل" name="wati_smart_button_settings">
+                <block title="button WhatsApp Smart and customer history" name="wati_smart_button_settings">
                     <div class="wati-settings-note alert alert-info mb16" role="status">
-                        <strong>تحكم من مكان واحد.</strong>
-                        أضف زر WhatsApp وسجل العميل إلى الشاشات التي تختارها داخل Odoo بدون تعديل التطبيقات الأصلية.
+                        <strong>Control from one place.</strong>
+                        Add button WhatsApp Register the client to the screens of your choice within Odoo Without modifying the original applications.
                     </div>
 
                     <div class="row g-3 wati-settings-card-grid">
@@ -20,20 +20,20 @@
                                         <i class="fa fa-whatsapp" title="WhatsApp"/>
                                     </div>
                                     <div class="min-w-0">
-                                        <h4 class="mb-1">أماكن ظهور زر WhatsApp</h4>
-                                        <p class="text-muted mb-0">حدد الشاشات التي يظهر فيها زر الإرسال وسجل WhatsApp.</p>
+                                        <h4 class="mb-1">Where a button appears WhatsApp</h4>
+                                        <p class="text-muted mb-0">Select the screens where the submit button appears and record WhatsApp.</p>
                                     </div>
                                 </div>
 
                                 <ul class="wati-settings-list text-muted mb-3">
-                                    <li>اختر التطبيق والموديل المطلوب.</li>
-                                    <li>حدد حقل رقم الجوال أو استخدم الاكتشاف الذكي.</li>
-                                    <li>يمكن تفعيل أكثر من شاشة في نفس الوقت.</li>
+                                    <li>Select the desired application and model.</li>
+                                    <li>Select the mobile number field or use smart discovery.</li>
+                                    <li>More than one screen can be activated at the same time.</li>
                                 </ul>
 
                                 <button name="action_wati_manage_smart_buttons"
                                         type="object"
-                                        string="إدارة أماكن زر WhatsApp"
+                                        string="Manage button places WhatsApp"
                                         class="btn btn-primary"
                                         icon="fa-whatsapp"/>
                             </div>
@@ -47,14 +47,14 @@
                                     </div>
                                     <div class="min-w-0">
                                         <h4 class="mb-1">Customer WhatsApp Timeline</h4>
-                                        <p class="text-muted mb-0">اعرض تاريخ WhatsApp من نفس شاشة العمل الحالية.</p>
+                                        <p class="text-muted mb-0">Show date WhatsApp From the same current working screen.</p>
                                     </div>
                                 </div>
 
                                 <ul class="wati-settings-list text-muted mb-0">
-                                    <li>يعرض الرسائل الواردة والصادرة وحالتها.</li>
-                                    <li>يعتمد على العميل المرتبط أو رقم الجوال.</li>
-                                    <li>بطاقة العميل تحتفظ بالـTimeline الكامل تلقائيًا.</li>
+                                    <li>Displays incoming and outgoing messages and their status.</li>
+                                    <li>Depends on the associated customer or mobile number.</li>
+                                    <li>The customer’s card is keptTimeline Automatically complete.</li>
                                 </ul>
                             </div>
                         </div>

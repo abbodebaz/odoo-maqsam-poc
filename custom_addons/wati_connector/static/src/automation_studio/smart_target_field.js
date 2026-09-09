@@ -15,7 +15,7 @@ export class WatiSmartTargetField extends Component {
         return this.props.record.data.smart_target_metadata || {
             mode: "input",
             input_type: "text",
-            placeholder: this.props.placeholder || "اكتب القيمة المطلوبة",
+            placeholder: this.props.placeholder || "Type the required value",
             options: [],
         };
     }
@@ -34,7 +34,7 @@ export class WatiSmartTargetField extends Component {
     }
 
     get placeholder() {
-        return this.metadata.placeholder || this.props.placeholder || "اكتب القيمة المطلوبة";
+        return this.metadata.placeholder || this.props.placeholder || "Type the required value";
     }
 
     async onValueChange(ev) {

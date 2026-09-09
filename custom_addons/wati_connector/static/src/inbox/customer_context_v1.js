@@ -56,9 +56,9 @@
         const actionBar = document.createElement("div");
         actionBar.className = "wati-context-actions";
         const buttons = {
-            customer: makeAction("👤", "العميل"),
-            tickets: makeAction("🎫", "التذاكر", true),
-            crm: makeAction("💼", "الفرص", true),
+            customer: makeAction("👤", "Customer"),
+            tickets: makeAction("🎫", "Tickets", true),
+            crm: makeAction("💼", "Opportunities", true),
         };
         Object.values(buttons).forEach((button) => actionBar.appendChild(button));
         actions.appendChild(actionBar);
@@ -69,13 +69,13 @@
         drawer.className = "wati-context-drawer";
         drawer.innerHTML = `
             <div class="wati-context-head">
-                <div><strong id="watiCtxTitle">بيانات العميل</strong><span id="watiCtxSubtitle">WhatsApp × Odoo</span></div>
-                <button type="button" class="wati-context-close" aria-label="إغلاق">×</button>
+                <div><strong id="watiCtxTitle">Customer data</strong><span id="watiCtxSubtitle">WhatsApp × Odoo</span></div>
+                <button type="button" class="wati-context-close" aria-label="Close">×</button>
             </div>
             <div class="wati-context-tabs">
-                <button type="button" class="wati-context-tab active" data-tab="customer">👤 العميل</button>
-                <button type="button" class="wati-context-tab" data-tab="tickets">🎫 التذاكر</button>
-                <button type="button" class="wati-context-tab" data-tab="crm">💼 الفرص</button>
+                <button type="button" class="wati-context-tab active" data-tab="customer">👤 Customer</button>
+                <button type="button" class="wati-context-tab" data-tab="tickets">🎫 Tickets</button>
+                <button type="button" class="wati-context-tab" data-tab="crm">💼 Opportunities</button>
             </div>
             <div id="watiCtxBody" class="wati-context-body"></div>
         `;
@@ -112,7 +112,7 @@
                 body: payload.toString(),
             });
             const data = await response.json().catch(() => ({}));
-            if (!response.ok || !data.ok) throw new Error(data.message || `تعذر تنفيذ الطلب (${response.status})`);
+            if (!response.ok || !data.ok) throw new Error(data.message || `The request could not be executed (${response.status})`);
             return data;
         }
 
@@ -124,7 +124,7 @@
                 return;
             }
             loading = true;
-            body.innerHTML = '<div class="wati-context-loading">جاري تحميل بيانات العميل...</div>';
+            body.innerHTML = '<div class="wati-context-loading">Loading customer data...</div>';
             try {
                 const response = await fetch(`/wati/inbox/customer-context?conversation_id=${encodeURIComponent(id)}`, {
                     credentials: "same-origin",
@@ -132,12 +132,12 @@
                     cache: "no-store",
                 });
                 const data = await response.json().catch(() => ({}));
-                if (!response.ok || !data.ok) throw new Error(data.message || "تعذر تحميل البيانات");
+                if (!response.ok || !data.ok) throw new Error(data.message || "Unable to load data");
                 currentData = data;
                 updateCounts();
                 render();
             } catch (error) {
-                body.innerHTML = '<div class="wati-ctx-empty">تعذر تحميل بيانات العميل.</div>';
+                body.innerHTML = '<div class="wati-ctx-empty">Unable to load customer data.</div>';
                 notify(error.message, true);
             } finally {
                 loading = false;
@@ -171,7 +171,7 @@
                 title.textContent = currentData.partner.name;
                 const meta = document.createElement("div");
                 meta.className = "wati-ctx-muted";
-                meta.textContent = [currentData.partner.phone, currentData.partner.email].filter(Boolean).join(" · ") || "عميل Odoo مربوط بهذه المحادثة";
+                meta.textContent = [currentData.partner.phone, currentData.partner.email].filter(Boolean).join(" · ") || "Client Odoo Related to this conversation";
                 const row = document.createElement("div");
                 row.className = "wati-ctx-row";
                 const link = document.createElement("a");
@@ -179,14 +179,14 @@
                 link.href = currentData.partner.url || "#";
                 link.target = "_blank";
                 link.rel = "noopener";
-                link.textContent = "فتح بطاقة العميل ↗";
+                link.textContent = "Open customer card ↗";
                 row.appendChild(link);
                 card.append(title, meta, row);
                 body.appendChild(card);
 
                 const summary = document.createElement("div");
                 summary.className = "wati-ctx-card";
-                summary.innerHTML = `<div class="wati-ctx-section-title"><span>ملخص العلاقة</span></div><div class="wati-ctx-muted">🎫 ${currentData.tickets?.length || 0} تذكرة · 💼 ${currentData.opportunities?.length || 0} فرصة بيع</div>`;
+                summary.innerHTML = `<div class="wati-ctx-section-title"><span>Relationship summary</span></div><div class="wati-ctx-muted">🎫 ${currentData.tickets?.length || 0} Ticket · 💼 ${currentData.opportunities?.length || 0} Selling opportunity</div>`;
                 body.appendChild(summary);
                 return;
             }
@@ -195,13 +195,13 @@
             empty.className = "wati-ctx-card";
             const title = document.createElement("div");
             title.className = "wati-ctx-card-title";
-            title.textContent = "هذا الرقم غير مربوط بعميل Odoo";
+            title.textContent = "This number is not linked to a customer Odoo";
             const meta = document.createElement("div");
             meta.className = "wati-ctx-muted";
-            meta.textContent = "أنشئ العميل الآن وسيتم أخذ الاسم ورقم WhatsApp تلقائيًا وربط المحادثة به.";
+            meta.textContent = "Create the customer now and the name and number will be taken WhatsApp Automatically and link the conversation to it.";
             const form = document.createElement("div");
             form.className = "wati-ctx-form open";
-            form.innerHTML = `<div class="wati-ctx-field"><label>اسم العميل</label><input id="watiCtxCustomerName" type="text" /></div><button type="button" class="wati-ctx-button primary" id="watiCtxCreateCustomer">إنشاء وربط العميل</button>`;
+            form.innerHTML = `<div class="wati-ctx-field"><label>Customer name</label><input id="watiCtxCustomerName" type="text" /></div><button type="button" class="wati-ctx-button primary" id="watiCtxCreateCustomer">Create and connect the client</button>`;
             const nameInput = form.querySelector("#watiCtxCustomerName");
             nameInput.value = currentData.conversation?.name || currentData.conversation?.wa_id || "";
             form.querySelector("#watiCtxCreateCustomer").addEventListener("click", async (event) => {
@@ -209,7 +209,7 @@
                 button.disabled = true;
                 try {
                     const data = await post("/wati/inbox/customer/create", { conversation_id: String(selectedId()), name: nameInput.value.trim() });
-                    notify(data.message || "تم إنشاء العميل ✅");
+                    notify(data.message || "The client has been created ✅");
                     currentData = null;
                     await loadContext(true);
                     document.getElementById("refreshButton")?.click();
@@ -224,26 +224,26 @@
             body.replaceChildren();
             const heading = document.createElement("div");
             heading.className = "wati-ctx-section-title";
-            heading.innerHTML = '<span>تذاكر خدمة العملاء</span><button type="button" class="wati-ctx-button soft">＋ تذكرة جديدة</button>';
+            heading.innerHTML = '<span>Customer service tickets</span><button type="button" class="wati-ctx-button soft">＋ New ticket</button>';
             body.appendChild(heading);
 
             const form = document.createElement("div");
             form.className = "wati-ctx-form";
             form.innerHTML = `
-                <div class="wati-ctx-field"><label>الموضوع</label><input id="watiCtxTicketSubject" type="text" /></div>
-                <div class="wati-ctx-field"><label>الأولوية</label><select id="watiCtxTicketPriority"><option value="0">عادية</option><option value="1">مهمة</option><option value="2">عاجلة</option></select></div>
-                <div class="wati-ctx-field"><label>التفاصيل</label><textarea id="watiCtxTicketDescription"></textarea></div>
-                <button type="button" class="wati-ctx-button primary" id="watiCtxCreateTicket">إنشاء التذكرة</button>`;
+                <div class="wati-ctx-field"><label>Topic</label><input id="watiCtxTicketSubject" type="text" /></div>
+                <div class="wati-ctx-field"><label>Priority</label><select id="watiCtxTicketPriority"><option value="0">Normal</option><option value="1">Mission</option><option value="2">Urgent</option></select></div>
+                <div class="wati-ctx-field"><label>Details</label><textarea id="watiCtxTicketDescription"></textarea></div>
+                <button type="button" class="wati-ctx-button primary" id="watiCtxCreateTicket">Create the ticket</button>`;
             body.appendChild(form);
             heading.querySelector("button").addEventListener("click", () => {
-                if (!currentData.partner) { activeTab = "customer"; render(); notify("أنشئ العميل أولًا ثم أضف التذكرة.", true); return; }
+                if (!currentData.partner) { activeTab = "customer"; render(); notify("Create the customer first and then add the ticket.", true); return; }
                 form.classList.toggle("open");
                 if (form.classList.contains("open")) form.querySelector("input")?.focus();
             });
             form.querySelector("#watiCtxCreateTicket").addEventListener("click", async (event) => {
                 const button = event.currentTarget;
                 const subject = form.querySelector("#watiCtxTicketSubject").value.trim();
-                if (!subject) { notify("اكتب موضوع التذكرة.", true); return; }
+                if (!subject) { notify("Type the subject of the ticket.", true); return; }
                 button.disabled = true;
                 try {
                     const data = await post("/wati/inbox/ticket/create", {
@@ -252,7 +252,7 @@
                         priority: form.querySelector("#watiCtxTicketPriority").value,
                         description: form.querySelector("#watiCtxTicketDescription").value.trim(),
                     });
-                    notify(data.message || "تم إنشاء التذكرة ✅");
+                    notify(data.message || "The ticket has been created ✅");
                     currentData = null;
                     await loadContext(true);
                 } catch (error) { notify(error.message, true); }
@@ -265,7 +265,7 @@
             if (!tickets.length) {
                 const empty = document.createElement("div");
                 empty.className = "wati-ctx-empty";
-                empty.textContent = "لا توجد تذاكر مرتبطة بهذه المحادثة حتى الآن.";
+                empty.textContent = "There are no tickets associated with this conversation yet.";
                 list.appendChild(empty);
             } else {
                 tickets.forEach((ticket) => {
@@ -290,26 +290,26 @@
             body.replaceChildren();
             const heading = document.createElement("div");
             heading.className = "wati-ctx-section-title";
-            heading.innerHTML = '<span>فرص CRM</span><button type="button" class="wati-ctx-button soft">＋ فرصة جديدة</button>';
+            heading.innerHTML = '<span>Opportunities CRM</span><button type="button" class="wati-ctx-button soft">＋ New opportunity</button>';
             body.appendChild(heading);
 
             const form = document.createElement("div");
             form.className = "wati-ctx-form";
             form.innerHTML = `
-                <div class="wati-ctx-field"><label>اسم الفرصة</label><input id="watiCtxOpportunityName" type="text" /></div>
-                <div class="wati-ctx-field"><label>القيمة المتوقعة (اختياري)</label><input id="watiCtxOpportunityRevenue" type="number" min="0" step="1" /></div>
-                <div class="wati-ctx-field"><label>ملاحظة</label><textarea id="watiCtxOpportunityDescription"></textarea></div>
-                <button type="button" class="wati-ctx-button primary" id="watiCtxCreateOpportunity">إنشاء فرصة البيع</button>`;
+                <div class="wati-ctx-field"><label>Opportunity name</label><input id="watiCtxOpportunityName" type="text" /></div>
+                <div class="wati-ctx-field"><label>Expected value (Optional)</label><input id="watiCtxOpportunityRevenue" type="number" min="0" step="1" /></div>
+                <div class="wati-ctx-field"><label>Note</label><textarea id="watiCtxOpportunityDescription"></textarea></div>
+                <button type="button" class="wati-ctx-button primary" id="watiCtxCreateOpportunity">Create a sales opportunity</button>`;
             body.appendChild(form);
             heading.querySelector("button").addEventListener("click", () => {
-                if (!currentData.partner) { activeTab = "customer"; render(); notify("أنشئ العميل أولًا ثم أضف فرصة البيع.", true); return; }
+                if (!currentData.partner) { activeTab = "customer"; render(); notify("Create the lead first and then add the sales opportunity.", true); return; }
                 form.classList.toggle("open");
                 if (form.classList.contains("open")) form.querySelector("input")?.focus();
             });
             form.querySelector("#watiCtxCreateOpportunity").addEventListener("click", async (event) => {
                 const button = event.currentTarget;
                 const name = form.querySelector("#watiCtxOpportunityName").value.trim();
-                if (!name) { notify("اكتب اسم فرصة البيع.", true); return; }
+                if (!name) { notify("Type the name of the sales opportunity.", true); return; }
                 button.disabled = true;
                 try {
                     const data = await post("/wati/inbox/opportunity/create", {
@@ -318,7 +318,7 @@
                         expected_revenue: form.querySelector("#watiCtxOpportunityRevenue").value || "0",
                         description: form.querySelector("#watiCtxOpportunityDescription").value.trim(),
                     });
-                    notify(data.message || "تم إنشاء فرصة البيع ✅");
+                    notify(data.message || "A sales opportunity has been created ✅");
                     currentData = null;
                     await loadContext(true);
                 } catch (error) { notify(error.message, true); }
@@ -331,7 +331,7 @@
             if (!opportunities.length) {
                 const empty = document.createElement("div");
                 empty.className = "wati-ctx-empty";
-                empty.textContent = currentData.partner ? "لا توجد فرص بيع لهذا العميل حتى الآن." : "اربط المحادثة بعميل Odoo أولًا.";
+                empty.textContent = currentData.partner ? "There are no sales opportunities for this customer yet." : "Link the conversation to a customer Odoo First.";
                 list.appendChild(empty);
             } else {
                 opportunities.forEach((lead) => {
@@ -345,7 +345,7 @@
                     const meta = document.createElement("div");
                     meta.className = "wati-ctx-item-meta";
                     const parts = [lead.stage_name, lead.user_name];
-                    if (Number(lead.expected_revenue || 0) > 0) parts.push(`${Number(lead.expected_revenue).toLocaleString("ar-SA")} ر.س`);
+                    if (Number(lead.expected_revenue || 0) > 0) parts.push(`${Number(lead.expected_revenue).toLocaleString("ar-SA")} R.S`);
                     meta.textContent = parts.filter(Boolean).join(" · ");
                     item.append(title, meta);
                     list.appendChild(item);
@@ -356,7 +356,7 @@
 
         function openDrawer(tab) {
             const id = selectedId();
-            if (!id) { notify("اختر محادثة أولًا.", true); return; }
+            if (!id) { notify("Choose a conversation first.", true); return; }
             activeTab = tab;
             backdrop.classList.add("open");
             drawer.classList.add("open");

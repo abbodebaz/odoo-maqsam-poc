@@ -40,8 +40,8 @@
             });
 
             if (conversationCount && rowsById.size) {
-                const label = activeFilter === "all" ? "محادثة" : "مطابقة";
-                conversationCount.textContent = `${visible} ${label} من ${rowsById.size}`;
+                const label = activeFilter === "all" ? "Conversation" : "Matching";
+                conversationCount.textContent = `${visible} ${label} Who ${rowsById.size}`;
             }
             setActiveButton();
         }

@@ -5,15 +5,15 @@ from ..services.config import WatiConfig
 
 
 _EVENT_OPERATOR_LABELS = {
-    "eq": "يساوي",
-    "ne": "لا يساوي",
-    "contains": "يحتوي على",
-    "gt": "أكبر من",
-    "gte": "أكبر من أو يساوي",
-    "lt": "أقل من",
-    "lte": "أقل من أو يساوي",
-    "is_set": "تصبح له قيمة",
-    "is_not_set": "يصبح فارغًا",
+    "eq": "equals",
+    "ne": "Not equal",
+    "contains": "Contains",
+    "gt": "Greater than",
+    "gte": "Greater than or equal to",
+    "lt": "less than",
+    "lte": "Less than or equal to",
+    "is_set": "It becomes valuable",
+    "is_not_set": "becomes empty",
 }
 
 
@@ -25,28 +25,28 @@ class WatiAutomationRuleBuilder(models.Model):
     # Helpdesk, Project, or any custom module name.
     app_menu_id = fields.Many2one(
         "ir.ui.menu",
-        string="التطبيق",
+        string="Application",
         ondelete="set null",
         copy=False,
-        help="التطبيق الظاهر في واجهة Odoo الذي يحتوي السجل المراد مراقبته.",
+        help="The application shown in the interface Odoo Which contains the record to be monitored.",
     )
     available_app_menu_ids = fields.Many2many(
         "ir.ui.menu",
         compute="_compute_available_app_menu_ids",
-        string="التطبيقات المتاحة",
+        string="Available applications",
     )
     available_model_ids = fields.Many2many(
         "ir.model",
         compute="_compute_available_model_ids",
-        string="السجلات المتاحة داخل التطبيق",
+        string="Records available within the app",
     )
     event_type = fields.Selection(
         [
-            ("field_condition", "عندما يتغير حقل ويطابق شرطًا"),
-            ("on_create", "عند إنشاء سجل جديد"),
-            ("on_update", "عند تحديث السجل"),
+            ("field_condition", "When a field changes and matches a condition"),
+            ("on_create", "When creating a new record"),
+            ("on_update", "When updating the record"),
         ],
-        string="نوع الحدث",
+        string="Event type",
         default="field_condition",
         copy=True,
     )
@@ -55,17 +55,17 @@ class WatiAutomationRuleBuilder(models.Model):
     # relaxes the original required=True field while preserving its domain.
     trigger_field_id = fields.Many2one(
         "ir.model.fields",
-        string="الحقل المراقَب",
+        string="Monitored field",
         required=False,
         ondelete="cascade",
         domain="[('model_id', '=', model_id), ('store', '=', True)]",
-        help="يُستخدم فقط عندما يكون نوع الحدث مبنيًا على تغير حقل.",
+        help="Used only when the event type is based on a field change.",
     )
 
     event_summary = fields.Char(
-        string="ملخص الحدث",
+        string="Event summary",
         compute="_compute_event_summary",
-        help="وصف مبسط للحدث الذي سيبدأ الأتمتة.",
+        help="A simplified description of the event that will start the automation.",
     )
 
     @api.depends_context("uid")
@@ -126,26 +126,26 @@ class WatiAutomationRuleBuilder(models.Model):
             app_label = rule.app_menu_id.name or ""
             if not rule.model_id:
                 rule.event_summary = (
-                    _("اختر ما تريد مراقبته داخل %s.", app_label)
+                    _("Choose what you want to monitor inside %s.", app_label)
                     if app_label
-                    else _("اختر التطبيق أولًا.")
+                    else _("Choose the application first.")
                 )
                 continue
 
-            model_label = rule.model_id.name or rule.model_id.model or _("السجل")
-            scope = _(" داخل %s", app_label) if app_label else ""
+            model_label = rule.model_id.name or rule.model_id.model or _("Record")
+            scope = _(" inside %s", app_label) if app_label else ""
             event_type = rule.event_type or "field_condition"
 
             if event_type == "on_create":
-                rule.event_summary = _("سيبدأ الإرسال عند إنشاء %(model)s جديد%(scope)s.", model=model_label, scope=scope)
+                rule.event_summary = _("Transmission will start upon creation %(model)s New%(scope)s.", model=model_label, scope=scope)
                 continue
             if event_type == "on_update":
-                rule.event_summary = _("سيبدأ الإرسال عند تحديث %(model)s%(scope)s.", model=model_label, scope=scope)
+                rule.event_summary = _("Transmission will start when updated %(model)s%(scope)s.", model=model_label, scope=scope)
                 continue
 
             if not rule.trigger_field_id:
                 rule.event_summary = _(
-                    "سنراقب %(model)s%(scope)s. اختر الحقل الذي يبدأ الحدث.",
+                    "We will watch %(model)s%(scope)s. Select the field that starts the event.",
                     model=model_label,
                     scope=scope,
                 )
@@ -154,7 +154,7 @@ class WatiAutomationRuleBuilder(models.Model):
             field_label = (
                 rule.trigger_field_id.field_description
                 or rule.trigger_field_id.name
-                or _("الحقل")
+                or _("field")
             )
             operator = _EVENT_OPERATOR_LABELS.get(
                 rule.condition_operator,
@@ -164,7 +164,7 @@ class WatiAutomationRuleBuilder(models.Model):
 
             if rule.condition_operator in ("is_set", "is_not_set"):
                 rule.event_summary = _(
-                    "سيبدأ الإرسال عندما %(field)s %(operator)s في %(model)s%(scope)s.",
+                    "Transmission will start when %(field)s %(operator)s In %(model)s%(scope)s.",
                     field=field_label,
                     operator=operator,
                     model=model_label,
@@ -172,7 +172,7 @@ class WatiAutomationRuleBuilder(models.Model):
                 )
             elif target:
                 rule.event_summary = _(
-                    "سيبدأ الإرسال عندما %(field)s %(operator)s «%(target)s» في %(model)s%(scope)s.",
+                    "Transmission will start when %(field)s %(operator)s «%(target)s» In %(model)s%(scope)s.",
                     field=field_label,
                     operator=operator,
                     target=target,
@@ -181,7 +181,7 @@ class WatiAutomationRuleBuilder(models.Model):
                 )
             else:
                 rule.event_summary = _(
-                    "سنراقب %(field)s في %(model)s%(scope)s. أكمل الشرط والقيمة المطلوبة.",
+                    "We will watch %(field)s In %(model)s%(scope)s. Complete the required condition and value.",
                     field=field_label,
                     model=model_label,
                     scope=scope,
@@ -307,20 +307,20 @@ class WatiAutomationRuleBuilder(models.Model):
         api_ready = WatiConfig(self.env).is_api_configured
         for rule in self:
             app_label = rule.app_menu_id.name or ""
-            model_label = rule.model_id.name or "السجل"
+            model_label = rule.model_id.name or "Record"
             event_type = rule.event_type or "field_condition"
             target = (rule.target_value or "").strip()
 
             if event_type == "on_create":
-                condition_text = f"إنشاء {model_label} جديد"
+                condition_text = f"Create {model_label} New"
                 trigger_complete = bool(rule.model_id)
                 condition_complete = True
             elif event_type == "on_update":
-                condition_text = f"تحديث {model_label}"
+                condition_text = f"Refresh {model_label}"
                 trigger_complete = bool(rule.model_id)
                 condition_complete = True
             else:
-                field_label = rule.trigger_field_id.field_description or rule.trigger_field_id.name or "الحقل"
+                field_label = rule.trigger_field_id.field_description or rule.trigger_field_id.name or "field"
                 operator = _EVENT_OPERATOR_LABELS.get(rule.condition_operator, rule.condition_operator or "")
                 if rule.condition_operator in ("is_set", "is_not_set"):
                     condition_text = f"{field_label} {operator}"
@@ -338,29 +338,29 @@ class WatiAutomationRuleBuilder(models.Model):
             elif rule.recipient_path:
                 recipient = rule.recipient_path
             else:
-                recipient = "رقم العميل تلقائيًا"
+                recipient = "Customer number automatically"
 
-            template = rule.template_name or "قالب لم يُحدد بعد"
-            once = " · مرة واحدة لكل سجل" if rule.once_per_record else ""
-            app_scope = f" داخل {app_label}" if app_label else ""
+            template = rule.template_name or "Template not yet defined"
+            once = " · Once per record" if rule.once_per_record else ""
+            app_scope = f" inside {app_label}" if app_label else ""
             rule.human_summary = (
-                f"عند {condition_text}{app_scope} ← أرسل «{template}» إلى {recipient}{once}"
+                f"At {condition_text}{app_scope} ← Send «{template}» To {recipient}{once}"
             )
 
             errors = []
             warnings = []
             if not rule.name:
-                errors.append("اسم القاعدة")
+                errors.append("Rule name")
             if not rule.model_id:
-                errors.append("نوع السجل داخل التطبيق")
+                errors.append("Log type within the application")
             if event_type == "field_condition" and not rule.trigger_field_id:
-                errors.append("الحقل المراقَب")
+                errors.append("Monitored field")
             if event_type == "field_condition" and not condition_complete:
-                errors.append("القيمة المطلوبة")
+                errors.append("Required value")
             if not rule.template_name:
-                errors.append("قالب WATI")
+                errors.append("Template WATI")
             if not api_ready:
-                errors.append("اتصال WATI API")
+                errors.append("Contact WATI API")
 
             unmapped = []
             for line in rule.parameter_ids:
@@ -377,25 +377,25 @@ class WatiAutomationRuleBuilder(models.Model):
                 if not mapped:
                     unmapped.append(line.param_name)
             if unmapped:
-                errors.append("متغيرات غير مربوطة: " + ", ".join(unmapped[:6]))
+                errors.append("Unbound variables: " + ", ".join(unmapped[:6]))
             if rule.template_name and not rule.parameter_ids:
-                warnings.append("لم يتم جلب متغيرات القالب بعد؛ إذا كان القالب يحتوي متغيرات اضغط جلب المتغيرات.")
+                warnings.append("Template variables have not been fetched yet; If the template contains variables, click Get Variables.")
             if not rule.recipient_field_id and not rule.recipient_path:
-                warnings.append("سيبحث النظام تلقائيًا عن mobile / phone / رقم العميل المرتبط.")
+                warnings.append("The system will automatically search for mobile / phone / Associated customer number.")
 
             rule.readiness_state = "incomplete" if errors else ("warning" if warnings else "ready")
             checklist = [
-                "✅ السجل والحدث محددان" if trigger_complete else "❌ حدد السجل والحدث",
-                "✅ شرط الحدث مكتمل" if condition_complete else "❌ أكمل شرط الحدث",
-                "✅ قالب WATI محدد" if rule.template_name else "❌ اختر قالب WATI",
-                "✅ اتصال WATI جاهز" if api_ready else "❌ إعدادات WATI API غير مكتملة",
+                "✅ The record and event are selected" if trigger_complete else "❌ Select the log and event",
+                "✅ The event condition is complete" if condition_complete else "❌ Complete the event condition",
+                "✅ Template WATI Specific" if rule.template_name else "❌ Choose a template WATI",
+                "✅ Contact WATI Ready" if api_ready else "❌ Settings WATI API Incomplete",
             ]
             if unmapped:
-                checklist.append("❌ اربط: " + ", ".join(unmapped[:6]))
+                checklist.append("❌ Fasten: " + ", ".join(unmapped[:6]))
             elif rule.parameter_ids:
-                checklist.append(f"✅ {len(rule.parameter_ids)} متغيرات مربوطة")
+                checklist.append(f"✅ {len(rule.parameter_ids)} Bound variables")
             elif rule.template_name:
-                checklist.append("⚠️ لا توجد متغيرات محملة للقالب")
+                checklist.append("⚠️ There are no variables loaded for the template")
             checklist.extend("⚠️ " + item for item in warnings)
             rule.readiness_message = "\n".join(checklist)
 
@@ -407,19 +407,19 @@ class WatiAutomationRuleBuilder(models.Model):
 
         missing = []
         if not self.name:
-            missing.append("اسم الأتمتة")
+            missing.append("Automation name")
         if not self.model_id:
-            missing.append("ما تريد مراقبته داخل التطبيق")
+            missing.append("What you want to monitor within the app")
 
         event_type = self.event_type or "field_condition"
         if event_type == "field_condition":
             if not self.trigger_field_id:
-                missing.append("الحقل المراقَب")
+                missing.append("Monitored field")
             if self.condition_operator not in ("is_set", "is_not_set") and not (self.target_value or "").strip():
-                missing.append("القيمة المطلوبة")
+                missing.append("Required value")
 
         if missing:
-            raise UserError(_("أكمل الخطوة الأولى: %s", "، ".join(missing)))
+            raise UserError(_("Complete the first step: %s", ", ".join(missing)))
 
     def write(self, vals):
         result = super().write(vals)
@@ -446,8 +446,8 @@ class WatiAutomationRuleBuilder(models.Model):
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
-                "title": _("إعداد مخصص"),
-                "message": _("ابدأ باختيار التطبيق، ثم ما تريد مراقبته داخله، ثم نوع الحدث."),
+                "title": _("Custom setup"),
+                "message": _("Start by choosing the app, then what you want to monitor within it, then the event type."),
                 "type": "info",
                 "sticky": False,
                 "next": {"type": "ir.actions.client", "tag": "soft_reload"},

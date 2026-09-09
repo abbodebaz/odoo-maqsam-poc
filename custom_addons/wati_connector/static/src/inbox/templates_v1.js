@@ -18,34 +18,34 @@
     const trigger = document.createElement("button");
     trigger.type = "button";
     trigger.className = "wati-template-trigger";
-    trigger.innerHTML = '<span class="wati-template-trigger-icon">▤</span><span>قوالب</span>';
-    trigger.title = "إرسال قالب WhatsApp";
+    trigger.innerHTML = '<span class="wati-template-trigger-icon">▤</span><span>Templates</span>';
+    trigger.title = "Submit template WhatsApp";
     chatActions.prepend(trigger);
 
     const overlay = document.createElement("div");
     overlay.className = "wati-template-overlay is-hidden";
     overlay.innerHTML = `
-        <div class="wati-template-modal" role="dialog" aria-modal="true" aria-label="قوالب WhatsApp">
+        <div class="wati-template-modal" role="dialog" aria-modal="true" aria-label="Templates WhatsApp">
             <div class="wati-template-modal-head">
                 <div>
-                    <strong>قوالب WhatsApp</strong>
-                    <span>إرسال قالب معتمد من WATI</span>
+                    <strong>Templates WhatsApp</strong>
+                    <span>Submit an approved template from WATI</span>
                 </div>
-                <button type="button" class="wati-template-close" aria-label="إغلاق">×</button>
+                <button type="button" class="wati-template-close" aria-label="Close">×</button>
             </div>
             <div class="wati-template-layout">
                 <aside class="wati-template-sidebar">
                     <label class="wati-template-search">
                         <span>⌕</span>
-                        <input type="search" placeholder="ابحث عن قالب..." />
+                        <input type="search" placeholder="Find a template..." />
                     </label>
                     <div class="wati-template-list"></div>
                 </aside>
                 <section class="wati-template-detail">
                     <div class="wati-template-empty">
                         <div>▤</div>
-                        <strong>اختر قالبًا</strong>
-                        <span>اختر قالبًا من القائمة لمعاينته وإرساله.</span>
+                        <strong>Choose a template</strong>
+                        <span>Choose a template from the list to preview and submit.</span>
                     </div>
                     <div class="wati-template-selected is-hidden">
                         <div class="wati-template-selected-head">
@@ -58,7 +58,7 @@
                         <div class="wati-template-preview"></div>
                         <div class="wati-template-params"></div>
                         <div class="wati-template-actions">
-                            <button type="button" class="wati-template-send">إرسال القالب</button>
+                            <button type="button" class="wati-template-send">Send template</button>
                         </div>
                     </div>
                 </section>
@@ -123,7 +123,7 @@
         if (!rows.length) {
             const noData = document.createElement("div");
             noData.className = "wati-template-no-data";
-            noData.textContent = loaded ? "لا توجد قوالب مطابقة." : "جاري تحميل القوالب...";
+            noData.textContent = loaded ? "There are no matching templates." : "Templates are loading...";
             list.appendChild(noData);
             return;
         }
@@ -139,12 +139,12 @@
             title.textContent = item.name;
             const badge = document.createElement("span");
             badge.className = `wati-template-mini-status ${statusClass(item.status)}`;
-            badge.textContent = item.status || "جاهز";
+            badge.textContent = item.status || "Ready";
             top.append(title, badge);
 
             const body = document.createElement("span");
             body.className = "wati-template-card-body";
-            body.textContent = item.body || "قالب WhatsApp";
+            body.textContent = item.body || "Template WhatsApp";
 
             const meta = document.createElement("span");
             meta.className = "wati-template-card-meta";
@@ -158,7 +158,7 @@
 
     function replacePreview() {
         if (!selected) return;
-        let text = selected.body || selected.name || "قالب WhatsApp";
+        let text = selected.body || selected.name || "Template WhatsApp";
         const inputs = Array.from(paramsEl.querySelectorAll("input[data-param-name]"));
         inputs.forEach((input) => {
             const name = input.dataset.paramName || "";
@@ -175,8 +175,8 @@
         empty.classList.add("is-hidden");
         selectedBox.classList.remove("is-hidden");
         nameEl.textContent = item.name;
-        metaEl.textContent = [item.language, item.category].filter(Boolean).join(" · ") || "قالب WATI";
-        statusEl.textContent = item.status || "جاهز";
+        metaEl.textContent = [item.language, item.category].filter(Boolean).join(" · ") || "Template WATI";
+        statusEl.textContent = item.status || "Ready";
         statusEl.className = `wati-template-status ${statusClass(item.status)}`;
         paramsEl.replaceChildren();
 
@@ -184,24 +184,24 @@
         if (params.length) {
             const title = document.createElement("strong");
             title.className = "wati-template-params-title";
-            title.textContent = "متغيرات القالب";
+            title.textContent = "Template variables";
             paramsEl.appendChild(title);
             params.forEach((param, index) => {
                 const label = document.createElement("label");
                 label.className = "wati-template-param";
                 const caption = document.createElement("span");
-                caption.textContent = /^\d+$/.test(param) ? `المتغير ${param}` : param;
+                caption.textContent = /^\d+$/.test(param) ? `variable ${param}` : param;
                 const input = document.createElement("input");
                 input.type = "text";
                 input.dataset.paramName = param;
-                input.placeholder = `اكتب قيمة ${caption.textContent}`;
+                input.placeholder = `Type a value ${caption.textContent}`;
                 input.addEventListener("input", replacePreview);
                 label.append(caption, input);
                 paramsEl.appendChild(label);
             });
         }
         sendButton.disabled = !isSendable(item);
-        sendButton.textContent = isSendable(item) ? "إرسال القالب" : "القالب غير متاح للإرسال";
+        sendButton.textContent = isSendable(item) ? "Send template" : "The template is not available for submission";
         replacePreview();
     }
 
@@ -216,14 +216,14 @@
                 cache: "no-store",
             });
             const payload = await response.json().catch(() => ({}));
-            if (!response.ok || !payload.ok) throw new Error(payload.message || `فشل جلب القوالب (${response.status})`);
+            if (!response.ok || !payload.ok) throw new Error(payload.message || `Failed to fetch templates (${response.status})`);
             templates = Array.isArray(payload.templates) ? payload.templates : [];
             loaded = true;
             renderList();
         } catch (error) {
             console.error("WATI template load error", error);
-            showToast(error.message || "تعذر تحميل قوالب WATI.", true);
-            list.innerHTML = '<div class="wati-template-no-data">تعذر تحميل القوالب. أغلق النافذة وحاول مرة أخرى.</div>';
+            showToast(error.message || "Unable to load templates WATI.", true);
+            list.innerHTML = '<div class="wati-template-no-data">Unable to load templates. Close the window and try again.</div>';
         } finally {
             loading = false;
         }
@@ -232,11 +232,11 @@
     function openModal() {
         const conversationId = Number(localStorage.getItem("watiInboxSelected") || 0);
         if (!conversationId) {
-            showToast("اختر محادثة أولًا.", true);
+            showToast("Choose a conversation first.", true);
             return;
         }
         if (messageInput.disabled) {
-            showToast("استلم المحادثة أولًا قبل إرسال قالب.", true);
+            showToast("Receive the chat first before sending a template.", true);
             return;
         }
         overlay.classList.remove("is-hidden");
@@ -262,7 +262,7 @@
         const missing = paramInputs.find((input) => !String(input.value || "").trim());
         if (missing) {
             missing.focus();
-            showToast("عبّئ جميع متغيرات القالب أولًا.", true);
+            showToast("Fill in all template variables first.", true);
             return;
         }
         const values = paramInputs.map((input) => ({
@@ -281,7 +281,7 @@
 
         sending = true;
         sendButton.disabled = true;
-        sendButton.textContent = "جاري الإرسال...";
+        sendButton.textContent = "Sending...";
         try {
             const response = await fetch("/wati/inbox/send-template", {
                 method: "POST",
@@ -293,19 +293,19 @@
                 body: body.toString(),
             });
             const payload = await response.json().catch(() => ({}));
-            if (!response.ok || !payload.ok) throw new Error(payload.message || `فشل إرسال القالب (${response.status})`);
+            if (!response.ok || !payload.ok) throw new Error(payload.message || `Template submission failed (${response.status})`);
             closeModal();
-            showToast("تم إرسال القالب إلى WATI ✅");
+            showToast("The template has been sent to WATI ✅");
             const refresh = document.getElementById("refreshButton");
             window.setTimeout(() => refresh && refresh.click(), 900);
             window.setTimeout(() => refresh && refresh.click(), 2400);
         } catch (error) {
             console.error("WATI template send error", error);
-            showToast(error.message || "تعذر إرسال القالب.", true);
+            showToast(error.message || "The template could not be sent.", true);
         } finally {
             sending = false;
             sendButton.disabled = !isSendable(selected);
-            sendButton.textContent = isSendable(selected) ? "إرسال القالب" : "القالب غير متاح للإرسال";
+            sendButton.textContent = isSendable(selected) ? "Send template" : "The template is not available for submission";
         }
     }
 

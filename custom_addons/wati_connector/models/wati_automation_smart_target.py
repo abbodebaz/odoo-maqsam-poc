@@ -5,7 +5,7 @@ class WatiAutomationRuleSmartTarget(models.Model):
     _inherit = "wati.automation.rule"
 
     smart_target_metadata = fields.Json(
-        string="إعدادات القيمة الذكية",
+        string="Smart value settings",
         compute="_compute_smart_target_metadata",
         copy=False,
     )
@@ -15,7 +15,7 @@ class WatiAutomationRuleSmartTarget(models.Model):
             "mode": "input",
             "field_type": "char",
             "input_type": "text",
-            "placeholder": _("اكتب القيمة المطلوبة"),
+            "placeholder": _("Type the required value"),
             "options": [],
         }
         if not field_record or field_record.model not in self.env:
@@ -36,7 +36,7 @@ class WatiAutomationRuleSmartTarget(models.Model):
                 choices = []
             metadata.update({
                 "mode": "select",
-                "placeholder": _("اختر القيمة"),
+                "placeholder": _("Choose the value"),
                 "options": [
                     {"value": str(label), "label": str(label), "technical_value": str(value)}
                     for value, label in choices
@@ -47,10 +47,10 @@ class WatiAutomationRuleSmartTarget(models.Model):
         if field_type == "boolean":
             metadata.update({
                 "mode": "select",
-                "placeholder": _("اختر نعم أو لا"),
+                "placeholder": _("Choose yes or no"),
                 "options": [
-                    {"value": "True", "label": _("نعم")},
-                    {"value": "False", "label": _("لا")},
+                    {"value": "True", "label": _("Yes")},
+                    {"value": "False", "label": _("No")},
                 ],
             })
             return metadata
@@ -77,7 +77,7 @@ class WatiAutomationRuleSmartTarget(models.Model):
                     options = []
             metadata.update({
                 "mode": "suggest" if options else "input",
-                "placeholder": _("اختر أو اكتب القيمة"),
+                "placeholder": _("Choose or type the value"),
                 "options": options,
                 "relation": relation or "",
             })
@@ -86,27 +86,27 @@ class WatiAutomationRuleSmartTarget(models.Model):
         if field_type in ("integer", "float", "monetary"):
             metadata.update({
                 "input_type": "number",
-                "placeholder": _("اكتب رقمًا"),
+                "placeholder": _("Type a number"),
             })
         elif field_type == "date":
             metadata.update({
                 "input_type": "date",
-                "placeholder": _("اختر التاريخ"),
+                "placeholder": _("Choose the date"),
             })
         elif field_type == "datetime":
             metadata.update({
                 "input_type": "datetime-local",
-                "placeholder": _("اختر التاريخ والوقت"),
+                "placeholder": _("Choose date and time"),
             })
         elif field_type in ("char", "text", "html"):
             metadata.update({
                 "input_type": "text",
-                "placeholder": _("اكتب القيمة المطلوبة"),
+                "placeholder": _("Type the required value"),
             })
         else:
             metadata.update({
                 "input_type": "text",
-                "placeholder": _("اكتب القيمة المطلوبة"),
+                "placeholder": _("Type the required value"),
             })
         return metadata
 

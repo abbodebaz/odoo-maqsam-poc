@@ -115,7 +115,7 @@ class WatiWebhookEventMonitorFastBackfill(models.Model):
             if duplicate_of_id:
                 processing_state = "duplicate"
                 processing_note = (
-                    "نسخة Callback إضافية لنفس الحدث؛ تم الاحتفاظ بها للتدقيق فقط."
+                    "Copy Callback additional for the same event; They are kept for auditing only."
                 )
                 duplicate_count += 1
             else:

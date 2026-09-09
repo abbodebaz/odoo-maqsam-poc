@@ -83,13 +83,13 @@ class WatiFileSendController(http.Controller):
         conversation = request.env["wati.conversation"].browse(conversation_id).exists()
         if not conversation:
             return request.make_json_response(
-                {"ok": False, "message": "المحادثة غير موجودة."}, status=404
+                {"ok": False, "message": "The conversation does not exist."}, status=404
             )
 
         current_user = request.env.user
         if not conversation.assigned_user_id:
             return request.make_json_response(
-                {"ok": False, "message": "استلم المحادثة أولًا قبل إرسال مرفق."},
+                {"ok": False, "message": "Receive the chat first before sending an attachment."},
                 status=409,
             )
         if conversation.assigned_user_id != current_user:
@@ -97,22 +97,22 @@ class WatiFileSendController(http.Controller):
                 {
                     "ok": False,
                     "message": (
-                        f"المحادثة مستلمة بواسطة {conversation.assigned_user_id.name}. "
-                        "انقل المحادثة إليك أولًا."
+                        f"Conversation received by {conversation.assigned_user_id.name}. "
+                        "Move the conversation to you first."
                     ),
                 },
                 status=409,
             )
         if not conversation.wa_id:
             return request.make_json_response(
-                {"ok": False, "message": "لا يوجد رقم WhatsApp لهذه المحادثة."},
+                {"ok": False, "message": "There is no number WhatsApp for this conversation."},
                 status=400,
             )
 
         upload = request.httprequest.files.get("file")
         if not upload or not upload.filename:
             return request.make_json_response(
-                {"ok": False, "message": "اختر ملفًا أولًا."}, status=400
+                {"ok": False, "message": "Choose a file first."}, status=400
             )
 
         filename = _safe_filename(upload.filename)
@@ -123,8 +123,8 @@ class WatiFileSendController(http.Controller):
                 {
                     "ok": False,
                     "message": (
-                        "نوع الملف غير مدعوم في WhatsApp. استخدم صورة JPG/PNG، "
-                        "فيديو MP4/3GP، صوت مدعوم، أو مستند PDF/Office/TXT."
+                        "The file type is not supported in WhatsApp. Use a picture JPG/PNG, "
+                        "Video MP4/3GP, supported audio, or document PDF/Office/TXT."
                     ),
                 },
                 status=400,
@@ -133,7 +133,7 @@ class WatiFileSendController(http.Controller):
         size = _stream_size(upload)
         if size == 0:
             return request.make_json_response(
-                {"ok": False, "message": "الملف فارغ ولا يمكن إرساله."}, status=400
+                {"ok": False, "message": "The file is empty and cannot be sent."}, status=400
             )
         limit = _LIMITS[category]
         if size > limit:
@@ -141,7 +141,7 @@ class WatiFileSendController(http.Controller):
                 {
                     "ok": False,
                     "message": (
-                        "حجم الملف أكبر من الحد المسموح لهذا النوع "
+                        "The file size is larger than the limit for this type "
                         f"({limit // (1024 * 1024)} MB)."
                     ),
                 },
@@ -151,7 +151,7 @@ class WatiFileSendController(http.Controller):
         caption = (caption or "").strip()
         if len(caption) > 1024:
             return request.make_json_response(
-                {"ok": False, "message": "تعليق المرفق يجب ألا يتجاوز 1024 حرفًا."},
+                {"ok": False, "message": "The attached comment must not exceed 1024 A letter."},
                 status=400,
             )
 
@@ -164,7 +164,7 @@ class WatiFileSendController(http.Controller):
             return request.make_json_response(
                 {
                     "ok": True,
-                    "message": "تم تجاهل إعادة إرسال مكررة.",
+                    "message": "Duplicate resubmission was ignored.",
                     "duplicate_suppressed": True,
                 },
                 status=200,
@@ -182,14 +182,14 @@ class WatiFileSendController(http.Controller):
         except WatiConfigurationError:
             idem.release_durable(scope, key)
             return request.make_json_response(
-                {"ok": False, "message": "إعدادات WATI API غير مكتملة."}, status=503
+                {"ok": False, "message": "Settings WATI API Incomplete."}, status=503
             )
         except WatiRequestError as exc:
             idem.release_durable(scope, key)
             detail = (exc.response_text or str(exc) or "").strip()[:600]
             status = exc.status_code or 502
             return request.make_json_response(
-                {"ok": False, "message": f"WATI رفض قبول المرفق ({status}): {detail}"},
+                {"ok": False, "message": f"WATI Refuse to accept the attachment ({status}): {detail}"},
                 status=status,
             )
         except Exception:
@@ -200,7 +200,7 @@ class WatiFileSendController(http.Controller):
         return request.make_json_response(
             {
                 "ok": True,
-                "message": "تم قبول المرفق في WATI ✅",
+                "message": "The attachment has been accepted WATI ✅",
                 "filename": filename,
                 "category": category,
                 "accepted": True,

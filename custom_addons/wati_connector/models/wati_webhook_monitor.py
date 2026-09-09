@@ -8,15 +8,15 @@ from odoo import api, fields, models
 _logger = logging.getLogger(__name__)
 
 _EVENT_FAMILIES = [
-    ("received", "رسالة واردة"),
-    ("sent", "تم الإرسال"),
-    ("delivered", "تم التسليم"),
-    ("read", "تمت القراءة"),
-    ("replied", "رد العميل"),
-    ("failed", "فشل"),
-    ("contact", "تحديث جهة اتصال"),
-    ("conversation", "تحديث محادثة"),
-    ("other", "حدث آخر"),
+    ("received", "Incoming message"),
+    ("sent", "Sent"),
+    ("delivered", "Delivered"),
+    ("read", "Read done"),
+    ("replied", "Customer response"),
+    ("failed", "Failed"),
+    ("contact", "Update a contact"),
+    ("conversation", "Update conversation"),
+    ("other", "Another event"),
 ]
 
 _EVENT_LABELS = dict(_EVENT_FAMILIES)
@@ -101,20 +101,20 @@ def _processing_truth(family, has_message=False, has_conversation=False, has_aut
         if has_message or has_automation:
             return (
                 "processed",
-                "تم ربط حالة الرسالة ببيانات Odoo ومعالجتها بنجاح.",
+                "The message status is linked to data Odoo And treated successfully.",
             )
         return (
             "needs_attention",
-            "وصلت حالة من WATI لكن لم يتم العثور على الرسالة المرتبطة داخل Odoo.",
+            "A state has arrived WATI But the associated message was not found within Odoo.",
         )
     if has_message or has_conversation or has_automation:
         return (
             "processed",
-            "تم ربط الحدث ببيانات Odoo ومعالجته بنجاح.",
+            "The event is linked to data Odoo And treated successfully.",
         )
     return (
         "audit_only",
-        "تم حفظ الحدث كسجل تدقيق تقني، ولا يحتاج إجراءً إضافيًا.",
+        "The event is saved as a technical audit log and does not require additional action.",
     )
 
 
@@ -124,52 +124,52 @@ class WatiWebhookEventMonitor(models.Model):
 
     event_family = fields.Selection(
         _EVENT_FAMILIES,
-        string="العائلة الموحدة",
+        string="Unified family",
         compute="_compute_monitor_labels",
         store=True,
         index=True,
     )
     event_label = fields.Char(
-        string="الحدث",
+        string="Event",
         compute="_compute_monitor_labels",
         store=True,
     )
     source_version = fields.Selection(
         [("legacy", "Legacy"), ("v2", "v2")],
-        string="نسخة Callback",
+        string="Copy Callback",
         compute="_compute_monitor_labels",
         store=True,
     )
-    event_key = fields.Char(string="بصمة الحدث", readonly=True, copy=False, index=True)
+    event_key = fields.Char(string="Event fingerprint", readonly=True, copy=False, index=True)
     is_duplicate_variant = fields.Boolean(
-        string="Callback مكرر",
+        string="Callback Duplicate",
         readonly=True,
         copy=False,
         index=True,
     )
     duplicate_of_id = fields.Many2one(
         "wati.webhook.event",
-        string="نسخة من",
+        string="Copy of",
         readonly=True,
         copy=False,
         ondelete="set null",
     )
     processing_state = fields.Selection(
         [
-            ("processed", "تمت المعالجة"),
-            ("needs_attention", "يحتاج انتباه"),
-            ("audit_only", "سجل تقني"),
-            ("duplicate", "Callback مكرر"),
+            ("processed", "Processed"),
+            ("needs_attention", "Needs attention"),
+            ("audit_only", "Technical record"),
+            ("duplicate", "Callback Duplicate"),
         ],
-        string="حالة المعالجة",
+        string="Processing status",
         readonly=True,
         copy=False,
         index=True,
     )
-    processing_note = fields.Char(string="نتيجة المعالجة", readonly=True, copy=False)
+    processing_note = fields.Char(string="Treatment result", readonly=True, copy=False)
     linked_message_id = fields.Many2one(
         "wati.message",
-        string="الرسالة المرتبطة",
+        string="Associated message",
         readonly=True,
         copy=False,
         ondelete="set null",
@@ -177,7 +177,7 @@ class WatiWebhookEventMonitor(models.Model):
     )
     linked_conversation_id = fields.Many2one(
         "wati.conversation",
-        string="المحادثة المرتبطة",
+        string="Associated conversation",
         readonly=True,
         copy=False,
         ondelete="set null",
@@ -185,7 +185,7 @@ class WatiWebhookEventMonitor(models.Model):
     )
     linked_automation_log_id = fields.Many2one(
         "wati.automation.log",
-        string="تشغيل الأتمتة المرتبط",
+        string="Run associated automation",
         readonly=True,
         copy=False,
         ondelete="set null",
@@ -197,7 +197,7 @@ class WatiWebhookEventMonitor(models.Model):
         for event in self:
             family = _normalise_event_family(event.event_type, event.status)
             event.event_family = family
-            event.event_label = _EVENT_LABELS.get(family, "حدث آخر")
+            event.event_label = _EVENT_LABELS.get(family, "Another event")
             event.source_version = (
                 "v2" if _clean(event.event_type).casefold().endswith("_v2") else "legacy"
             )
@@ -289,7 +289,7 @@ class WatiWebhookEventMonitor(models.Model):
             if duplicate:
                 processing_state = "duplicate"
                 note = (
-                    "نسخة Callback إضافية لنفس الحدث؛ تم الاحتفاظ بها للتدقيق فقط."
+                    "Copy Callback additional for the same event; They are kept for auditing only."
                 )
             else:
                 processing_state, note = _processing_truth(

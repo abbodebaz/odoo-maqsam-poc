@@ -19,8 +19,8 @@ class WatiWorkspaceAccess(models.TransientModel):
         if can_access_feature(self.env, "templates") and "templates" not in by_id:
             templates = {
                 "id": "templates",
-                "title": "مركز القوالب",
-                "description": "أنشئ قوالب WhatsApp، أرسلها للمراجعة وتابع اعتمادها وجودتها من Odoo.",
+                "title": "Template Center",
+                "description": "Create templates WhatsAppSend it for review and monitor its approval and quality Odoo.",
                 "icon": "fa-file-text-o",
                 "action": "wati_connector.action_wati_templates",
                 "tone": "info",
@@ -39,8 +39,8 @@ class WatiWorkspaceAccess(models.TransientModel):
         if can_access_feature(self.env, "monitor") and "monitor" not in by_id:
             monitor = {
                 "id": "monitor",
-                "title": "مراقبة التكامل",
-                "description": "راقب Webhooks وحالات المعالجة والأحداث التي تحتاج انتباه.",
+                "title": "Integration monitoring",
+                "description": "Watch Webhooks Processing cases and events that require attention.",
                 "icon": "fa-heartbeat",
                 "action": "wati_connector.action_wati_webhook_events",
                 "tone": "warning",
@@ -71,38 +71,38 @@ class WatiWorkspaceAccess(models.TransientModel):
         if can_templates:
             template_section = {
                 "id": "templates",
-                "title": "القوالب",
+                "title": "Templates",
                 "icon": "fa-file-text-o",
                 "articles": [
                     {
                         "id": "template-center",
-                        "title": "إدارة قوالب WhatsApp",
-                        "summary": "إنشاء القوالب في Odoo ومزامنتها ومتابعة اعتماد Meta.",
+                        "title": "Template management WhatsApp",
+                        "summary": "Create templates in Odoo Synchronize and track adoption Meta.",
                         "steps": [
-                            "افتح مركز القوالب ثم اضغط جديد لإنشاء مسودة.",
-                            "اكتب اسمًا تقنيًا بحروف إنجليزية صغيرة واختر اللغة والتصنيف.",
-                            "اكتب نص الرسالة وأضف المتغيرات بصيغة {{name}} أو {{1}} بدون خلط الطريقتين.",
-                            "أدخل قيمة مثال واقعية لكل متغير وراجع المعاينة قبل الإرسال.",
-                            "اضغط إرسال للمراجعة؛ بعدها يصبح القالب مرآة لحالة WATI/Meta ولا يتم تعديل النسخة المقدمة مباشرة.",
-                            "استخدم تحديث الحالة أو مزامنة من WATI عند الحاجة، وتصل حالات الموافقة والجودة والتصنيف تلقائيًا عبر Webhook إذا كانت أحداث القوالب مفعلة في WATI.",
+                            "Open the Template Center and click New to create a draft.",
+                            "Type a technical name in lower case letters and choose the language and classification.",
+                            "Type the text of the message and add variables with a formula {{name}} Or {{1}} Without mixing the two methods.",
+                            "Enter a realistic example value for each variable and review the preview before submitting.",
+                            "Click Submit to review; The template then becomes a mirror of a situation WATI/Meta The submitted copy is not modified directly.",
+                            "Use Update Status or Sync From WATI When needed, approval, quality and rating statuses are automatically communicated via Webhook If template events are enabled in WATI.",
                         ],
                         "tips": [
-                            "إنشاء STANDARD Utility وMarketing مدعوم من Odoo؛ القوالب المتقدمة المستوردة تظهر للمتابعة بدون تخمين Payload غير موثق.",
-                            "إذا احتجت تعديل قالب معتمد أو مستورد، أنشئ نسخة جديدة ثم أرسل النسخة للمراجعة.",
+                            "Create STANDARD Utility AndMarketing Powered by Odoo; Imported advanced templates appear for guesswork-free follow-up Payload Undocumented.",
+                            "If you need to modify an approved or imported template, create a new copy and then submit the copy for review.",
                         ],
                     },
                     {
                         "id": "template-statuses",
-                        "title": "فهم حالات القالب",
-                        "summary": "معنى Draft وPending وApproved وRejected وPaused وDisabled.",
+                        "title": "Understanding template states",
+                        "summary": "Meaning Draft AndPending AndApproved AndRejected AndPaused AndDisabled.",
                         "steps": [
-                            "مسودة: ما زالت داخل Odoo وقابلة للتعديل.",
-                            "قيد المراجعة: أرسلها WATI إلى مسار مراجعة Meta.",
-                            "معتمد: يمكن استخدام القالب في الرسائل والأتمتة.",
-                            "مرفوض: راجع سبب الرفض إن توفر ثم أنشئ نسخة مصححة.",
-                            "متوقف مؤقتًا أو معطل: لا تعتمد عليه في الإرسال حتى تعود حالته صالحة.",
+                            "Draft: Still inside Odoo And adjustable.",
+                            "Under review: Send it WATI To an audit trail Meta.",
+                            "Certified: The template can be used for messaging and automation.",
+                            "Rejected: Review the reason for rejection, if available, and then create a corrected version.",
+                            "Paused or disabled: Do not rely on it to transmit until it is in good condition again.",
                         ],
-                        "tips": ["جودة القالب منفصلة عن حالة الاعتماد وقد تتغير بعد بدء الاستخدام."],
+                        "tips": ["Template quality is separate from certification status and may change after you start using it."],
                     },
                 ],
             }

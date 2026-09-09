@@ -8,25 +8,25 @@ class WatiAutomationRuleReview(models.Model):
 
     preview_mode = fields.Selection(
         [
-            ("real", "بيانات حقيقية"),
-            ("sample", "بيانات تجريبية"),
+            ("real", "Real data"),
+            ("sample", "Experimental data"),
         ],
-        string="نوع المعاينة",
+        string="Preview type",
         copy=False,
         readonly=True,
     )
     preview_source_note = fields.Char(
-        string="مصدر المعاينة",
+        string="Preview source",
         copy=False,
         readonly=True,
     )
     preview_generated_at = fields.Datetime(
-        string="وقت المعاينة",
+        string="Preview time",
         copy=False,
         readonly=True,
     )
     review_message_summary = fields.Char(
-        string="ملخص الرسالة",
+        string="Message summary",
         compute="_compute_review_message_summary",
     )
 
@@ -34,20 +34,20 @@ class WatiAutomationRuleReview(models.Model):
     def _compute_review_message_summary(self):
         for rule in self:
             if not rule.template_name:
-                rule.review_message_summary = _("لم يتم اختيار قالب بعد")
+                rule.review_message_summary = _("No template has been selected yet")
                 continue
             count = len(rule.parameter_ids)
             if count:
-                rule.review_message_summary = _("%s · %s متغير", rule.template_name, count)
+                rule.review_message_summary = _("%s · %s variable", rule.template_name, count)
             else:
-                rule.review_message_summary = _("%s · بدون متغيرات", rule.template_name)
+                rule.review_message_summary = _("%s · No variables", rule.template_name)
 
     def _sample_value_for_parameter(self, line):
         """Return a harmless human-looking value for preview-only rendering."""
         if line.source_type == "record_id":
             return "123"
         if line.source_type == "record_name":
-            return _("سجل تجريبي")
+            return _("Demo record")
         if line.source_type == "static" and (line.static_value or "").strip():
             return line.static_value
 
@@ -73,16 +73,16 @@ class WatiAutomationRuleReview(models.Model):
         ):
             return "1,250"
         if any(token in field_name for token in ("stage", "status", "state")):
-            return _("مرحلة تجريبية")
+            return _("Experimental phase")
         if any(token in field_name for token in ("name", "title", "partner", "customer", "client")):
-            return _("عميل تجريبي")
+            return _("Demo client")
 
         label = ""
         if field:
             label = field.field_description or field.name or ""
         if not label:
             label = (line.param_name or "").strip()
-        return _("قيمة تجريبية") if not label else _("مثال: %s", label)
+        return _("Experimental value") if not label else _("Example: %s", label)
 
     def _render_safe_sample_preview(self):
         self.ensure_one()
@@ -99,7 +99,7 @@ class WatiAutomationRuleReview(models.Model):
             )
         if not rendered:
             rendered = _(
-                "القالب «%s» جاهز، لكن WATI لم يرسل نص القالب للمعاينة.",
+                "Template «%s» Ready, but WATI The template text was not sent for preview.",
                 self.template_name,
             )
         return rendered
@@ -125,7 +125,7 @@ class WatiAutomationRuleReview(models.Model):
         if not self.template_name:
             from odoo.exceptions import UserError
 
-            raise UserError(_("اختر قالب WATI أولًا."))
+            raise UserError(_("Choose a template WATI First."))
 
         record = self._sample_record() if self.model_id else False
         if record:
@@ -133,23 +133,23 @@ class WatiAutomationRuleReview(models.Model):
             self._write_preview(
                 self._render_preview(record),
                 "real",
-                _("معاينة ببيانات حقيقية من Odoo: %s", record_name),
+                _("Preview with real data from Odoo: %s", record_name),
                 record_name=record_name,
             )
-            message = _("تم إنشاء المعاينة باستخدام السجل: %s", record_name)
+            message = _("The preview was created using history: %s", record_name)
         else:
             self._write_preview(
                 self._render_safe_sample_preview(),
                 "sample",
-                _("لا توجد سجلات بعد؛ استخدمنا بيانات تجريبية آمنة للمعاينة فقط."),
+                _("No records yet; We used safe experimental data for preview only."),
             )
-            message = _("لا توجد بيانات فعلية بعد، لذلك أنشأنا معاينة تجريبية آمنة.")
+            message = _("There’s no actual data yet, so we created a safe beta preview.")
 
         return {
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
-                "title": _("المعاينة جاهزة"),
+                "title": _("The preview is ready"),
                 "message": message,
                 "type": "success",
                 "sticky": False,
@@ -162,18 +162,18 @@ class WatiAutomationRuleReview(models.Model):
         if not self.template_name:
             from odoo.exceptions import UserError
 
-            raise UserError(_("اختر قالب WATI أولًا."))
+            raise UserError(_("Choose a template WATI First."))
         self._write_preview(
             self._render_safe_sample_preview(),
             "sample",
-            _("معاينة تجريبية آمنة؛ لن يتم إرسال أي رسالة ولن تتغير بيانات Odoo."),
+            _("Safe demo preview; No message will be sent and no data will be changed Odoo."),
         )
         return {
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
-                "title": _("تم إنشاء معاينة تجريبية"),
-                "message": _("هذه المعاينة للعرض فقط ولا ترسل أي WhatsApp."),
+                "title": _("A test preview has been created"),
+                "message": _("This preview is for display only and does not send any information WhatsApp."),
                 "type": "info",
                 "sticky": False,
                 "next": {"type": "ir.actions.client", "tag": "soft_reload"},

@@ -60,18 +60,18 @@ class WatiInteractiveListController(http.Controller):
             conversation_id = 0
         conversation = request.env["wati.conversation"].browse(conversation_id).exists()
         if not conversation:
-            return request.make_json_response({"ok": False, "message": "المحادثة غير موجودة."}, status=404)
+            return request.make_json_response({"ok": False, "message": "The conversation does not exist."}, status=404)
 
         current_user = request.env.user
         if not conversation.assigned_user_id:
-            return request.make_json_response({"ok": False, "message": "استلم المحادثة أولًا قبل إرسال قائمة تفاعلية."}, status=409)
+            return request.make_json_response({"ok": False, "message": "Receive the chat first before sending an interactive menu."}, status=409)
         if conversation.assigned_user_id != current_user:
             return request.make_json_response(
-                {"ok": False, "message": f"المحادثة مستلمة بواسطة {conversation.assigned_user_id.name}. انقل المحادثة إليك أولًا."},
+                {"ok": False, "message": f"Conversation received by {conversation.assigned_user_id.name}. Move the conversation to you first."},
                 status=409,
             )
         if not conversation.wa_id:
-            return request.make_json_response({"ok": False, "message": "لا يوجد رقم WhatsApp لهذه المحادثة."}, status=400)
+            return request.make_json_response({"ok": False, "message": "There is no number WhatsApp for this conversation."}, status=400)
 
         header = _clean(header)
         body = _clean(body)
@@ -79,37 +79,37 @@ class WatiInteractiveListController(http.Controller):
         button_text = _clean(button_text)
         sections = _parse_sections(sections_json)
         if not body:
-            return request.make_json_response({"ok": False, "message": "اكتب نص الرسالة أولًا."}, status=400)
+            return request.make_json_response({"ok": False, "message": "Write the body of the message first."}, status=400)
         if not button_text:
-            return request.make_json_response({"ok": False, "message": "اكتب نص زر فتح القائمة."}, status=400)
+            return request.make_json_response({"ok": False, "message": "Type the text for the Open Menu button."}, status=400)
         if len(header) > 60:
-            return request.make_json_response({"ok": False, "message": "العنوان يجب ألا يتجاوز 60 حرفًا."}, status=400)
+            return request.make_json_response({"ok": False, "message": "The address must not exceed 60 A letter."}, status=400)
         if len(body) > 1024:
-            return request.make_json_response({"ok": False, "message": "نص الرسالة يجب ألا يتجاوز 1024 حرفًا."}, status=400)
+            return request.make_json_response({"ok": False, "message": "The text of the message must not exceed 1024 A letter."}, status=400)
         if len(footer) > 60:
-            return request.make_json_response({"ok": False, "message": "التذييل يجب ألا يتجاوز 60 حرفًا."}, status=400)
+            return request.make_json_response({"ok": False, "message": "The footer must not exceed 60 A letter."}, status=400)
         if len(button_text) > 20:
-            return request.make_json_response({"ok": False, "message": "نص زر القائمة يجب ألا يتجاوز 20 حرفًا."}, status=400)
+            return request.make_json_response({"ok": False, "message": "Menu button text must not exceed 20 A letter."}, status=400)
         if not sections:
-            return request.make_json_response({"ok": False, "message": "أضف قسمًا واحدًا على الأقل وخيارًا واحدًا."}, status=400)
+            return request.make_json_response({"ok": False, "message": "Add at least one section and one option."}, status=400)
         if len(sections) > 10:
-            return request.make_json_response({"ok": False, "message": "الحد الأقصى 10 أقسام."}, status=400)
+            return request.make_json_response({"ok": False, "message": "max 10 Sections."}, status=400)
         total_rows = sum(len(section["rows"]) for section in sections)
         if not 1 <= total_rows <= 10:
-            return request.make_json_response({"ok": False, "message": "عدد الخيارات يجب أن يكون من 1 إلى 10."}, status=400)
+            return request.make_json_response({"ok": False, "message": "The number of options should be from 1 To 10."}, status=400)
         if len(sections) > 1 and any(not section["title"] for section in sections):
-            return request.make_json_response({"ok": False, "message": "عند استخدام أكثر من قسم، اكتب عنوانًا لكل قسم."}, status=400)
+            return request.make_json_response({"ok": False, "message": "When using more than one section, write a title for each section."}, status=400)
         for section in sections:
             if len(section["title"]) > 24:
-                return request.make_json_response({"ok": False, "message": "عنوان القسم يجب ألا يتجاوز 24 حرفًا."}, status=400)
+                return request.make_json_response({"ok": False, "message": "The section title must not exceed 24 A letter."}, status=400)
             for row in section["rows"]:
                 if len(row["title"]) > 24:
-                    return request.make_json_response({"ok": False, "message": "عنوان الخيار يجب ألا يتجاوز 24 حرفًا."}, status=400)
+                    return request.make_json_response({"ok": False, "message": "The option title must not exceed 24 A letter."}, status=400)
                 if len(row["description"]) > 72:
-                    return request.make_json_response({"ok": False, "message": "وصف الخيار يجب ألا يتجاوز 72 حرفًا."}, status=400)
+                    return request.make_json_response({"ok": False, "message": "Option description must not exceed 72 A letter."}, status=400)
         titles = [row["title"].casefold() for section in sections for row in section["rows"]]
         if len(set(titles)) != len(titles):
-            return request.make_json_response({"ok": False, "message": "اجعل عنوان كل خيار مختلفًا حتى يكون الرد واضحًا داخل Odoo."}, status=400)
+            return request.make_json_response({"ok": False, "message": "Make the title of each option different so that the response is clear within Odoo."}, status=400)
 
         payload = {"body": body, "buttonText": button_text, "sections": sections}
         if header:
@@ -121,17 +121,17 @@ class WatiInteractiveListController(http.Controller):
         scope = f"outbound:list:user:{current_user.id}"
         key = (request_id or "").strip() or idem.digest(conversation.id, header, body, footer, button_text, sections_json or "")
         if not idem.acquire(scope, key, ttl_seconds=180):
-            return request.make_json_response({"ok": True, "duplicate_suppressed": True, "message": "تم تجاهل إعادة إرسال مكررة."}, status=200)
+            return request.make_json_response({"ok": True, "duplicate_suppressed": True, "message": "Duplicate resubmission was ignored."}, status=200)
 
         try:
             WatiClient(request.env).send_interactive_list(conversation.wa_id, payload)
         except WatiConfigurationError:
             idem.release(scope, key)
-            return request.make_json_response({"ok": False, "message": "إعدادات WATI API غير مكتملة."}, status=503)
+            return request.make_json_response({"ok": False, "message": "Settings WATI API Incomplete."}, status=503)
         except WatiRequestError as exc:
             idem.release(scope, key)
             detail = (exc.response_text or str(exc) or "").strip()[:1000]
             status = exc.status_code or 502
-            return request.make_json_response({"ok": False, "message": f"WATI رفض القائمة ({status}): {detail}"}, status=status)
+            return request.make_json_response({"ok": False, "message": f"WATI Reject list ({status}): {detail}"}, status=status)
 
-        return request.make_json_response({"ok": True, "accepted": True, "message": "تم قبول القائمة التفاعلية في WATI ✅"}, status=200)
+        return request.make_json_response({"ok": True, "accepted": True, "message": "Interactive menu accepted in WATI ✅"}, status=200)

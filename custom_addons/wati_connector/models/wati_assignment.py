@@ -10,7 +10,7 @@ class ResUsers(models.Model):
 
     wati_operator_email = fields.Char(
         string="WATI Operator Email",
-        help="إيميل الموظف كما هو مسجل داخل WATI Team Inbox.",
+        help="Employee email as registered inside WATI Team Inbox.",
     )
 
     def _wati_email(self):
@@ -34,11 +34,11 @@ class WatiConversation(models.Model):
 
     assigned_user_id = fields.Many2one(
         "res.users",
-        string="موظف Odoo المسؤول",
+        string="Agent Odoo Administrator",
         ondelete="set null",
         index=True,
     )
-    assigned_at = fields.Datetime(string="وقت الاستلام")
+    assigned_at = fields.Datetime(string="Pick up time")
 
     def _lock_assignment_row(self):
         """Serialize assignment changes for this conversation."""
@@ -61,12 +61,12 @@ class WatiConversation(models.Model):
         actor = self.env.user
         if previous_user and previous_user != user:
             if not force:
-                raise UserError(_("هذه المحادثة مستلمة بواسطة %s.") % previous_user.name)
+                raise UserError(_("This conversation was received by %s.") % previous_user.name)
             if not actor._wati_can_supervise():
                 raise UserError(
                     _(
-                        "لا تملك صلاحية نقل محادثة مستلمة بواسطة موظف آخر. "
-                        "اطلب من مشرف WATI تنفيذ النقل."
+                        "You do not have the authority to transfer a conversation received by another employee. "
+                        "Ask a supervisor WATI Transfer execution."
                     )
                 )
 
@@ -74,24 +74,24 @@ class WatiConversation(models.Model):
         if not email:
             raise UserError(
                 _(
-                    "لا يوجد بريد WATI مرتبط بهذا المستخدم. "
-                    "أضف WATI Operator Email في بطاقة المستخدم."
+                    "There is no mail WATI Associated with this user. "
+                    "Add WATI Operator Email In the user card."
                 )
             )
         if not self.wa_id:
-            raise UserError(_("لا يوجد رقم WhatsApp لهذه المحادثة."))
+            raise UserError(_("There is no number WhatsApp for this conversation."))
 
         try:
             WatiClient(self.env).assign_operator(self.wa_id, email)
         except WatiConfigurationError as exc:
-            raise UserError(_("إعدادات WATI API غير مكتملة.")) from exc
+            raise UserError(_("Settings WATI API Incomplete.")) from exc
         except WatiRequestError as exc:
             detail = (exc.response_text or str(exc) or "").strip()[:500]
             if exc.status_code:
                 raise UserError(
-                    _("WATI رفض تعيين الموظف (%s): %s") % (exc.status_code, detail)
+                    _("WATI Refusal to hire an employee (%s): %s") % (exc.status_code, detail)
                 ) from exc
-            raise UserError(_("تعذر الاتصال بـ WATI لتعيين الموظف: %s") % detail) from exc
+            raise UserError(_("Unable to contact WATI To appoint the employee: %s") % detail) from exc
 
         now = fields.Datetime.now()
         self.write(
@@ -123,8 +123,8 @@ class WatiConversation(models.Model):
         elif self.assigned_user_id != current_user:
             raise UserError(
                 _(
-                    "هذه المحادثة مستلمة بواسطة %s. "
-                    "يجب نقلها إليك أولًا قبل الإرسال."
+                    "This conversation was received by %s. "
+                    "It must be transferred to you first before sending."
                 )
                 % self.assigned_user_id.name
             )
@@ -140,14 +140,14 @@ class WatiAssignmentLog(models.Model):
         "wati.conversation", required=True, ondelete="cascade", index=True
     )
     from_user_id = fields.Many2one(
-        "res.users", string="من الموظف", ondelete="set null"
+        "res.users", string="From the employee", ondelete="set null"
     )
     to_user_id = fields.Many2one(
-        "res.users", string="إلى الموظف", required=True, ondelete="restrict"
+        "res.users", string="To the employee", required=True, ondelete="restrict"
     )
     moved_by_user_id = fields.Many2one(
-        "res.users", string="نفذ النقل", required=True, ondelete="restrict"
+        "res.users", string="Carry out the transfer", required=True, ondelete="restrict"
     )
     moved_at = fields.Datetime(
-        string="وقت النقل", required=True, default=fields.Datetime.now, index=True
+        string="Transportation time", required=True, default=fields.Datetime.now, index=True
     )

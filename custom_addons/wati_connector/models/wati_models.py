@@ -122,34 +122,34 @@ class WatiConversation(models.Model):
     _description = "WATI WhatsApp Conversation"
     _order = "last_message_at desc, id desc"
 
-    name = fields.Char(string="العميل", required=True, default="WhatsApp")
+    name = fields.Char(string="Customer", required=True, default="WhatsApp")
     conversation_uid = fields.Char(string="Conversation ID", index=True)
     ticket_uid = fields.Char(string="WATI Ticket ID", index=True)
     wa_id = fields.Char(string="WhatsApp ID", index=True)
     bsuid = fields.Char(string="BSUID", index=True)
-    sender_name = fields.Char(string="اسم المرسل")
-    operator_name = fields.Char(string="الموظف في WATI")
-    operator_email = fields.Char(string="بريد الموظف")
-    status = fields.Char(string="الحالة")
-    last_message = fields.Text(string="آخر رسالة")
+    sender_name = fields.Char(string="Sender’s name")
+    operator_name = fields.Char(string="employee in WATI")
+    operator_email = fields.Char(string="Employee email")
+    status = fields.Char(string="Status")
+    last_message = fields.Text(string="Last message")
     last_message_at = fields.Datetime(
-        string="آخر نشاط", default=fields.Datetime.now, index=True
+        string="Latest activity", default=fields.Datetime.now, index=True
     )
-    unread_count = fields.Integer(string="غير مقروء", default=0)
+    unread_count = fields.Integer(string="Unreadable", default=0)
     partner_id = fields.Many2one(
-        "res.partner", string="عميل Odoo", ondelete="set null", index=True
+        "res.partner", string="Client Odoo", ondelete="set null", index=True
     )
     message_ids = fields.One2many(
-        "wati.message", "conversation_id", string="الرسائل"
+        "wati.message", "conversation_id", string="Messages"
     )
 
     def action_open_reply_wizard(self):
         self.ensure_one()
         if not self.wa_id:
-            raise UserError(_("لا يوجد WhatsApp ID لهذه المحادثة."))
+            raise UserError(_("There is no WhatsApp ID for this conversation."))
         return {
             "type": "ir.actions.act_window",
-            "name": _("رد عبر WhatsApp"),
+            "name": _("Reply via WhatsApp"),
             "res_model": "wati.reply.wizard",
             "view_mode": "form",
             "target": "new",
@@ -168,17 +168,17 @@ class WatiReplyWizard(models.TransientModel):
 
     conversation_id = fields.Many2one(
         "wati.conversation",
-        string="المحادثة",
+        string="Conversation",
         required=True,
         readonly=True,
         ondelete="cascade",
     )
     wa_id = fields.Char(
-        string="رقم WhatsApp",
+        string="No WhatsApp",
         related="conversation_id.wa_id",
         readonly=True,
     )
-    message = fields.Text(string="الرسالة", required=True)
+    message = fields.Text(string="The message", required=True)
 
     def action_send(self):
         self.ensure_one()
@@ -188,7 +188,7 @@ class WatiReplyWizard(models.TransientModel):
             "tag": "display_notification",
             "params": {
                 "title": _("WhatsApp"),
-                "message": _("تم قبول الرسالة في WATI ✅"),
+                "message": _("The message has been accepted WATI ✅"),
                 "type": "success",
                 "sticky": False,
                 "next": {"type": "ir.actions.act_window_close"},
@@ -205,35 +205,35 @@ class WatiMessage(models.Model):
     whatsapp_message_id = fields.Char(string="WhatsApp Message ID", index=True)
     local_message_id = fields.Char(string="Local Message ID", index=True)
     conversation_id = fields.Many2one(
-        "wati.conversation", string="المحادثة", ondelete="cascade", index=True
+        "wati.conversation", string="Conversation", ondelete="cascade", index=True
     )
     conversation_uid = fields.Char(string="Conversation ID", index=True)
     ticket_uid = fields.Char(string="WATI Ticket ID", index=True)
     wa_id = fields.Char(string="WhatsApp ID", index=True)
     bsuid = fields.Char(string="BSUID", index=True)
-    channel_phone_number = fields.Char(string="قناة WhatsApp", index=True)
-    sender_name = fields.Char(string="المرسل")
+    channel_phone_number = fields.Char(string="channel WhatsApp", index=True)
+    sender_name = fields.Char(string="Sender")
     direction = fields.Selection(
-        [("inbound", "وارد"), ("outbound", "صادر")],
-        string="الاتجاه",
+        [("inbound", "Incoming"), ("outbound", "Outgoing")],
+        string="direction",
         default="inbound",
         index=True,
     )
-    message_type = fields.Char(string="نوع الرسالة")
-    text = fields.Text(string="النص")
-    status = fields.Char(string="حالة الرسالة", index=True)
-    operator_name = fields.Char(string="الموظف")
-    operator_email = fields.Char(string="بريد الموظف")
+    message_type = fields.Char(string="Message type")
+    text = fields.Text(string="Text")
+    status = fields.Char(string="Message status", index=True)
+    operator_name = fields.Char(string="Employee")
+    operator_email = fields.Char(string="Employee email")
     received_at = fields.Datetime(
-        string="وقت الاستقبال", default=fields.Datetime.now, index=True
+        string="Reception time", default=fields.Datetime.now, index=True
     )
-    accepted_at = fields.Datetime(string="وقت القبول", readonly=True)
-    sent_at = fields.Datetime(string="وقت الإرسال", readonly=True)
-    delivered_at = fields.Datetime(string="وقت التسليم", readonly=True)
-    read_at = fields.Datetime(string="وقت القراءة", readonly=True)
-    failed_at = fields.Datetime(string="وقت الفشل", readonly=True)
+    accepted_at = fields.Datetime(string="Acceptance time", readonly=True)
+    sent_at = fields.Datetime(string="Transmission time", readonly=True)
+    delivered_at = fields.Datetime(string="Delivery time", readonly=True)
+    read_at = fields.Datetime(string="Reading time", readonly=True)
+    failed_at = fields.Datetime(string="Failure time", readonly=True)
     status_updated_at = fields.Datetime(
-        string="آخر تحديث للحالة", readonly=True, index=True
+        string="Latest status update", readonly=True, index=True
     )
     raw_payload = fields.Text(string="Raw Payload")
 

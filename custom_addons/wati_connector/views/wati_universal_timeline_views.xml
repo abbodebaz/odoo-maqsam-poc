@@ -4,11 +4,11 @@
         <field name="name">wati.universal.timeline.wizard.form</field>
         <field name="model">wati.universal.timeline.wizard</field>
         <field name="arch" type="xml">
-            <form string="سجل WhatsApp">
+            <form string="Register WhatsApp">
                 <sheet>
                     <div class="oe_title">
-                        <h2>سجل WhatsApp</h2>
-                        <div class="text-muted">يعرض تاريخ WhatsApp المرتبط بالسجل الحالي من خلال العميل أو رقم الجوال.</div>
+                        <h2>Register WhatsApp</h2>
+                        <div class="text-muted">Displays date WhatsApp Linked to the current record through the customer or mobile number.</div>
                     </div>
                     <group>
                         <group>
@@ -28,26 +28,26 @@
                         <list create="false" edit="false" delete="false" default_order="received_at desc, id desc"
                               decoration-success="direction == 'outbound'"
                               decoration-info="direction == 'inbound'">
-                            <field name="received_at" string="الوقت"/>
-                            <field name="direction" string="الاتجاه" widget="badge"/>
-                            <field name="message_type" string="النوع" optional="hide"/>
-                            <field name="text" string="الرسالة"/>
-                            <field name="status" string="الحالة" widget="badge"/>
-                            <field name="operator_name" string="الموظف" optional="show"/>
-                            <field name="channel_phone_number" string="القناة" optional="hide"/>
+                            <field name="received_at" string="time"/>
+                            <field name="direction" string="direction" widget="badge"/>
+                            <field name="message_type" string="Type" optional="hide"/>
+                            <field name="text" string="The message"/>
+                            <field name="status" string="Status" widget="badge"/>
+                            <field name="operator_name" string="Employee" optional="show"/>
+                            <field name="channel_phone_number" string="Channel" optional="hide"/>
                         </list>
                     </field>
                 </sheet>
                 <footer>
-                    <button name="action_open_full_timeline" type="object" string="فتح السجل الكامل" class="btn-primary" icon="fa-external-link"/>
-                    <button string="إغلاق" special="cancel" class="btn-secondary"/>
+                    <button name="action_open_full_timeline" type="object" string="Open full history" class="btn-primary" icon="fa-external-link"/>
+                    <button string="Close" special="cancel" class="btn-secondary"/>
                 </footer>
             </form>
         </field>
     </record>
 
     <record id="action_wati_universal_timeline" model="ir.actions.act_window">
-        <field name="name">سجل WhatsApp</field>
+        <field name="name">Register WhatsApp</field>
         <field name="res_model">wati.universal.timeline.wizard</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>

@@ -47,8 +47,8 @@ class WatiTemplateSubmissionTruth(models.Model):
     def _mark_submission_unverified(self, message=None):
         self.ensure_one()
         detail = message or _(
-            "أرسل Odoo طلب إنشاء القالب إلى WATI، لكن القالب لم يظهر بعد في مصدر WATI. "
-            "لم نعتبره قيد مراجعة Meta حتى يتم التحقق منه فعليًا."
+            "Send Odoo Request to create template to WATI, but the template has not yet appeared in the source WATI. "
+            "We have not considered it under review Meta Until it is actually verified."
         )
         self.sudo().write(
             {
@@ -73,7 +73,7 @@ class WatiTemplateSubmissionTruth(models.Model):
         except (WatiConfigurationError, WatiRequestError, UserError) as exc:
             detail = clean(getattr(exc, "response_text", "") or str(exc))[:1200]
             return self._mark_submission_unverified(
-                _("تم إرسال طلب الإنشاء، لكن تعذر التحقق من WATI الآن: %s") % detail
+                _("The create request was sent, but could not be verified WATI Now: %s") % detail
             )
 
         if not normalized:
@@ -93,9 +93,9 @@ class WatiTemplateSubmissionTruth(models.Model):
                 "type": "ir.actions.client",
                 "tag": "display_notification",
                 "params": {
-                    "title": _("تم التحقق من القالب في WATI"),
+                    "title": _("The template has been verified in WATI"),
                     "message": _(
-                        "تم إنشاء القالب وظهر في WATI. الحالة المعروضة الآن هي الحالة الحقيقية القادمة من WATI/Meta."
+                        "The template has been created and appears in WATI. The status shown now is the real status coming from WATI/Meta."
                     ),
                     "type": "success",
                     "sticky": False,
@@ -107,9 +107,9 @@ class WatiTemplateSubmissionTruth(models.Model):
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
-                "title": _("بانتظار تأكيد WATI"),
+                "title": _("Waiting for confirmation WATI"),
                 "message": _(
-                    "استلم WATI طلب الإنشاء، لكن القالب لم يظهر في قائمة WATI بعد. لن نعتبره قيد مراجعة Meta حتى يتم التحقق منه. استخدم «تحديث الحالة» لاحقًا."
+                    "Received WATI Requested to create, but the template does not appear in the list WATI After. We will not consider it under review Meta Until it is verified. Use «Status update» Later."
                 ),
                 "type": "warning",
                 "sticky": True,
@@ -125,11 +125,11 @@ class WatiTemplateSubmissionTruth(models.Model):
             if (
                 record.source == "odoo"
                 and record.status == "pending"
-                and clean(record.last_error).startswith("لم يظهر هذا القالب")
+                and clean(record.last_error).startswith("This template did not appear")
             ):
                 record._mark_submission_unverified(
                     _(
-                        "لم يظهر هذا القالب في نتيجة WATI الحالية. لذلك أعدنا الحالة إلى «قيد التحقق» بدل عرض «قيد مراجعة Meta» بدون إثبات."
+                        "This template did not appear in a result WATI current. So we brought the case back to «Under verification» Display allowance «Under review Meta» Without proof."
                     )
                 )
         return result
@@ -142,7 +142,7 @@ class WatiTemplateSubmissionTruth(models.Model):
                 ("status", "=", "pending"),
                 ("wati_template_id", "=", False),
                 ("meta_template_id", "=", False),
-                ("last_error", "ilike", "لم يظهر هذا القالب"),
+                ("last_error", "ilike", "This template did not appear"),
             ]
         )
         for record in records:
@@ -172,7 +172,7 @@ class WatiTemplateSubmissionTruth(models.Model):
             )
             record._mark_submission_unverified(
                 _(
-                    "القالب لم يظهر في WATI بعد طلب الإنشاء السابق. تم تصحيح الحالة إلى «قيد التحقق» حتى لا تظهر مراجعة Meta بشكل غير مؤكد."
+                    "The template did not appear WATI After the previous creation request. The condition has been corrected to «Under verification» So no review appears Meta Uncertainly."
                 )
             )
         if records:
