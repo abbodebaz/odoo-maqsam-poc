@@ -85,6 +85,9 @@ class WatiClient:
     def post(self, path, **kwargs):
         return self._request("POST", path, **kwargs)
 
+    def delete(self, path, **kwargs):
+        return self._request("DELETE", path, **kwargs)
+
     def probe_contacts_v1(self):
         return self.get(
             "api/v1/getContacts",
@@ -137,6 +140,23 @@ class WatiClient:
             params={"pageSize": page_size, "pageNumber": page_number},
             timeout=25,
         )
+
+    def create_whatsapp_template(self, payload):
+        """Create a WhatsApp template through WATI's documented template endpoint."""
+        return self.post(
+            "api/v1/whatsApp/templates",
+            json=payload,
+            timeout=45,
+        )
+
+    def delete_whatsapp_template(self, waba_id, name, language=None):
+        """Delete one template language, or all languages when language is omitted."""
+        safe_waba = quote(str(waba_id or "").strip(), safe="")
+        safe_name = quote(str(name or "").strip(), safe="")
+        path = f"api/v1/whatsApp/templates/{safe_waba}/{safe_name}"
+        if language:
+            path += f"/{quote(str(language).strip(), safe='')}"
+        return self.delete(path, timeout=45)
 
     def send_template_messages(self, payload):
         return self.post(
