@@ -1,5 +1,11 @@
 # Changelog
 
+## 19.0.11.0.2 — Warning-free template metadata
+
+- Disambiguated editable draft header labels from provider-mirrored header fields.
+- Removed the final WATI model metadata warnings seen during the Odoo registry upgrade.
+- Kept the complete WATI addon bundle version-aligned.
+
 ## 19.0.11.0.1 — Final warning cleanup
 
 - Replaced the removed Odoo 18-era `_sql_constraints` declaration with Odoo 19 `models.Constraint`, restoring the database-level uniqueness guarantee for WATI idempotency keys.
