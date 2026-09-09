@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_wati_smart_button" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.wati.smart.button</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="wati_connector.res_config_settings_view_form_wati"/>
+        <field name="arch" type="xml">
+            <xpath expr="//app[@name='wati_connector']" position="inside">
+                <block title="زر WhatsApp الذكي" name="wati_smart_button_settings">
+                    <div class="alert alert-info mb16" role="status">
+                        <strong>زر واحد قابل للتركيب في أي مكان.</strong>
+                        أضف أكثر من شاشة في CRM أو العملاء أو المبيعات أو أي تطبيق، وحدد من أين يقرأ النظام رقم WhatsApp لكل شاشة.
+                    </div>
+                    <setting string="أماكن ظهور زر WhatsApp" help="إدارة كل الشاشات التي يظهر فيها زر WhatsApp الذكي. يمكن إضافة عدة أماكن في نفس الوقت بدون تعديل كود التطبيقات الأصلية.">
+                        <div class="content-group">
+                            <button name="action_wati_manage_smart_buttons"
+                                    type="object"
+                                    string="إدارة أماكن زر WhatsApp"
+                                    class="btn btn-primary"
+                                    icon="fa-whatsapp"/>
+                            <div class="text-muted mt8">داخل كل مكان اختر التطبيق والموديل، ثم استخدم «اكتشاف ذكي» لتحديد Form View ورقم الجوال والعميل تلقائيًا قدر الإمكان.</div>
+                        </div>
+                    </setting>
+                    <setting string="Customer WhatsApp Timeline" help="يعرض تاريخ WhatsApp داخل بطاقة العميل اعتمادًا على الربط المباشر أو مطابقة رقم الجوال مع الرسائل القديمة.">
+                        <div class="text-muted">يظهر تبويب WhatsApp تلقائيًا للمستخدمين الذين لديهم صلاحية WATI، مع الرسائل الواردة والصادرة وحالة التسليم والقراءة.</div>
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+</odoo>
