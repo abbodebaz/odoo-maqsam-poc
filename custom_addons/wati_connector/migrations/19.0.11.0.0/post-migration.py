@@ -24,7 +24,7 @@ _REPAIRS = (
 
 
 def migrate(cr, version):
-    env = api.Environment(cr, SUPERUSER_ID, {})
+    env = api.Environment(cr, SUPERUSER_ID, {"lang": "en_US"})
     for model_name, method_name in _REPAIRS:
         _logger.info("WATI migration 19.0.11: %s.%s", model_name, method_name)
         getattr(env[model_name], method_name)()

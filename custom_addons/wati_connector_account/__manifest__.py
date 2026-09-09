@@ -1,6 +1,6 @@
 {
     "name": "WATI Connector - Accounting",
-    "version": "19.0.11.0.0",
+    "version": "19.0.11.0.1",
     "summary": "Customer invoice integration for the WATI WhatsApp Connector",
     "category": "Productivity",
     "author": "Abdulrhman Bazarah",

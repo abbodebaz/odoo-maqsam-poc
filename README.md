@@ -26,7 +26,7 @@ WATI modules use Odoo-style five-part versions:
 
 `19.0.<release>.<minor>.<patch>`
 
-The delivery bundle is version-aligned. Release `19.0.11.0.0` is the pre-delivery cleanup baseline.
+The delivery bundle is version-aligned. Release `19.0.11.0.1` is the pre-delivery cleanup baseline.
 
 ## Quality gate
 
@@ -37,6 +37,7 @@ The delivery bundle is version-aligned. Release `19.0.11.0.0` is the pre-deliver
 - English-only runtime source outside `i18n/`.
 - No generated/debug artifacts committed to the WATI bundle.
 - No one-off repair XML in the production manifest.
+- No legacy Odoo `_sql_constraints` declarations in production models.
 - No optional Odoo business-model leakage into the core connector.
 - No direct HTTP transport outside the WATI service layer.
 - Aligned WATI module versions and clean production model filenames.
