@@ -32,3 +32,4 @@ from . import wati_automation_template_contract
 from . import wati_webhook_monitor
 from . import wati_webhook_monitor_backfill
 from . import wati_workspace
+from . import wati_workspace_access
