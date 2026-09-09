@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
 """One-time converter for WATI runtime source strings.
 
-The commercial WATI addon historically accumulated Arabic hard-coded UI copy.
-This script converts Arabic word sequences in runtime Python/XML/JavaScript files
-to English while leaving code syntax, identifiers, placeholders and punctuation
-untouched. It is intended to run once on the bilingual cleanup feature branch.
+The WATI addon historically accumulated Arabic hard-coded UI copy. This helper
+converts Arabic word runs in runtime Python/XML/JavaScript files to English while
+leaving identifiers, placeholders, numbers and punctuation untouched.
+
+It deliberately batches translation requests so the one-time conversion does not
+hammer the public translation endpoint and hit rate limits.
 """
 
 from __future__ import annotations
 
 import json
-import os
 import re
 import sys
 import time
 import urllib.parse
 import urllib.request
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -24,11 +24,9 @@ MODULE_GLOB = "wati_connector*"
 TARGET_SUFFIXES = {".py", ".xml", ".js"}
 SKIP_PARTS = {"tests", "docs", "notes", "i18n", "migrations"}
 CACHE_PATH = ROOT / ".wati_translate_cache.json"
-
-# Translate complete Arabic word runs, but deliberately leave ASCII syntax,
-# placeholders, numbers and punctuation outside each run.
 ARABIC_RUN = re.compile(r"[\u0600-\u06FF]+(?:[ \t]+[\u0600-\u06FF]+)*")
 ARABIC_ANY = re.compile(r"[\u0600-\u06FF]")
+SPLIT_MARKER = "ZXWATISPLITXZ"
 
 OVERRIDES = {
     "واتساب": "WhatsApp",
@@ -86,6 +84,7 @@ OVERRIDES = {
     "مشرف": "Supervisor",
     "مدير": "Administrator",
     "موظف": "Agent",
+    "نسخ": "Copy",
 }
 
 
@@ -105,26 +104,16 @@ def runtime_files() -> list[Path]:
 
 def clean_translation(value: str) -> str:
     value = value.strip()
-    # Keep translated text safe inside Python/JS/XML delimiters. Curly quote
-    # characters are display-safe and cannot terminate ASCII string literals.
+    # Curly quotes cannot terminate ordinary ASCII Python/JS string delimiters.
     value = value.replace("'", "’").replace('"', "”").replace("`", "’")
     value = value.replace("&", "and").replace("<", "").replace(">", "")
     value = re.sub(r"\s+", " ", value).strip()
     return value
 
 
-def google_translate(phrase: str) -> str:
-    if phrase in OVERRIDES:
-        return OVERRIDES[phrase]
-
+def request_translation(text: str) -> str:
     query = urllib.parse.urlencode(
-        {
-            "client": "gtx",
-            "sl": "ar",
-            "tl": "en",
-            "dt": "t",
-            "q": phrase,
-        }
+        {"client": "gtx", "sl": "ar", "tl": "en", "dt": "t", "q": text}
     )
     url = "https://translate.googleapis.com/translate_a/single?" + query
     request = urllib.request.Request(
@@ -132,19 +121,50 @@ def google_translate(phrase: str) -> str:
         headers={"User-Agent": "Mozilla/5.0 WATI-i18n-build/1.0"},
     )
     last_error: Exception | None = None
-    for attempt in range(6):
+    for attempt in range(8):
         try:
-            with urllib.request.urlopen(request, timeout=20) as response:
+            with urllib.request.urlopen(request, timeout=30) as response:
                 payload = json.loads(response.read().decode("utf-8"))
             translated = "".join(part[0] for part in payload[0] if part and part[0])
-            translated = clean_translation(translated)
-            if not translated or ARABIC_ANY.search(translated):
-                raise ValueError(f"translation still contains Arabic: {translated!r}")
+            if not translated:
+                raise ValueError("empty translation")
             return translated
-        except Exception as exc:  # network service can transiently throttle
+        except Exception as exc:
             last_error = exc
-            time.sleep(min(8.0, 0.5 * (2**attempt)))
-    raise RuntimeError(f"Could not translate {phrase!r}: {last_error}")
+            time.sleep(min(20.0, 1.0 * (2**attempt)))
+    raise RuntimeError(f"Translation request failed: {last_error}")
+
+
+def translate_batch(batch: list[str]) -> dict[str, str]:
+    if not batch:
+        return {}
+    if len(batch) == 1:
+        phrase = batch[0]
+        value = OVERRIDES.get(phrase)
+        if value is None:
+            value = clean_translation(request_translation(phrase))
+        if not value or ARABIC_ANY.search(value):
+            raise RuntimeError(f"Invalid translation for {phrase!r}: {value!r}")
+        return {phrase: value}
+
+    joined = f"\n{SPLIT_MARKER}\n".join(batch)
+    translated = request_translation(joined)
+    parts = re.split(rf"\s*{re.escape(SPLIT_MARKER)}\s*", translated)
+    if len(parts) != len(batch):
+        # Translation services can occasionally rewrite a separator. Split the
+        # work recursively rather than falling back to thousands of requests.
+        mid = len(batch) // 2
+        result = translate_batch(batch[:mid])
+        result.update(translate_batch(batch[mid:]))
+        return result
+
+    result: dict[str, str] = {}
+    for phrase, part in zip(batch, parts):
+        value = OVERRIDES.get(phrase) or clean_translation(part)
+        if not value or ARABIC_ANY.search(value):
+            raise RuntimeError(f"Invalid translation for {phrase!r}: {value!r}")
+        result[phrase] = value
+    return result
 
 
 def load_cache() -> dict[str, str]:
@@ -152,7 +172,7 @@ def load_cache() -> dict[str, str]:
         return {}
     try:
         data = json.loads(CACHE_PATH.read_text(encoding="utf-8"))
-        return {str(k): str(v) for k, v in data.items()}
+        return {str(key): str(value) for key, value in data.items()}
     except Exception:
         return {}
 
@@ -172,29 +192,44 @@ def collect_phrases(files: list[Path]) -> list[str]:
     return sorted(phrases, key=lambda item: (-len(item), item))
 
 
+def make_batches(items: list[str], max_items: int = 24, max_chars: int = 3200) -> list[list[str]]:
+    batches: list[list[str]] = []
+    current: list[str] = []
+    chars = 0
+    separator_cost = len(SPLIT_MARKER) + 2
+    for item in items:
+        projected = chars + len(item) + (separator_cost if current else 0)
+        if current and (len(current) >= max_items or projected > max_chars):
+            batches.append(current)
+            current = []
+            chars = 0
+        current.append(item)
+        chars += len(item) + (separator_cost if len(current) > 1 else 0)
+    if current:
+        batches.append(current)
+    return batches
+
+
 def translate_all(phrases: list[str], cache: dict[str, str]) -> dict[str, str]:
     for phrase, translated in OVERRIDES.items():
         if phrase in phrases:
             cache[phrase] = translated
 
     missing = [phrase for phrase in phrases if phrase not in cache]
-    print(f"WATI_ENGLISH_PHRASES total={len(phrases)} cached={len(phrases)-len(missing)} missing={len(missing)}")
+    print(
+        f"WATI_ENGLISH_PHRASES total={len(phrases)} "
+        f"cached={len(phrases) - len(missing)} missing={len(missing)}"
+    )
+    batches = make_batches(missing)
+    print(f"WATI_ENGLISH_BATCHES count={len(batches)}")
 
-    if not missing:
-        return cache
-
-    workers = max(2, min(int(os.environ.get("WATI_TRANSLATE_WORKERS", "6")), 10))
     completed = 0
-    with ThreadPoolExecutor(max_workers=workers) as pool:
-        futures = {pool.submit(google_translate, phrase): phrase for phrase in missing}
-        for future in as_completed(futures):
-            phrase = futures[future]
-            translated = future.result()
-            cache[phrase] = translated
-            completed += 1
-            if completed % 50 == 0 or completed == len(missing):
-                print(f"WATI_ENGLISH_PROGRESS {completed}/{len(missing)}")
-                save_cache(cache)
+    for index, batch in enumerate(batches, 1):
+        cache.update(translate_batch(batch))
+        completed += len(batch)
+        save_cache(cache)
+        print(f"WATI_ENGLISH_PROGRESS batch={index}/{len(batches)} phrases={completed}/{len(missing)}")
+        time.sleep(0.15)
     return cache
 
 
@@ -202,8 +237,6 @@ def rewrite(files: list[Path], translations: dict[str, str]) -> tuple[int, int]:
     changed_files = 0
     replacements = 0
 
-    # Regex callback avoids replacement ordering problems with phrases that are
-    # substrings of other phrases.
     def replace_match(match: re.Match[str]) -> str:
         nonlocal replacements
         phrase = match.group(0)
