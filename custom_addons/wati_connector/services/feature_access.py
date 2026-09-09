@@ -68,11 +68,12 @@ def get_feature_mode(env, feature_id):
 
 def is_wati_admin(env, user=None):
     user = user or env.user
-    return bool(
-        user.id == env.ref("base.user_root", raise_if_not_found=False).id
-        if env.ref("base.user_root", raise_if_not_found=False)
-        else False
-    ) or user.has_group("base.group_system") or user.has_group(
+    if env.su:
+        return True
+    root = env.ref("base.user_root", raise_if_not_found=False)
+    if root and user.id == root.id:
+        return True
+    return user.has_group("base.group_system") or user.has_group(
         "wati_connector.group_wati_admin"
     )
 
@@ -122,6 +123,8 @@ def sync_feature_access_controls(env, feature_ids=None):
         mode = get_feature_mode(env, feature_id)
         target_group = user_group if mode == ACCESS_ALL else admin_group
 
+        # Odoo system administrators always retain an emergency path to the menu,
+        # while day-to-day access follows the narrower WhatsApp role policy.
         menu_group_ids = [target_group.id, system_group.id]
         for xmlid in definition.get("menu_xmlids", []):
             menu = env.ref(xmlid, raise_if_not_found=False)
@@ -135,5 +138,4 @@ def sync_feature_access_controls(env, feature_ids=None):
 
         result[feature_id] = mode
 
-    env.registry.clear_cache()
     return result
