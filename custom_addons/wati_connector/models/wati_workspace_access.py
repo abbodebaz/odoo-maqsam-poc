@@ -16,6 +16,23 @@ class WatiWorkspaceAccess(models.TransientModel):
         features = list(super()._workspace_features())
         by_id = {feature["id"]: feature for feature in features}
 
+        if can_access_feature(self.env, "templates") and "templates" not in by_id:
+            templates = {
+                "id": "templates",
+                "title": "مركز القوالب",
+                "description": "أنشئ قوالب WhatsApp، أرسلها للمراجعة وتابع اعتمادها وجودتها من Odoo.",
+                "icon": "fa-file-text-o",
+                "action": "wati_connector.action_wati_templates",
+                "tone": "info",
+            }
+            # Keep templates close to message tools and before automation.
+            automation_index = next(
+                (index for index, item in enumerate(features) if item.get("id") == "automation"),
+                len(features),
+            )
+            features.insert(automation_index, templates)
+            by_id["templates"] = templates
+
         # The original workspace exposed the monitor only to Odoo system admins.
         # WATI Administrators are intentionally narrower than Odoo admins, so add
         # the monitor for them when the company policy allows it.
@@ -44,11 +61,56 @@ class WatiWorkspaceAccess(models.TransientModel):
 
     @api.model
     def _workspace_help_sections(self):
-        sections = super()._workspace_help_sections()
+        sections = list(super()._workspace_help_sections())
         is_system_admin = self.env.user.has_group("base.group_system")
+        can_templates = can_access_feature(self.env, "templates")
         can_automation = can_access_feature(self.env, "automation")
         can_logs = can_access_feature(self.env, "automation_logs")
         can_monitor = can_access_feature(self.env, "monitor")
+
+        if can_templates:
+            template_section = {
+                "id": "templates",
+                "title": "القوالب",
+                "icon": "fa-file-text-o",
+                "articles": [
+                    {
+                        "id": "template-center",
+                        "title": "إدارة قوالب WhatsApp",
+                        "summary": "إنشاء القوالب في Odoo ومزامنتها ومتابعة اعتماد Meta.",
+                        "steps": [
+                            "افتح مركز القوالب ثم اضغط جديد لإنشاء مسودة.",
+                            "اكتب اسمًا تقنيًا بحروف إنجليزية صغيرة واختر اللغة والتصنيف.",
+                            "اكتب نص الرسالة وأضف المتغيرات بصيغة {{name}} أو {{1}} بدون خلط الطريقتين.",
+                            "أدخل قيمة مثال واقعية لكل متغير وراجع المعاينة قبل الإرسال.",
+                            "اضغط إرسال للمراجعة؛ بعدها يصبح القالب مرآة لحالة WATI/Meta ولا يتم تعديل النسخة المقدمة مباشرة.",
+                            "استخدم تحديث الحالة أو مزامنة من WATI عند الحاجة، وتصل حالات الموافقة والجودة والتصنيف تلقائيًا عبر Webhook إذا كانت أحداث القوالب مفعلة في WATI.",
+                        ],
+                        "tips": [
+                            "إنشاء STANDARD Utility وMarketing مدعوم من Odoo؛ القوالب المتقدمة المستوردة تظهر للمتابعة بدون تخمين Payload غير موثق.",
+                            "إذا احتجت تعديل قالب معتمد أو مستورد، أنشئ نسخة جديدة ثم أرسل النسخة للمراجعة.",
+                        ],
+                    },
+                    {
+                        "id": "template-statuses",
+                        "title": "فهم حالات القالب",
+                        "summary": "معنى Draft وPending وApproved وRejected وPaused وDisabled.",
+                        "steps": [
+                            "مسودة: ما زالت داخل Odoo وقابلة للتعديل.",
+                            "قيد المراجعة: أرسلها WATI إلى مسار مراجعة Meta.",
+                            "معتمد: يمكن استخدام القالب في الرسائل والأتمتة.",
+                            "مرفوض: راجع سبب الرفض إن توفر ثم أنشئ نسخة مصححة.",
+                            "متوقف مؤقتًا أو معطل: لا تعتمد عليه في الإرسال حتى تعود حالته صالحة.",
+                        ],
+                        "tips": ["جودة القالب منفصلة عن حالة الاعتماد وقد تتغير بعد بدء الاستخدام."],
+                    },
+                ],
+            }
+            automation_index = next(
+                (index for index, section in enumerate(sections) if section.get("id") == "automation"),
+                len(sections),
+            )
+            sections.insert(automation_index, template_section)
 
         filtered = []
         for section in sections:
