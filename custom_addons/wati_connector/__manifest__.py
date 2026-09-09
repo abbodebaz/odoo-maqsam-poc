@@ -1,6 +1,6 @@
 {
     "name": "WATI WhatsApp Connector",
-    "version": "19.0.10.0.19",
+    "version": "19.0.10.0.20",
     "summary": "WATI WhatsApp inbox, no-code automation, webhooks and API integration for Odoo",
     "category": "Productivity",
     "author": "Abdulrhman Bazarah",
@@ -30,6 +30,7 @@
         "views/wati_automation_review_views.xml",
         "views/wati_automation_template_contract_views.xml",
         "views/wati_automation_log_experience_views.xml",
+        "views/wati_workspace_views.xml",
         "data/wati_template_integrity_final.xml",
         "data/wati_template_contract_repair.xml",
         "data/wati_log_truth_repair.xml",
@@ -52,7 +53,10 @@
             "wati_connector/static/src/automation_studio/smart_target_field.js",
             "wati_connector/static/src/automation_studio/smart_target_field.xml",
             "wati_connector/static/src/automation_studio/smart_recipient_field.js",
-            "wati_connector/static/src/automation_studio/smart_recipient_field.xml"
+            "wati_connector/static/src/automation_studio/smart_recipient_field.xml",
+            "wati_connector/static/src/workspace/workspace.css",
+            "wati_connector/static/src/workspace/workspace.js",
+            "wati_connector/static/src/workspace/workspace.xml"
         ]
     },
     "installable": True,
