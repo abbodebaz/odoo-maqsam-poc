@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Re-apply the configured feature policy after every module upgrade.
+         This intentionally runs after menus/security data have loaded so an
+         upgrade can never silently reset company access choices. -->
+    <function model="res.config.settings" name="_sync_wati_feature_access"/>
+</odoo>
