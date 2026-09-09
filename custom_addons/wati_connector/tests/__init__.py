@@ -16,3 +16,4 @@ from . import test_template_builder
 from . import test_template_variable_save
 from . import test_template_submission_truth
 from . import test_template_provider_error
+from . import test_template_lifecycle_final
