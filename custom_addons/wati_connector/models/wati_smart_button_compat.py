@@ -1,4 +1,4 @@
-from odoo import models
+from odoo import fields, models
 
 from ..utils.phone import normalize_whatsapp_number
 
@@ -24,6 +24,22 @@ class WatiSmartButtonLocationPhoneCompat(models.Model):
 class ResPartnerWatiTimelinePhoneCompat(models.Model):
     _inherit = "res.partner"
 
+    # Use a distinct compute method name so Odoo does not merge dependency
+    # metadata from the earlier implementation that referenced optional fields.
+    wati_timeline_message_ids = fields.Many2many(
+        "wati.message",
+        string="WhatsApp Timeline",
+        compute="_compute_wati_timeline_runtime_safe",
+    )
+    wati_message_count = fields.Integer(
+        string="رسائل WhatsApp",
+        compute="_compute_wati_timeline_runtime_safe",
+    )
+    wati_last_message_at = fields.Datetime(
+        string="آخر تواصل WhatsApp",
+        compute="_compute_wati_timeline_runtime_safe",
+    )
+
     def _wati_timeline_domain(self):
         """Build timeline matching only from phone fields present in this Odoo build."""
         self.ensure_one()
@@ -44,8 +60,8 @@ class ResPartnerWatiTimelinePhoneCompat(models.Model):
             ("wa_id", "in", sorted(phones)),
         ]
 
-    def _compute_wati_timeline(self):
-        """Non-stored timeline compute with no hard dependency on optional fields."""
+    def _compute_wati_timeline_runtime_safe(self):
+        """Non-stored timeline compute with zero hard dependencies on optional fields."""
         Message = self.env["wati.message"].sudo()
         for partner in self:
             messages = Message.search(
