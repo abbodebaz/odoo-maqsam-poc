@@ -15,6 +15,7 @@ access_wati_automation_log_supervisor,wati.automation.log supervisor,model_wati_
 access_wati_automation_value_choice_admin,wati.automation.value.choice admin,model_wati_automation_value_choice,wati_connector.group_wati_admin,1,1,1,1
 access_wati_automation_template_choice_admin,wati.automation.template.choice admin,model_wati_automation_template_choice,wati_connector.group_wati_admin,1,1,1,1
 access_wati_idempotency_admin,wati.idempotency.key admin,model_wati_idempotency_key,wati_connector.group_wati_admin,1,0,0,1
+access_wati_workspace_gateway_user,wati.workspace.gateway user,model_wati_workspace_gateway,wati_connector.group_wati_user,1,0,0,0
 access_wati_conversation_system,wati.conversation system,model_wati_conversation,base.group_system,1,1,1,1
 access_wati_reply_wizard_system,wati.reply.wizard system,model_wati_reply_wizard,base.group_system,1,1,1,1
 access_wati_message_system,wati.message system,model_wati_message,base.group_system,1,1,1,1
@@ -28,3 +29,4 @@ access_wati_automation_log_system,wati.automation.log system,model_wati_automati
 access_wati_automation_value_choice_system,wati.automation.value.choice system,model_wati_automation_value_choice,base.group_system,1,1,1,1
 access_wati_automation_template_choice_system,wati.automation.template.choice system,model_wati_automation_template_choice,base.group_system,1,1,1,1
 access_wati_idempotency_system,wati.idempotency.key system,model_wati_idempotency_key,base.group_system,1,1,1,1
+access_wati_workspace_gateway_system,wati.workspace.gateway system,model_wati_workspace_gateway,base.group_system,1,0,0,0
