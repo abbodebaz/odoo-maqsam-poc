@@ -2,7 +2,6 @@ import json
 import re
 
 from odoo import _, api, models
-from odoo.exceptions import UserError
 
 from ..services.template_catalog import clean
 
@@ -14,27 +13,18 @@ _PROVIDER_ERROR_MESSAGE_RE = re.compile(
 
 
 class WatiTemplateButtonGuard(models.Model):
-    """Prevent known-invalid button submissions until WATI's nested schema is verified.
+    """Keep provider-error recovery while button authoring uses a verified contract.
 
-    WATI publicly documents button configuration types, but its create-template
-    page does not publish the nested button-object contract. Our first live
-    Quick Reply request was explicitly rejected by WATI, so production behavior
-    must fail closed instead of guessing another payload shape.
+    The temporary fail-closed block was needed while the nested WATI button
+    object was unknown. We now mirror the exact ``parameter`` structure returned
+    by WATI's own template catalogue, so supported Standard buttons can proceed
+    through the normal builder validation and lifecycle checks.
     """
 
     _inherit = "wati.template"
 
     def _assert_can_submit(self):
-        super()._assert_can_submit()
-        self.ensure_one()
-        if self.builder_button_type != "NONE":
-            raise UserError(
-                _(
-                    "إرسال القوالب التي تحتوي على أزرار متوقف مؤقتًا للحماية. "
-                    "WATI رفض عقد الزر الحالي برسالة تحقق من الخادم، بينما التوثيق العام لا يوضح البنية الداخلية للزر. "
-                    "اختر «بدون أزرار» لإرسال القالب الآن. ستبقى خيارات الأزرار متاحة في المسودة والمعاينة إلى أن نثبت عقد WATI الفعلي."
-                )
-            )
+        return super()._assert_can_submit()
 
     @api.model
     def _repair_provider_rejected_template_submissions(self):
