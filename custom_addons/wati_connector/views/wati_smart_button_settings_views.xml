@@ -5,8 +5,8 @@
         <field name="model">res.config.settings</field>
         <field name="inherit_id" ref="wati_connector.res_config_settings_view_form_wati"/>
         <field name="arch" type="xml">
-            <xpath expr="//app[@name='wati_connector']" position="inside">
-                <block title="زر WhatsApp الذكي" name="wati_smart_button_settings">
+            <xpath expr="//div[@id='wati_smart_button_settings_slot']" position="replace">
+                <block title="زر WhatsApp الذكي وسجل العميل" name="wati_smart_button_settings">
                     <div class="alert alert-info mb16" role="status">
                         <strong>زر واحد قابل للتركيب في أي مكان.</strong>
                         أضف أكثر من شاشة في CRM أو العملاء أو المبيعات أو أي تطبيق، وحدد من أين يقرأ النظام رقم WhatsApp لكل شاشة.
@@ -21,8 +21,8 @@
                             <div class="text-muted mt8">داخل كل مكان اختر التطبيق والموديل، ثم استخدم «اكتشاف ذكي» لتحديد Form View ورقم الجوال والعميل تلقائيًا قدر الإمكان.</div>
                         </div>
                     </setting>
-                    <setting string="Customer WhatsApp Timeline" help="يعرض تاريخ WhatsApp داخل بطاقة العميل اعتمادًا على الربط المباشر أو مطابقة رقم الجوال مع الرسائل القديمة.">
-                        <div class="text-muted">يظهر تبويب WhatsApp تلقائيًا للمستخدمين الذين لديهم صلاحية WATI، مع الرسائل الواردة والصادرة وحالة التسليم والقراءة.</div>
+                    <setting string="Customer WhatsApp Timeline" help="يعرض تاريخ WhatsApp داخل بطاقة العميل، ومع Smart Button يظهر سجل WhatsApp أيضًا داخل الشاشة المختارة اعتمادًا على العميل أو رقم الجوال.">
+                        <div class="text-muted">بطاقة العميل تعرض Timeline كامل، والشاشات المفعّل فيها Smart Button تحصل على زر «سجل WhatsApp» لعرض نفس التاريخ من مكان العمل الحالي.</div>
                     </setting>
                 </block>
             </xpath>
