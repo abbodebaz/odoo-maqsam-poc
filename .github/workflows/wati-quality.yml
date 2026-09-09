@@ -7,7 +7,9 @@ on:
   pull_request:
     paths:
       - 'custom_addons/**'
+      - 'delivery/**'
       - '.github/workflows/wati-quality.yml'
+      - '.github/workflows/wati-release-package.yml'
       - 'odoo-railway-start.sh'
 
 jobs:
@@ -45,17 +47,13 @@ jobs:
           python - <<'PY'
           from pathlib import Path
 
-          addons_root = Path('custom_addons')
+          root = Path('custom_addons')
           unexpected = sorted(
-              path.name
-              for path in addons_root.iterdir()
+              path.name for path in root.iterdir()
               if path.is_dir() and not path.name.startswith('wati_connector')
           )
           if unexpected:
-              raise SystemExit(
-                  'Non-WATI addons are not allowed in this delivery repository:\n'
-                  + '\n'.join(unexpected)
-              )
+              raise SystemExit('Non-WATI addon directories are not allowed in this delivery repository: ' + ', '.join(unexpected))
           print('WATI-only addon scope passed.')
           PY
 
@@ -217,6 +215,25 @@ jobs:
 
           print('Static WATI validation passed for:', ', '.join(module.name for module in modules))
           print('Aligned bundle version:', core_version)
+          PY
+
+      - name: Validate delivery packaging files
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          required = [
+              Path('delivery/README_FIRST.md'),
+              Path('delivery/INSTALLATION.md'),
+              Path('delivery/CONFIGURATION.md'),
+              Path('delivery/UPGRADE.md'),
+              Path('delivery/TROUBLESHOOTING.md'),
+              Path('.github/workflows/wati-release-package.yml'),
+          ]
+          missing = [str(path) for path in required if not path.exists()]
+          if missing:
+              raise SystemExit('Missing delivery packaging files:\n' + '\n'.join(missing))
+          print('Delivery packaging files present.')
           PY
 
       - name: Detect unreferenced inbox assets
