@@ -1,0 +1,72 @@
+name: WATI English Source Conversion
+
+on:
+  push:
+    branches:
+      - feat/wati-bilingual-ui
+
+permissions:
+  contents: write
+
+jobs:
+  convert:
+    if: ${{ !contains(github.event.head_commit.message, '[wati-en-generated]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/wati-bilingual-ui
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Convert WATI runtime copy to English
+        run: python scripts/wati_to_english.py
+
+      - name: Validate converted sources
+        run: |
+          for module in custom_addons/wati_connector*; do
+            [ -d "$module" ] || continue
+            python -m compileall -q "$module"
+          done
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          import xml.etree.ElementTree as ET
+
+          arabic = re.compile(r'[\u0600-\u06FF]')
+          skip = {'tests', 'docs', 'notes', 'i18n', 'migrations'}
+          bad = []
+          for module in Path('custom_addons').glob('wati_connector*'):
+              if not module.is_dir():
+                  continue
+              for path in module.rglob('*'):
+                  if not path.is_file() or path.suffix not in {'.py', '.xml', '.js'}:
+                      continue
+                  if skip.intersection(path.parts):
+                      continue
+                  text = path.read_text(encoding='utf-8')
+                  if arabic.search(text):
+                      bad.append(str(path))
+                  if path.suffix == '.xml':
+                      ET.parse(path)
+          if bad:
+              raise SystemExit('Arabic runtime source remains:\n' + '\n'.join(bad))
+          print('WATI runtime source is English-only and XML is valid.')
+          PY
+
+      - name: Commit generated English source
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add custom_addons/wati_connector* scripts/wati_to_english.py
+          if git diff --cached --quiet; then
+            echo "No conversion changes required."
+            exit 0
+          fi
+          git commit -m "i18n: convert WATI runtime source to English [wati-en-generated]"
+          git push origin HEAD:feat/wati-bilingual-ui
