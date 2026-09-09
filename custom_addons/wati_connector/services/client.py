@@ -1,10 +1,17 @@
 import json as jsonlib
+import re
 from urllib.parse import quote
 
 import requests
 
 from .config import WatiConfig
 from .exceptions import WatiConfigurationError, WatiRequestError
+
+
+_TEMPLATE_CREATION_ERROR_MESSAGE_RE = re.compile(
+    r"(?:parameter\s+is\s+null|please\s+check|\binvalid\b|\bfailed\b|\bfailure\b|\berror\b|\bmissing\b|\brequired\b|cannot|can't)",
+    re.IGNORECASE,
+)
 
 
 class WatiClient:
@@ -118,6 +125,33 @@ class WatiClient:
             )
         return response
 
+    def _ensure_template_creation_ack(self, response):
+        """Reject WATI's HTTP-200 template validation failures.
+
+        The template endpoint can return a plain ``message`` rather than the
+        usual ``error``/``success`` envelope. We only classify strong failure
+        language as an application error; neutral/success messages still pass
+        to the second-stage catalogue verification in the model layer.
+        """
+        response = self._ensure_application_success(response, "template creation")
+        try:
+            payload = response.json()
+        except ValueError:
+            return response
+        if not isinstance(payload, dict):
+            return response
+
+        message = payload.get("message")
+        message_text = message.strip() if isinstance(message, str) else ""
+        if message_text and _TEMPLATE_CREATION_ERROR_MESSAGE_RE.search(message_text):
+            detail = jsonlib.dumps(payload, ensure_ascii=False, default=str)[:1500]
+            raise WatiRequestError(
+                f"WATI template creation failed: {detail}",
+                status_code=response.status_code,
+                response_text=detail,
+            )
+        return response
+
     def get(self, path, **kwargs):
         return self._request("GET", path, **kwargs)
 
@@ -187,7 +221,7 @@ class WatiClient:
             json=payload,
             timeout=45,
         )
-        return self._ensure_application_success(response, "template creation")
+        return self._ensure_template_creation_ack(response)
 
     def delete_whatsapp_template(self, waba_id, name, language=None):
         """Delete one template language, or all languages when language is omitted."""
