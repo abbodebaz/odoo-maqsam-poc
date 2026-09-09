@@ -41,12 +41,12 @@ class WatiTemplateBuilder(models.Model):
     )
     builder_header_type = fields.Selection(
         _HEADER_TYPE_SELECTION,
-        string="Header type",
+        string="Draft header type",
         default="NONE",
         required=True,
         copy=True,
     )
-    builder_header_text = fields.Char(string="Header text", copy=True)
+    builder_header_text = fields.Char(string="Draft header text", copy=True)
     header_media_url = fields.Char(string="Media link", copy=True)
     header_media_filename = fields.Char(string="Document file name", copy=True)
 
