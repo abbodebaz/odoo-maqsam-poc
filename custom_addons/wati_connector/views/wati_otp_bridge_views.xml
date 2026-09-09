@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_otp_bridge_list" model="ir.ui.view">
+        <field name="name">wati.otp.bridge.list</field>
+        <field name="model">wati.otp.bridge</field>
+        <field name="arch" type="xml">
+            <list string="OTP Bridge" decoration-success="mapping_state == 'ready' and active" decoration-muted="not active">
+                <field name="sequence" widget="handle"/>
+                <field name="active" widget="boolean_toggle"/>
+                <field name="name"/>
+                <field name="technical_key"/>
+                <field name="trigger_mode"/>
+                <field name="app_menu_id" optional="show"/>
+                <field name="model_id"/>
+                <field name="otp_field_id" optional="show"/>
+                <field name="template_id"/>
+                <field name="mapping_state" widget="badge"/>
+                <field name="sent_count"/>
+                <field name="failure_count"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_wati_otp_bridge_form" model="ir.ui.view">
+        <field name="name">wati.otp.bridge.form</field>
+        <field name="model">wati.otp.bridge</field>
+        <field name="arch" type="xml">
+            <form string="WATI OTP Bridge">
+                <header>
+                    <button name="action_auto_detect_fields" type="object" string="اكتشاف الحقول تلقائيًا" icon="fa-magic" class="btn-secondary" invisible="trigger_mode != 'field' or not model_id"/>
+                    <button name="action_sync" type="object" string="مزامنة مع Odoo" icon="fa-refresh" class="btn-secondary" invisible="trigger_mode != 'field'"/>
+                    <button name="action_open_test" type="object" string="اختبار القالب" icon="fa-paper-plane" class="btn-primary" invisible="not template_id"/>
+                    <field name="active" widget="boolean_toggle"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_logs" type="object" class="oe_stat_button" icon="fa-list-alt">
+                            <field name="run_count" widget="statinfo" string="المحاولات"/>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="مثال: OTP تسجيل دخول السائق"/></h1>
+                    </div>
+
+                    <div class="alert alert-info" role="alert">
+                        <strong>OTP Bridge لا ينشئ ولا يتحقق من OTP.</strong>
+                        تطبيق الشركة يبقى المصدر الوحيد للرمز وصلاحيته والتحقق منه، وهذه الميزة مسؤولة فقط عن إرساله عبر قالب WATI Authentication المعتمد.
+                    </div>
+
+                    <group string="1. طريقة الربط">
+                        <group>
+                            <field name="trigger_mode"/>
+                            <field name="technical_key" placeholder="driver_login"/>
+                        </group>
+                        <group>
+                            <field name="mapping_state" readonly="1" widget="badge"/>
+                            <field name="mapping_summary" readonly="1" nolabel="1"/>
+                        </group>
+                    </group>
+
+                    <group string="2. أين يوجد OTP في Odoo؟">
+                        <group>
+                            <field name="available_app_menu_ids" invisible="1"/>
+                            <field name="available_model_ids" invisible="1"/>
+                            <field name="app_menu_id" options="{'no_create': True}" domain="[('id', 'in', available_app_menu_ids)]"/>
+                            <field name="model_id" options="{'no_create': True}" domain="[('id', 'in', available_model_ids)]"/>
+                        </group>
+                        <group invisible="trigger_mode != 'field'">
+                            <field name="otp_field_id" options="{'no_create': True}"/>
+                            <div class="text-muted">عند تغيّر هذا الحقل إلى قيمة غير فارغة سيقرأ النظام الرمز ويرسله، ولن يحفظ الرمز في سجل OTP Bridge.</div>
+                        </group>
+                        <group invisible="trigger_mode != 'hook'">
+                            <div class="alert alert-secondary" role="alert">
+                                في وضع Integration Hook يمكن ترك التطبيق والموديل فارغين. التطبيق المخصص يمرّر الرمز مباشرة باستخدام <strong>مفتاح التكامل</strong>.
+                            </div>
+                        </group>
+                    </group>
+
+                    <group string="3. من أين نأخذ رقم الجوال؟">
+                        <group>
+                            <field name="phone_field_id" options="{'no_create': True}" invisible="not model_id"/>
+                            <field name="phone_path" placeholder="مثال: driver_id.mobile أو partner_id.mobile" invisible="not model_id"/>
+                        </group>
+                        <group>
+                            <div class="text-muted" invisible="not model_id">اختر حقلًا مباشرًا أو استخدم مسارًا لعلاقة. زر «اكتشاف الحقول تلقائيًا» يجرب mobile / phone / WhatsApp والعلاقات الشائعة.</div>
+                        </group>
+                    </group>
+
+                    <group string="4. قالب WATI Authentication">
+                        <group>
+                            <field name="template_id" options="{'no_create': True}"/>
+                            <field name="code_param_name" placeholder="مثال: 1 أو otp"/>
+                        </group>
+                        <group>
+                            <field name="channel_number" placeholder="اختياري — اتركه فارغًا لاستخدام القناة التلقائية"/>
+                            <field name="dedup_seconds"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="المتابعة والسجل">
+                            <group>
+                                <group>
+                                    <field name="run_count" readonly="1"/>
+                                    <field name="sent_count" readonly="1"/>
+                                </group>
+                                <group>
+                                    <field name="failure_count" readonly="1"/>
+                                    <field name="skipped_count" readonly="1"/>
+                                </group>
+                            </group>
+                            <group string="المحرك الداخلي" groups="base.group_system">
+                                <field name="model_name" readonly="1"/>
+                                <field name="base_automation_id" readonly="1"/>
+                                <field name="server_action_id" readonly="1"/>
+                            </group>
+                        </page>
+
+                        <page string="دليل الاستخدام">
+                            <div class="o_wati_otp_guide">
+                                <h3>الطريقة الأولى: No-Code — بدون تعديل تطبيق السائق</h3>
+                                <ol>
+                                    <li>اختر «بدون برمجة — عند تغيّر حقل OTP».</li>
+                                    <li>اختر التطبيق ثم الموديل الذي يحتوي OTP.</li>
+                                    <li>اضغط «اكتشاف الحقول تلقائيًا»، ثم راجع حقل OTP ورقم الجوال.</li>
+                                    <li>اختر قالب Authentication المعتمد والمستورَد من WATI.</li>
+                                    <li>راجع متغير OTP في القالب؛ غالبًا يتم تعبئته تلقائيًا من أول متغير.</li>
+                                    <li>اضغط «اختبار القالب» على رقم اختبار، ثم فعّل الربط واضغط «مزامنة مع Odoo».</li>
+                                    <li>من هذه اللحظة: تطبيق الشركة يولد OTP كالمعتاد، وWATI Connector يرسله تلقائيًا عند تغيّر الحقل.</li>
+                                </ol>
+
+                                <h3 class="mt-4">الطريقة الثانية: Integration Hook — إذا OTP لا يُحفظ في حقل</h3>
+                                <p>إذا تطبيق السائق يولّد الرمز داخل Method فقط، اختر Integration Hook وأعطِ الربط مفتاحًا ثابتًا مثل <code>driver_login</code>. يضيف مطور التطبيق نداءً واحدًا فقط:</p>
+                                <pre>env["wati.otp.bridge"].sudo().send_by_key(
+    "driver_login",
+    record=driver_record,
+    code=otp_code,
+    phone=driver_mobile,
+)</pre>
+                                <p>يمكن حذف <code>phone</code> إذا تم تحديد حقل/مسار الجوال في الربط. فشل WATI يعيد <code>False</code> ولا يجب أن يوقف منطق OTP الأصلي.</p>
+
+                                <h3 class="mt-4">مسؤوليات كل نظام</h3>
+                                <ul>
+                                    <li><strong>تطبيق الشركة:</strong> توليد OTP، مدة الصلاحية، عدد المحاولات، والتحقق من الرمز.</li>
+                                    <li><strong>OTP Bridge:</strong> قراءة/استقبال الرمز، منع الإرسال المكرر، وإرساله عبر WATI.</li>
+                                    <li><strong>WATI/Meta:</strong> قالب Authentication المعتمد وتسليم رسالة WhatsApp.</li>
+                                </ul>
+
+                                <h3 class="mt-4">الأمان</h3>
+                                <ul>
+                                    <li>لا يتم حفظ OTP كنص في سجل OTP Bridge.</li>
+                                    <li>السجل يحتفظ فقط ببصمة SHA-256 للرمز ورقم جوال مخفي جزئيًا.</li>
+                                    <li>الإرسال محمي بـ Durable Idempotency لمنع إرسال نفس OTP مرتين عند Retry من Odoo.</li>
+                                    <li>لا تستخدم OTP Bridge لتوليد الرمز أو التحقق منه؛ يجب أن يبقى ذلك داخل التطبيق الأصلي.</li>
+                                </ul>
+                            </div>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_wati_otp_bridges" model="ir.actions.act_window">
+        <field name="name">OTP Bridge</field>
+        <field name="res_model">wati.otp.bridge</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">اربط OTP الموجود في أي تطبيق Odoo مع WATI بدون بناء تكامل جديد</p>
+            <p>اختر التطبيق والموديل وحقل OTP ورقم الجوال وقالب Authentication، أو استخدم Integration Hook إذا كان الرمز لا يُحفظ في حقل.</p>
+        </field>
+    </record>
+
+    <record id="view_wati_otp_log_list" model="ir.ui.view">
+        <field name="name">wati.otp.log.list</field>
+        <field name="model">wati.otp.log</field>
+        <field name="arch" type="xml">
+            <list string="سجل OTP" create="false" edit="false" delete="false" decoration-success="status == 'sent'" decoration-danger="status == 'failed'" decoration-warning="status == 'skipped'">
+                <field name="create_date"/>
+                <field name="status" widget="badge"/>
+                <field name="bridge_id"/>
+                <field name="source"/>
+                <field name="res_name"/>
+                <field name="phone_masked"/>
+                <field name="template_name"/>
+                <field name="triggered_by_id"/>
+                <field name="error_message" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_wati_otp_log_form" model="ir.ui.view">
+        <field name="name">wati.otp.log.form</field>
+        <field name="model">wati.otp.log</field>
+        <field name="arch" type="xml">
+            <form string="تفاصيل إرسال OTP" create="false" edit="false" delete="false">
+                <sheet>
+                    <div class="alert alert-info" role="alert">لأسباب أمنية لا يتم حفظ أو عرض رمز OTP نفسه هنا.</div>
+                    <group>
+                        <group>
+                            <field name="status" widget="badge"/>
+                            <field name="bridge_id"/>
+                            <field name="source"/>
+                            <field name="template_name"/>
+                            <field name="phone_masked"/>
+                        </group>
+                        <group>
+                            <field name="model_name"/>
+                            <field name="res_id"/>
+                            <field name="res_name"/>
+                            <field name="triggered_by_id"/>
+                            <field name="create_date"/>
+                        </group>
+                    </group>
+                    <group string="الخطأ" invisible="not error_message">
+                        <field name="error_message" nolabel="1"/>
+                    </group>
+                    <group string="استجابة WATI المنقحة" invisible="not provider_excerpt">
+                        <field name="provider_excerpt" nolabel="1"/>
+                    </group>
+                    <group string="تشخيص تقني" groups="base.group_system">
+                        <field name="code_fingerprint" readonly="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_wati_otp_logs" model="ir.actions.act_window">
+        <field name="name">سجل OTP</field>
+        <field name="res_model">wati.otp.log</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="view_wati_otp_test_wizard_form" model="ir.ui.view">
+        <field name="name">wati.otp.test.wizard.form</field>
+        <field name="model">wati.otp.test.wizard</field>
+        <field name="arch" type="xml">
+            <form string="اختبار OTP Bridge">
+                <div class="alert alert-warning" role="alert">هذا اختبار إرسال حقيقي عبر WhatsApp. استخدم رقمك أو رقم اختبار مصرحًا به.</div>
+                <group>
+                    <field name="bridge_id"/>
+                    <field name="phone" placeholder="9665XXXXXXXX"/>
+                    <field name="code" placeholder="123456"/>
+                </group>
+                <footer>
+                    <button name="action_send" type="object" string="إرسال OTP تجريبي" class="btn-primary" icon="fa-paper-plane"/>
+                    <button string="إلغاء" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <menuitem id="menu_wati_otp_bridges" name="🔐 OTP Bridge" parent="menu_wati_root" action="action_wati_otp_bridges" groups="wati_connector.group_wati_admin" sequence="32"/>
+    <menuitem id="menu_wati_otp_logs" name="سجل OTP" parent="menu_wati_root" action="action_wati_otp_logs" groups="wati_connector.group_wati_supervisor" sequence="36"/>
+</odoo>
