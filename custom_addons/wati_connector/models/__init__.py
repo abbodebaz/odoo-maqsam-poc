@@ -43,3 +43,4 @@ from . import wati_template_variable_save
 from . import wati_template_submission_truth
 from . import wati_template_button_guard
 from . import wati_template_lifecycle_final
+from . import wati_template_lifecycle_provider_scope
