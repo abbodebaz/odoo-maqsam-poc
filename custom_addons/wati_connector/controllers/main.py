@@ -297,7 +297,7 @@ class WatiWebhookController(http.Controller):
         idem = WatiIdempotency(request.env)
         scope = f"outbound:text:user:{request.env.user.id}"
         key = (request_id or "").strip() or idem.digest(conversation_id, message or "")
-        if not idem.acquire(scope, key, ttl_seconds=120):
+        if not idem.acquire_durable(scope, key, ttl_seconds=120):
             return request.make_json_response(
                 {
                     "ok": True,
@@ -310,12 +310,14 @@ class WatiWebhookController(http.Controller):
         try:
             conversation.send_session_message(message or "")
         except UserError as exc:
-            idem.release(scope, key)
+            idem.release_durable(scope, key)
             return request.make_json_response(
                 {"ok": False, "message": str(exc)}, status=400
             )
         except Exception:
-            idem.release(scope, key)
+            # Do not release the durable key on an unknown failure. WATI may
+            # already have accepted the message before the local transaction
+            # failed, and Odoo can retry this route automatically.
             raise
 
         return request.make_json_response(

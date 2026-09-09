@@ -3,7 +3,7 @@ from datetime import timedelta
 
 from psycopg2 import IntegrityError
 
-from odoo import fields
+from odoo import SUPERUSER_ID, api, fields
 
 
 class WatiIdempotency:
@@ -12,6 +12,14 @@ class WatiIdempotency:
     Process-local dictionaries are unsafe when Odoo runs multiple workers or
     multiple containers. This service stores short-lived request keys in
     PostgreSQL, so every worker observes the same idempotency state.
+
+    Outbound provider calls need the durable methods below. Odoo may
+    automatically retry an HTTP transaction after a serialization failure. If
+    the idempotency key is written only in that transaction, the rollback also
+    removes the key even though WATI may already have accepted the message.
+    A retry would then send the same user action again. Durable acquisition uses
+    its own cursor and commit so the guard survives rollback/retry of the outer
+    request transaction.
     """
 
     DEFAULT_TTL_SECONDS = 180
@@ -64,6 +72,30 @@ class WatiIdempotency:
             [("scope", "=", scope), ("key", "=", key)],
             limit=1,
         ).unlink()
+
+    def acquire_durable(self, scope, key, *, ttl_seconds=None):
+        """Acquire a key in an independent committed transaction.
+
+        This method must protect any non-transactional external side effect such
+        as sending a WATI message. The committed key remains visible if Odoo
+        rolls back and retries the surrounding HTTP request.
+        """
+        with self.env.registry.cursor() as cr:
+            durable_env = api.Environment(cr, SUPERUSER_ID, {})
+            acquired = WatiIdempotency(durable_env).acquire(
+                scope,
+                key,
+                ttl_seconds=ttl_seconds,
+            )
+            cr.commit()
+            return acquired
+
+    def release_durable(self, scope, key):
+        """Release a durable key after a known pre-acceptance provider failure."""
+        with self.env.registry.cursor() as cr:
+            durable_env = api.Environment(cr, SUPERUSER_ID, {})
+            WatiIdempotency(durable_env).release(scope, key)
+            cr.commit()
 
     def cleanup_expired(self, *, limit=1000):
         now = fields.Datetime.now()
