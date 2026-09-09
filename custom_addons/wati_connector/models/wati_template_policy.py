@@ -14,6 +14,15 @@ _PROTECTED_CONTENT_FIELDS = {
     "body",
     "footer",
     "variable_ids",
+    "template_kind",
+    "builder_header_type",
+    "builder_header_text",
+    "header_media_url",
+    "header_media_filename",
+    "builder_button_type",
+    "builder_button_text",
+    "builder_button_url",
+    "builder_button_phone",
 }
 
 
