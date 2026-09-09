@@ -43,6 +43,49 @@
                         </setting>
                     </block>
 
+                    <block title="صلاحيات مساحة WhatsApp" name="wati_workspace_access_settings">
+                        <div class="alert alert-info mb16" role="status">
+                            <strong>تحكم مركزي في ظهور الخدمات.</strong>
+                            اختر من يستطيع استخدام كل جزء من مساحة WhatsApp. خيار «مشرفو WhatsApp فقط» يعتمد على دور
+                            <strong>WATI Administrator</strong> داخل صلاحيات المستخدم، بدون الحاجة لمنح المستخدم صلاحيات مدير Odoo الكاملة.
+                        </div>
+
+                        <setting string="سجل المحادثات" help="إظهار شاشة سجل المحادثات التاريخية. صندوق الوارد اليومي يبقى مستقلًا عن هذا الخيار.">
+                            <div class="content-group">
+                                <field name="wati_access_conversations" class="w-50"/>
+                                <div class="text-muted mt8">مناسب لخدمة العملاء إذا احتاجوا البحث التاريخي، أو اجعله للمشرفين فقط إذا أردت واجهة أبسط للموظفين.</div>
+                            </div>
+                        </setting>
+
+                        <setting string="سجل الرسائل" help="تحديد من يستطيع فتح السجل الكامل للرسائل الواردة والصادرة.">
+                            <div class="content-group">
+                                <field name="wati_access_messages" class="w-50"/>
+                                <div class="text-muted mt8">هذا الخيار يتحكم في شاشة السجل، بينما صندوق الوارد يستمر في عرض الرسائل اللازمة للعمل اليومي.</div>
+                            </div>
+                        </setting>
+
+                        <setting string="مركز الأتمتة" help="تحديد من يستطيع إنشاء وتعديل وتفعيل أتمتات WhatsApp.">
+                            <div class="content-group">
+                                <field name="wati_access_automation" class="w-50"/>
+                                <div class="text-muted mt8">ننصح بإبقائه للمشرفين فقط في بيئة الشركات لأن أي تعديل هنا قد يغير سلوك الإرسال التلقائي.</div>
+                            </div>
+                        </setting>
+
+                        <setting string="سجل التشغيل" help="تحديد من يستطيع مراجعة نتائج تشغيل الأتمتات وأخطاء الإرسال.">
+                            <div class="content-group">
+                                <field name="wati_access_automation_logs" class="w-50"/>
+                                <div class="text-muted mt8">مفيد للمديرة أو فريق الجودة لمتابعة ما تم تشغيله بدون كشف التفاصيل التقنية لباقي الموظفين.</div>
+                            </div>
+                        </setting>
+
+                        <setting string="مراقبة Webhook" help="تحديد من يستطيع فتح مركز مراقبة تكامل WATI والـCallbacks وحالات المعالجة.">
+                            <div class="content-group">
+                                <field name="wati_access_monitor" class="w-50"/>
+                                <div class="text-muted mt8">ميزة تشغيلية متقدمة؛ الوضع الافتراضي يجعلها لمشرفي WhatsApp فقط.</div>
+                            </div>
+                        </setting>
+                    </block>
+
                     <block title="ميزات صندوق الوارد" name="wati_inbox_feature_settings">
                         <setting string="المحادثات السريعة داخل Odoo" help="إظهار زر WhatsApp في شريط Odoo لفتح نافذة محادثات سريعة من أي شاشة، بدون مغادرة العمل الحالي.">
                             <field name="wati_enable_mini_inbox"/>
