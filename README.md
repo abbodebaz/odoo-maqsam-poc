@@ -12,6 +12,10 @@ Production-oriented WATI integration for Odoo 19. The connector keeps WhatsApp o
 
 The core module intentionally does not depend on CRM, Sales, Accounting, or Project. Optional Odoo models stay in their dedicated integration modules.
 
+## Repository scope
+
+This repository is WATI-only. `custom_addons/` is reserved for the `wati_connector*` delivery bundle, and CI rejects unrelated addons from being introduced into the repository.
+
 ## Architecture
 
 Provider HTTP calls are centralized in `wati_connector/services/`. Controllers remain transport-oriented and delegate business rules to models/services. Persistent correctness, idempotency, message correlation, template lifecycle state, automation logs, and webhook reconciliation are database-backed.
@@ -32,6 +36,7 @@ The delivery bundle is version-aligned. Release `19.0.11.0.2` is the pre-deliver
 
 `.github/workflows/wati-quality.yml` validates:
 
+- WATI-only addon scope under `custom_addons/`.
 - Python syntax and critical Ruff correctness rules.
 - XML and manifest integrity.
 - English-only runtime source outside `i18n/`.
@@ -47,7 +52,3 @@ The delivery bundle is version-aligned. Release `19.0.11.0.2` is the pre-deliver
 The Railway entrypoint is `odoo-railway-start.sh`. It waits for PostgreSQL, installs/upgrades the configured WATI module set, clears generated Odoo web assets after an upgrade, and starts Odoo 19.
 
 The module set can be configured with `WATI_MODULES`. The default is `wati_connector`.
-
-## Repository note
-
-`maqsam_connector` is a separate legacy/POC integration and is not part of the WATI delivery bundle or the default WATI deployment path.
