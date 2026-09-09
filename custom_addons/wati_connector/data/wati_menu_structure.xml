@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Keep the WhatsApp app navigation compact by grouping related pages.
+        This file is loaded after all feature menus so it can safely re-parent
+        existing menu records without touching their actions or security groups.
+    -->
+
+    <menuitem id="menu_wati_conversations_group"
+              name="المحادثات"
+              parent="wati_connector.menu_wati_root"
+              sequence="10"/>
+
+    <menuitem id="menu_wati_automation_group"
+              name="الأتمتة"
+              parent="wati_connector.menu_wati_root"
+              sequence="30"/>
+
+    <menuitem id="menu_wati_otp_group"
+              name="OTP"
+              parent="wati_connector.menu_wati_root"
+              sequence="40"/>
+
+    <!-- Conversations -->
+    <record id="wati_connector.menu_wati_inbox" model="ir.ui.menu">
+        <field name="parent_id" ref="wati_connector.menu_wati_conversations_group"/>
+        <field name="sequence">10</field>
+    </record>
+    <record id="wati_connector.menu_wati_conversations" model="ir.ui.menu">
+        <field name="parent_id" ref="wati_connector.menu_wati_conversations_group"/>
+        <field name="sequence">20</field>
+    </record>
+    <record id="wati_connector.menu_wati_messages" model="ir.ui.menu">
+        <field name="parent_id" ref="wati_connector.menu_wati_conversations_group"/>
+        <field name="sequence">30</field>
+    </record>
+
+    <!-- Templates stays one click away because it is already a single center. -->
+    <record id="wati_connector.menu_wati_templates" model="ir.ui.menu">
+        <field name="name">القوالب</field>
+        <field name="sequence">20</field>
+    </record>
+
+    <!-- Automation -->
+    <record id="wati_connector.menu_wati_automation_rules" model="ir.ui.menu">
+        <field name="name">مركز الأتمتة</field>
+        <field name="parent_id" ref="wati_connector.menu_wati_automation_group"/>
+        <field name="sequence">10</field>
+    </record>
+    <record id="wati_connector.menu_wati_automation_logs" model="ir.ui.menu">
+        <field name="parent_id" ref="wati_connector.menu_wati_automation_group"/>
+        <field name="sequence">20</field>
+    </record>
+
+    <!-- OTP -->
+    <record id="wati_connector.menu_wati_otp_bridges" model="ir.ui.menu">
+        <field name="name">OTP Bridge</field>
+        <field name="parent_id" ref="wati_connector.menu_wati_otp_group"/>
+        <field name="sequence">10</field>
+    </record>
+    <record id="wati_connector.menu_wati_otp_logs" model="ir.ui.menu">
+        <field name="parent_id" ref="wati_connector.menu_wati_otp_group"/>
+        <field name="sequence">20</field>
+    </record>
+
+    <!-- Keep monitoring/help/settings as concise top-level destinations. -->
+    <record id="wati_connector.menu_wati_webhook_events" model="ir.ui.menu">
+        <field name="name">المراقبة</field>
+        <field name="sequence">50</field>
+    </record>
+    <record id="wati_connector.menu_wati_help" model="ir.ui.menu">
+        <field name="name">المساعدة</field>
+        <field name="sequence">90</field>
+    </record>
+    <record id="wati_connector.menu_wati_settings" model="ir.ui.menu">
+        <field name="sequence">100</field>
+    </record>
+</odoo>
