@@ -1,9 +1,10 @@
-/* Keep the help center scrollable inside Odoo's action viewport.
+/* Keep the WhatsApp workspace and help center scrollable inside Odoo's action viewport.
  * Odoo's action manager is a constrained flex container; using min-height: 100%
  * with content-box padding can make the bottom of a client action unreachable.
- * This layer gives the client action its own bounded scrolling surface without
+ * This layer gives both client actions their own bounded scrolling surface without
  * leaking scroll responsibility to the browser window.
  */
+.o_wati_workspace,
 .o_wati_help_center {
     height: 100%;
     min-height: 0;
@@ -16,6 +17,13 @@
     -webkit-overflow-scrolling: touch;
     scrollbar-gutter: stable;
     padding-bottom: max(48px, env(safe-area-inset-bottom));
+}
+
+/* Give the workspace's last section enough breathing room so the final cards
+ * remain reachable above Odoo/browser chrome on shorter screens. */
+.o_wati_workspace > :last-child,
+.o_wati_workspace .o_wati_workspace_section:last-child {
+    margin-bottom: 18px;
 }
 
 .o_wati_help_layout {
@@ -34,9 +42,15 @@
 }
 
 @media (max-width: 900px) {
+    .o_wati_workspace,
     .o_wati_help_center {
         padding-bottom: max(32px, env(safe-area-inset-bottom));
         scrollbar-gutter: auto;
+    }
+
+    .o_wati_workspace > :last-child,
+    .o_wati_workspace .o_wati_workspace_section:last-child {
+        margin-bottom: 24px;
     }
 
     .o_wati_help_layout {
