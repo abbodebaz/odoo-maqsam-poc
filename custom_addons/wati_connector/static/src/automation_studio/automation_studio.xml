@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
     <t t-name="wati_connector.WatiAutomationStudio">
-        <div class="o_wati_studio" dir="rtl">
+        <div class="o_wati_studio" dir="ltr">
             <div class="o_wati_studio_hero">
                 <div class="o_wati_studio_hero_copy">
                     <div class="o_wati_studio_eyebrow">WhatsApp Automation Studio</div>
                     <h1>Automation Center</h1>
-                    <p>Build trips WhatsApp Smart inside OdooMonitor its results, and know which automation needs attention before it affects the customer.</p>
+                    <p>Build smart WhatsApp automations inside Odoo, monitor their results, and quickly identify anything that needs attention.</p>
                 </div>
                 <div class="o_wati_studio_hero_actions">
                     <button class="btn btn-light o_wati_studio_logs" t-on-click="openLogs">
                         <i class="fa fa-list-alt me-2"/> Run Log
                     </button>
                     <button class="btn btn-primary o_wati_studio_create" t-on-click="createAutomation">
-                        <i class="fa fa-plus me-2"/> Create automation
+                        <i class="fa fa-plus me-2"/> Create Automation
                     </button>
                 </div>
             </div>
@@ -21,19 +21,19 @@
             <div class="o_wati_studio_kpis">
                 <div class="o_wati_kpi_card">
                     <div class="o_wati_kpi_icon is-active"><i class="fa fa-bolt"/></div>
-                    <div><span>Active automation</span><strong t-esc="state.kpis.active"/></div>
+                    <div><span>Active Automations</span><strong t-esc="state.kpis.active"/></div>
                 </div>
                 <div class="o_wati_kpi_card">
                     <div class="o_wati_kpi_icon is-attention"><i class="fa fa-exclamation-triangle"/></div>
-                    <div><span>Need attention</span><strong t-esc="state.kpis.attention"/></div>
+                    <div><span>Need Attention</span><strong t-esc="state.kpis.attention"/></div>
                 </div>
                 <div class="o_wati_kpi_card">
                     <div class="o_wati_kpi_icon is-runs"><i class="fa fa-play-circle"/></div>
-                    <div><span>Today’s plays</span><strong t-esc="state.kpis.runsToday"/></div>
+                    <div><span>Runs Today</span><strong t-esc="state.kpis.runsToday"/></div>
                 </div>
                 <div class="o_wati_kpi_card">
                     <div class="o_wati_kpi_icon is-success"><i class="fa fa-line-chart"/></div>
-                    <div><span>Success rate</span><strong><t t-esc="state.kpis.successRate"/>%</strong></div>
+                    <div><span>Success Rate</span><strong><t t-esc="state.kpis.successRate"/>%</strong></div>
                 </div>
             </div>
 
@@ -41,8 +41,8 @@
                 <div class="o_wati_studio_filters">
                     <button t-att-class="'o_wati_filter ' + (state.filter === 'all' ? 'is-active' : '')" t-on-click="() => this.setFilter('all')">All</button>
                     <button t-att-class="'o_wati_filter ' + (state.filter === 'active' ? 'is-active' : '')" t-on-click="() => this.setFilter('active')">Active</button>
-                    <button t-att-class="'o_wati_filter ' + (state.filter === 'attention' ? 'is-active' : '')" t-on-click="() => this.setFilter('attention')">Need attention</button>
-                    <button t-att-class="'o_wati_filter ' + (state.filter === 'paused' ? 'is-active' : '')" t-on-click="() => this.setFilter('paused')">Stopped</button>
+                    <button t-att-class="'o_wati_filter ' + (state.filter === 'attention' ? 'is-active' : '')" t-on-click="() => this.setFilter('attention')">Need Attention</button>
+                    <button t-att-class="'o_wati_filter ' + (state.filter === 'paused' ? 'is-active' : '')" t-on-click="() => this.setFilter('paused')">Paused</button>
                 </div>
                 <div class="o_wati_studio_search">
                     <i class="fa fa-search"/>
@@ -65,19 +65,19 @@
                                         <h3 t-esc="rule.name"/>
                                         <span t-att-class="'o_wati_rule_status ' + (rule.active ? 'is-on' : 'is-off')">
                                             <i t-att-class="rule.active ? 'fa fa-circle' : 'fa fa-pause-circle'"/>
-                                            <t t-esc="rule.active ? 'Active' : 'Stopped'"/>
+                                            <t t-esc="rule.active ? 'Active' : 'Paused'"/>
                                         </span>
                                     </div>
                                     <span class="o_wati_rule_model" t-esc="modelLabel(rule)"/>
                                 </div>
                             </div>
 
-                            <div class="o_wati_rule_summary" t-esc="rule.human_summary || 'Automation WhatsApp inside Odoo'"/>
+                            <div class="o_wati_rule_summary" t-esc="rule.human_summary || 'WhatsApp automation inside Odoo'"/>
 
                             <div class="o_wati_rule_meta">
                                 <div class="o_wati_rule_meta_item">
                                     <span>Template</span>
-                                    <strong t-esc="rule.template_name || 'Not yet determined'"/>
+                                    <strong t-esc="rule.template_name || 'Not selected yet'"/>
                                 </div>
                                 <div class="o_wati_rule_meta_item">
                                     <span>Readiness</span>
@@ -92,17 +92,17 @@
                             </div>
 
                             <div class="o_wati_rule_footer">
-                                <span>Open automation</span>
-                                <i class="fa fa-arrow-left"/>
+                                <span>Open Automation</span>
+                                <i class="fa fa-arrow-right"/>
                             </div>
                         </article>
                     </t>
                 </t>
                 <div t-else="" class="o_wati_studio_empty">
                     <div class="o_wati_empty_icon"><i class="fa fa-bolt"/></div>
-                    <h3>There is no automation here</h3>
-                    <p>Change the filter or create your first ride WhatsApp Smart.</p>
-                    <button class="btn btn-primary" t-on-click="createAutomation">Create automation</button>
+                    <h3>No automations found</h3>
+                    <p>Change the filter or create your first smart WhatsApp automation.</p>
+                    <button class="btn btn-primary" t-on-click="createAutomation">Create Automation</button>
                 </div>
             </div>
         </div>
