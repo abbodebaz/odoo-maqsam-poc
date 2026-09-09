@@ -34,6 +34,7 @@ from . import wati_webhook_monitor_backfill
 from . import wati_workspace
 from . import wati_workspace_access
 from . import wati_template
+from . import wati_template_builder
 from . import wati_template_policy
 from . import wati_template_webhook
 from . import wati_template_compat
