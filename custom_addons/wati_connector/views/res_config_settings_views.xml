@@ -26,7 +26,7 @@
                                 </div>
                             </div>
                         </setting>
-                        <setting string="Incoming Webhook" help="يستقبل رسائل العملاء وحالات الرسائل من WATI داخل Odoo.">
+                        <setting string="Incoming Webhook" help="يستقبل رسائل العملاء وحالات الرسائل وتحديثات القوالب من WATI داخل Odoo.">
                             <div class="content-group">
                                 <div class="row mt16">
                                     <label for="wati_webhook_token" class="col-lg-3 o_light_label"/>
@@ -37,7 +37,7 @@
                                     <field name="wati_webhook_url" readonly="1" class="col-lg-7"/>
                                 </div>
                                 <div class="text-muted mt8">
-                                    انسخ Webhook URL كاملًا كما هو إلى WATI. لا تستخدم WATI API Token في رابط الـWebhook.
+                                    انسخ Webhook URL كاملًا كما هو إلى WATI. فعّل أحداث الرسائل وأحداث القوالب Template Reviewed / Quality / Category حتى تتحدث الحالات تلقائيًا.
                                 </div>
                             </div>
                         </setting>
@@ -61,6 +61,13 @@
                             <div class="content-group">
                                 <field name="wati_access_messages" class="w-50"/>
                                 <div class="text-muted mt8">هذا الخيار يتحكم في شاشة السجل، بينما صندوق الوارد يستمر في عرض الرسائل اللازمة للعمل اليومي.</div>
+                            </div>
+                        </setting>
+
+                        <setting string="مركز القوالب" help="تحديد من يستطيع إنشاء قوالب WhatsApp ومزامنتها وإرسالها إلى WATI/Meta للمراجعة.">
+                            <div class="content-group">
+                                <field name="wati_access_templates" class="w-50"/>
+                                <div class="text-muted mt8">ننصح بجعله للمشرفين فقط لأن إنشاء أو حذف قالب يؤثر مباشرة على الأصول المعتمدة في WhatsApp Business.</div>
                             </div>
                         </setting>
 
