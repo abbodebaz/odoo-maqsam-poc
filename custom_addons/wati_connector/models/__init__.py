@@ -41,3 +41,4 @@ from . import wati_template_compat
 from . import wati_template_provider_policy
 from . import wati_template_variable_save
 from . import wati_template_submission_truth
+from . import wati_template_button_guard
