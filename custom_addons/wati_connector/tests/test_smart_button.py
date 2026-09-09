@@ -49,6 +49,7 @@ class TestWatiSmartButton(TransactionCase):
         self.assertIn("fa-whatsapp", arch)
         self.assertIn(str(location.id), arch)
         self.assertIn("wati_connector.group_wati_agent", arch)
+        self.assertIn("base.group_system", arch)
 
         location.active = False
         self.assertFalse(location.generated_view_id.active)
