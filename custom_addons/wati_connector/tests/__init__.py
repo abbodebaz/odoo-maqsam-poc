@@ -13,3 +13,4 @@ from . import test_template_management
 from . import test_template_button_compat
 from . import test_template_provider_policy
 from . import test_template_builder
+from . import test_template_variable_save
