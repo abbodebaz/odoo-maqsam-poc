@@ -31,12 +31,12 @@
 
     function syncPhone() {
         if (!phoneValue) return;
-        phoneValue.textContent = (chatNumber?.textContent || "").trim() || "غير متوفر";
+        phoneValue.textContent = (chatNumber?.textContent || "").trim() || "Not available";
     }
 
     function openDrawer() {
         if (!selectedConversationId()) {
-            notify("اختر محادثة أولًا.", true);
+            notify("Choose a conversation first.", true);
             return;
         }
         syncPhone();

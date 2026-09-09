@@ -142,7 +142,7 @@ def _template_param_names(item):
 
 def _error_summary(payload):
     if not isinstance(payload, dict):
-        return "WATI أعاد نتيجة فشل غير مفهومة."
+        return "WATI It returned an incomprehensible failure result."
     errors = payload.get("errors")
     if isinstance(errors, dict):
         parts = []
@@ -151,9 +151,9 @@ def _error_summary(payload):
         invalid_numbers = errors.get("invalidWhatsappNumbers") or []
         invalid_params = errors.get("invalidCustomParameters") or []
         if invalid_numbers:
-            parts.append("أرقام غير صالحة: " + ", ".join(map(str, invalid_numbers)))
+            parts.append("Invalid numbers: " + ", ".join(map(str, invalid_numbers)))
         if invalid_params:
-            parts.append("متغيرات القالب: " + " | ".join(map(str, invalid_params)))
+            parts.append("Template variables: " + " | ".join(map(str, invalid_params)))
         if parts:
             return " — ".join(parts)
     if errors:
@@ -161,7 +161,7 @@ def _error_summary(payload):
             return json.dumps(errors, ensure_ascii=False, default=str)[:1000]
         except Exception:
             return str(errors)[:1000]
-    return "WATI أعاد result=false؛ لم يتم إرسال الرسالة."
+    return "WATI He repeated result=false; The message was not sent."
 
 
 class WatiAutomationRuleImprovements(models.Model):
@@ -216,14 +216,14 @@ class WatiAutomationRuleImprovements(models.Model):
     def action_fetch_template_params(self):
         self.ensure_one()
         if not self.template_name:
-            raise UserError(_("اكتب أو اختر اسم WATI Template أولًا."))
+            raise UserError(_("Type or choose a name WATI Template First."))
         try:
             response = WatiClient(self.env).get_message_templates(page_size=200, page_number=1)
             payload = response.json()
         except WatiError as exc:
-            raise UserError(_("تعذر الاتصال بـ WATI لجلب القالب: %s", exc)) from exc
+            raise UserError(_("Unable to contact WATI To bring the template: %s", exc)) from exc
         except ValueError as exc:
-            raise UserError(_("WATI أعاد استجابة غير مفهومة عند جلب القوالب.")) from exc
+            raise UserError(_("WATI Returned an unintelligible response when fetching templates.")) from exc
 
         wanted = (self.template_name or "").strip().casefold()
         template = next(
@@ -231,7 +231,7 @@ class WatiAutomationRuleImprovements(models.Model):
             None,
         )
         if not template:
-            raise UserError(_("لم أجد Template باسم %s داخل حساب WATI.", self.template_name))
+            raise UserError(_("I did not find Template In the name of %s Inside an account WATI.", self.template_name))
 
         param_names = _template_param_names(template)
         created = self._sync_template_parameters(param_names)
@@ -248,23 +248,23 @@ class WatiAutomationRuleImprovements(models.Model):
                 auto_mapped = 0
 
         if not param_names:
-            message = _("تم العثور على القالب، ولا توجد متغيرات BODY واضحة فيه.")
+            message = _("Template found, no variables found BODY Clear in it.")
             notification_type = "warning"
         else:
             details = []
             if created:
-                details.append(_("تم إنشاء %s صفوف مطابقة للقالب.", created))
+                details.append(_("has been created %s Rows matching the template.", created))
             if auto_mapped:
-                details.append(_("تم ربط %s متغيرات تلقائيًا.", auto_mapped))
+                details.append(_("has been linked %s variables automatically.", auto_mapped))
             suffix = " " + " ".join(details) if details else ""
-            message = _("تمت مزامنة %(total)s متغيرات من القالب بدون تكرار.%(suffix)s", total=len(param_names), suffix=suffix)
+            message = _("Synchronized %(total)s Variables from the template without duplication.%(suffix)s", total=len(param_names), suffix=suffix)
             notification_type = "success"
 
         return {
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
-                "title": _("متغيرات WATI Template"),
+                "title": _("variables WATI Template"),
                 "message": message,
                 "type": notification_type,
                 "sticky": False,
@@ -285,9 +285,9 @@ class WatiAutomationRuleImprovements(models.Model):
                 "failed",
                 phone=phone,
                 error_message=(
-                    "لم يتم استدعاء WATI لأن متغيرات القالب التالية بدون قيمة: "
+                    "Not called WATI Because the following template variables are worthless: "
                     + ", ".join(filter(None, empty_params))
-                    + ". اربطها بحقل Odoo أو ضع قيمة احتياطية."
+                    + ". Link it to a field Odoo Or set a reserve value."
                 ),
             ))
             return False

@@ -4,12 +4,12 @@
         <field name="name">wati.smart.button.location.list</field>
         <field name="model">wati.smart.button.location</field>
         <field name="arch" type="xml">
-            <list string="أماكن زر WhatsApp" decoration-success="mapping_state == 'ready' and active" decoration-muted="not active">
+            <list string="Button places WhatsApp" decoration-success="mapping_state == 'ready' and active" decoration-muted="not active">
                 <field name="sequence" widget="handle"/>
                 <field name="active" widget="boolean_toggle"/>
                 <field name="name"/>
-                <field name="app_menu_id" string="التطبيق"/>
-                <field name="model_id" string="الموديل"/>
+                <field name="app_menu_id" string="Application"/>
+                <field name="model_id" string="Model"/>
                 <field name="button_label"/>
                 <field name="phone_field_id" optional="show"/>
                 <field name="phone_path" optional="show"/>
@@ -22,23 +22,23 @@
         <field name="name">wati.smart.button.location.form</field>
         <field name="model">wati.smart.button.location</field>
         <field name="arch" type="xml">
-            <form string="مكان زر WhatsApp">
+            <form string="Place button WhatsApp">
                 <header>
-                    <button name="action_auto_detect" type="object" string="اكتشاف ذكي" icon="fa-magic" class="btn-secondary" invisible="not model_id"/>
-                    <button name="action_sync_view" type="object" string="تحديث الزر في Odoo" icon="fa-refresh" class="btn-primary" invisible="not active"/>
+                    <button name="action_auto_detect" type="object" string="Intelligent discovery" icon="fa-magic" class="btn-secondary" invisible="not model_id"/>
+                    <button name="action_sync_view" type="object" string="Update button on Odoo" icon="fa-refresh" class="btn-primary" invisible="not active"/>
                     <field name="active" widget="boolean_toggle"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
                         <label for="name"/>
-                        <h1><field name="name" placeholder="مثال: زر WhatsApp في فرصة CRM"/></h1>
+                        <h1><field name="name" placeholder="Example: button WhatsApp By chance CRM"/></h1>
                     </div>
 
                     <div class="alert alert-info" role="status">
-                        اختر التطبيق ثم نوع السجل. النظام يكتشف شاشة Form ورقم الجوال والعميل قدر الإمكان، وبعد التفعيل يركّب زر WhatsApp تلقائيًا بدون تعديل تطبيق CRM أو المبيعات أو أي تطبيق آخر.
+                        Choose Application and then Record Type. The system detects a screen Form And the mobile number and the customer as much as possible, and after activation, a button is installed WhatsApp Automatically without modifying an application CRM Or sales or any other application.
                     </div>
 
-                    <group string="1. أين يظهر الزر؟">
+                    <group string="1. Where does the button appear?">
                         <group>
                             <field name="available_app_menu_ids" invisible="1"/>
                             <field name="available_model_ids" invisible="1"/>
@@ -52,34 +52,34 @@
                         </group>
                     </group>
 
-                    <group string="2. من أين نقرأ رقم العميل؟">
+                    <group string="2. Where do we read the customer number?">
                         <group>
                             <field name="phone_field_id" options="{'no_create': True}"/>
-                            <field name="phone_path" placeholder="مثال: partner_id.mobile"/>
+                            <field name="phone_path" placeholder="Example: partner_id.mobile"/>
                         </group>
                         <group>
-                            <field name="partner_path" placeholder="مثال: partner_id"/>
-                            <div class="text-muted">مسار العميل اختياري لكنه يجعل المحادثة ترتبط تلقائيًا ببطاقة العميل والـWhatsApp Timeline.</div>
+                            <field name="partner_path" placeholder="Example: partner_id"/>
+                            <div class="text-muted">The customer path is optional but makes the conversation automatically link to the customer card and theWhatsApp Timeline.</div>
                         </group>
                     </group>
 
                     <notebook>
-                        <page string="تفاصيل متقدمة" groups="base.group_system">
+                        <page string="Advanced details" groups="base.group_system">
                             <group>
                                 <field name="view_id" options="{'no_create': True}"/>
                                 <field name="model_name" readonly="1"/>
                                 <field name="generated_view_id" readonly="1"/>
                             </group>
-                            <div class="text-muted">إذا كان للموديل أكثر من Form View يمكنك اختيار الشاشة المطلوبة هنا، ثم الضغط «تحديث الزر في Odoo».</div>
+                            <div class="text-muted">If the model has more than Form View You can select the desired screen here, then press «Update button on Odoo».</div>
                         </page>
-                        <page string="كيف تعمل الميزة؟">
+                        <page string="How does the feature work?">
                             <ol>
-                                <li>أضف مكانًا لكل شاشة تريد أن يظهر فيها زر WhatsApp.</li>
-                                <li>اختر التطبيق والموديل واضغط «اكتشاف ذكي».</li>
-                                <li>راجع حقل أو مسار رقم الجوال، ثم فعّل المكان.</li>
-                                <li>الموظف يفتح أي سجل في تلك الشاشة ويضغط WhatsApp.</li>
-                                <li>النافذة تلتقط العميل والرقم تلقائيًا وتسمح برسالة عادية أو Template معتمد.</li>
-                                <li>يمكن إنشاء أكثر من مكان في CRM والعملاء والمبيعات والفواتير وأي موديل آخر.</li>
+                                <li>Add a place for each screen where you want a button to appear WhatsApp.</li>
+                                <li>Select the application and model and press «Intelligent discovery».</li>
+                                <li>Review the mobile number field or path, then activate the location.</li>
+                                <li>The employee opens any record on that screen and clicks WhatsApp.</li>
+                                <li>The window automatically captures the customer and number and allows a regular message or Template Certified.</li>
+                                <li>More than one location can be created CRM Customers, sales, invoices and any other model.</li>
                             </ol>
                         </page>
                     </notebook>
@@ -89,12 +89,12 @@
     </record>
 
     <record id="action_wati_smart_button_locations" model="ir.actions.act_window">
-        <field name="name">أماكن زر WhatsApp</field>
+        <field name="name">Button places WhatsApp</field>
         <field name="res_model">wati.smart.button.location</field>
         <field name="view_mode">list,form</field>
         <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">أضف زر WhatsApp إلى أي شاشة في Odoo بدون برمجة</p>
-            <p>اختر التطبيق والموديل ومصدر رقم الجوال، ويمكنك إضافة أكثر من مكان في نفس الوقت.</p>
+            <p class="o_view_nocontent_smiling_face">Add button WhatsApp To any screen in Odoo Without programming</p>
+            <p>Choose the application, model, and source of the mobile number, and you can add more than one place at the same time.</p>
         </field>
     </record>
 
@@ -103,8 +103,8 @@
         <field name="model">wati.universal.compose.parameter</field>
         <field name="arch" type="xml">
             <list editable="bottom" create="false" delete="false">
-                <field name="param_name" string="المتغير" readonly="1"/>
-                <field name="value" string="القيمة"/>
+                <field name="param_name" string="variable" readonly="1"/>
+                <field name="value" string="Value"/>
             </list>
         </field>
     </record>
@@ -113,9 +113,9 @@
         <field name="name">wati.universal.compose.wizard.form</field>
         <field name="model">wati.universal.compose.wizard</field>
         <field name="arch" type="xml">
-            <form string="إرسال WhatsApp">
+            <form string="Send WhatsApp">
                 <div class="alert alert-success" role="status">
-                    <strong>إرسال ذكي من السجل الحالي.</strong> تم التقاط العميل ورقم WhatsApp من إعداد المكان، ويمكنك تعديل الرقم قبل الإرسال إذا احتجت.
+                    <strong>Intelligent sending of current record.</strong> The customer and number were captured WhatsApp Prepared by the location, and you can modify the number before sending if you need.
                 </div>
                 <group>
                     <group>
@@ -128,8 +128,8 @@
                     </group>
                 </group>
                 <group invisible="send_mode != 'session'">
-                    <field name="message" nolabel="1" placeholder="اكتب رسالة WhatsApp..."/>
-                    <div class="text-muted">الرسالة العادية تعمل عندما تكون جلسة WhatsApp مفتوحة. إذا كانت الجلسة مغلقة استخدم Template معتمد.</div>
+                    <field name="message" nolabel="1" placeholder="Write a message WhatsApp..."/>
+                    <div class="text-muted">The normal message works when it is a session WhatsApp open. If the session is closed use Template Certified.</div>
                 </group>
                 <group invisible="send_mode != 'template'">
                     <field name="template_id" options="{'no_create': True}"/>
@@ -145,15 +145,15 @@
                 <field name="source_res_id" invisible="1"/>
                 <field name="request_key" invisible="1"/>
                 <footer>
-                    <button name="action_send" type="object" string="إرسال WhatsApp" class="btn-primary" icon="fa-paper-plane"/>
-                    <button string="إلغاء" special="cancel" class="btn-secondary"/>
+                    <button name="action_send" type="object" string="Send WhatsApp" class="btn-primary" icon="fa-paper-plane"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
                 </footer>
             </form>
         </field>
     </record>
 
     <record id="action_wati_universal_compose" model="ir.actions.act_window">
-        <field name="name">إرسال WhatsApp</field>
+        <field name="name">Send WhatsApp</field>
         <field name="res_model">wati.universal.compose.wizard</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
@@ -177,20 +177,20 @@
                 <page string="WhatsApp" name="wati_timeline" groups="wati_connector.group_wati_user">
                     <div class="alert alert-light border" role="status">
                         <strong>Customer WhatsApp Timeline</strong>
-                        <span class="ms-2">آخر تواصل:</span>
+                        <span class="ms-2">Last communication:</span>
                         <field name="wati_last_message_at" class="d-inline" readonly="1"/>
                     </div>
                     <field name="wati_timeline_message_ids" readonly="1" nolabel="1">
                         <list create="false" edit="false" delete="false" default_order="received_at desc, id desc"
                               decoration-success="direction == 'outbound'"
                               decoration-info="direction == 'inbound'">
-                            <field name="received_at" string="الوقت"/>
-                            <field name="direction" string="الاتجاه" widget="badge"/>
-                            <field name="message_type" string="النوع" optional="hide"/>
-                            <field name="text" string="الرسالة"/>
-                            <field name="status" string="الحالة" widget="badge"/>
-                            <field name="operator_name" string="الموظف" optional="show"/>
-                            <field name="channel_phone_number" string="القناة" optional="hide"/>
+                            <field name="received_at" string="time"/>
+                            <field name="direction" string="direction" widget="badge"/>
+                            <field name="message_type" string="Type" optional="hide"/>
+                            <field name="text" string="The message"/>
+                            <field name="status" string="Status" widget="badge"/>
+                            <field name="operator_name" string="Employee" optional="show"/>
+                            <field name="channel_phone_number" string="Channel" optional="hide"/>
                         </list>
                     </field>
                 </page>

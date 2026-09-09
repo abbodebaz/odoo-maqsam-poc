@@ -14,7 +14,7 @@ export class WatiSmartRecipientField extends Component {
     get metadata() {
         return this.props.record.data.smart_recipient_metadata || {
             mode: "empty",
-            placeholder: this.props.placeholder || "اختر رقم المستلم",
+            placeholder: this.props.placeholder || "Choose the recipient number",
             options: [],
         };
     }
@@ -29,7 +29,7 @@ export class WatiSmartRecipientField extends Component {
     }
 
     get placeholder() {
-        return this.metadata.placeholder || this.props.placeholder || "اختر رقم المستلم";
+        return this.metadata.placeholder || this.props.placeholder || "Choose the recipient number";
     }
 
     async onValueChange(ev) {

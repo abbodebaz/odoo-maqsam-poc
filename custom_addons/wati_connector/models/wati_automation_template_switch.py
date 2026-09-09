@@ -36,10 +36,10 @@ class WatiAutomationRuleTemplateSwitch(models.Model):
     _inherit = "wati.automation.rule"
 
     template_param_names_json = fields.Text(
-        string="متغيرات القالب المختار",
+        string="Variables of the selected template",
         copy=False,
         readonly=True,
-        help="نسخة داخلية من متغيرات نفس عنصر WATI الذي اختاره المستخدم.",
+        help="Internal copy of variables of the same element WATI chosen by the user.",
     )
 
     def action_pick_template(self):
@@ -55,7 +55,7 @@ class WatiAutomationRuleTemplateSwitch(models.Model):
         if not templates:
             from odoo.exceptions import UserError
 
-            raise UserError(_("لم أجد قوالب WhatsApp في حساب WATI."))
+            raise UserError(_("No templates found WhatsApp In an account WATI."))
 
         Choice = self.env["wati.automation.template.choice"]
         Choice.search([("rule_id", "=", self.id)]).unlink()
@@ -85,7 +85,7 @@ class WatiAutomationRuleTemplateSwitch(models.Model):
 
         return {
             "type": "ir.actions.act_window",
-            "name": _("اختر قالب WATI"),
+            "name": _("Choose a template WATI"),
             "res_model": "wati.automation.template.choice",
             "view_mode": "list",
             "views": [(self.env.ref("wati_connector.view_wati_automation_template_choice_list").id, "list")],
@@ -124,17 +124,17 @@ class WatiAutomationRuleTemplateSwitch(models.Model):
             except Exception:
                 auto_mapped = 0
 
-        parts = [_("تمت مطابقة المتغيرات مع نص القالب الحالي: %s متغير.", len(param_names))]
+        parts = [_("Variables are matched to the current template text: %s variable.", len(param_names))]
         if created:
-            parts.append(_("تم إنشاء %s ربط جديد.", created))
+            parts.append(_("has been created %s New link.", created))
         if auto_mapped:
-            parts.append(_("تم اقتراح %s ربط تلقائي.", auto_mapped))
+            parts.append(_("been suggested %s Automatic connection.", auto_mapped))
 
         return {
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
-                "title": _("تم تنظيف ومزامنة متغيرات القالب"),
+                "title": _("Template variables have been cleaned and synchronized"),
                 "message": " ".join(parts),
                 "type": "success" if param_names else "warning",
                 "sticky": False,

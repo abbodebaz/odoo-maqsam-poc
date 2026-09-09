@@ -22,25 +22,25 @@ class WatiSmartButtonLocation(models.Model):
     _description = "WATI Smart Button Location"
     _order = "sequence, id"
 
-    name = fields.Char(string="اسم المكان", required=True)
+    name = fields.Char(string="Place name", required=True)
     sequence = fields.Integer(default=10)
-    active = fields.Boolean(string="مفعّل", default=False)
-    button_label = fields.Char(string="اسم الزر", default="WhatsApp", required=True)
+    active = fields.Boolean(string="Activated", default=False)
+    button_label = fields.Char(string="Button name", default="WhatsApp", required=True)
 
     app_menu_id = fields.Many2one(
         "ir.ui.menu",
-        string="التطبيق",
+        string="Application",
         ondelete="set null",
-        help="اختر التطبيق أولًا لتقليل قائمة الموديلات المعروضة.",
+        help="Select the application first to reduce the list of displayed models.",
     )
     available_app_menu_ids = fields.Many2many(
         "ir.ui.menu",
         compute="_compute_available_app_menu_ids",
-        string="التطبيقات المتاحة",
+        string="Available applications",
     )
     model_id = fields.Many2one(
         "ir.model",
-        string="الموديل / نوع السجل",
+        string="Model / Record type",
         ondelete="cascade",
         domain=[("transient", "=", False)],
         required=True,
@@ -49,43 +49,43 @@ class WatiSmartButtonLocation(models.Model):
     available_model_ids = fields.Many2many(
         "ir.model",
         compute="_compute_available_model_ids",
-        string="الموديلات المتاحة",
+        string="Available models",
     )
     view_id = fields.Many2one(
         "ir.ui.view",
-        string="نموذج الشاشة",
+        string="Screen model",
         ondelete="cascade",
         domain="[('model', '=', model_name), ('type', '=', 'form')]",
-        help="يتم اختياره تلقائيًا. غيّره فقط إذا كان للموديل أكثر من شاشة Form.",
+        help="It is selected automatically. Change it only if the model has more than one screen Form.",
     )
 
     phone_field_id = fields.Many2one(
         "ir.model.fields",
-        string="حقل رقم الجوال",
+        string="Mobile number field",
         ondelete="set null",
         domain="[('model_id', '=', model_id), ('ttype', 'in', ['char', 'text'])]",
     )
     phone_path = fields.Char(
-        string="مسار رقم الجوال",
-        help="عند وجود الرقم داخل علاقة، مثال: partner_id.mobile أو customer_id.phone.",
+        string="Mobile number path",
+        help="When the number is inside a relationship, e.g: partner_id.mobile Or customer_id.phone.",
     )
     partner_path = fields.Char(
-        string="مسار العميل",
-        help="اختياري لربط المحادثة ببطاقة العميل، مثال: partner_id.",
+        string="Customer path",
+        help="Optional to link the conversation to a customer card, e.g: partner_id.",
     )
     generated_view_id = fields.Many2one(
         "ir.ui.view",
-        string="الواجهة المولدة",
+        string="Generated interface",
         readonly=True,
         copy=False,
         ondelete="set null",
     )
     mapping_state = fields.Selection(
-        [("incomplete", "غير مكتمل"), ("ready", "جاهز")],
+        [("incomplete", "Incomplete"), ("ready", "Ready")],
         compute="_compute_mapping_state",
-        string="الحالة",
+        string="Status",
     )
-    mapping_summary = fields.Char(compute="_compute_mapping_state", string="ملخص")
+    mapping_summary = fields.Char(compute="_compute_mapping_state", string="Summary")
 
     @api.depends_context("uid")
     def _compute_available_app_menu_ids(self):
@@ -131,17 +131,17 @@ class WatiSmartButtonLocation(models.Model):
         for record in self:
             missing = []
             if not record.model_id:
-                missing.append("الموديل")
+                missing.append("Model")
             if not record.view_id:
-                missing.append("الشاشة")
+                missing.append("Screen")
             if not record.phone_field_id and not _clean(record.phone_path):
-                missing.append("رقم الجوال")
+                missing.append("Mobile Number")
             record.mapping_state = "incomplete" if missing else "ready"
             if missing:
-                record.mapping_summary = "أكمل: " + "، ".join(missing)
+                record.mapping_summary = "Complete: " + ", ".join(missing)
             else:
                 source = record.phone_path or record.phone_field_id.field_description or record.phone_field_id.name
-                record.mapping_summary = f"سيظهر زر {record.button_label} في {record.model_id.name} ويقرأ الرقم من {source}."
+                record.mapping_summary = f"A button will appear {record.button_label} In {record.model_id.name} The number is read from {source}."
 
     @api.onchange("app_menu_id")
     def _onchange_app_menu_id(self):
@@ -165,9 +165,9 @@ class WatiSmartButtonLocation(models.Model):
     def _check_model_fields(self):
         for record in self:
             if record.view_id and record.view_id.model != record.model_name:
-                raise ValidationError(_("شاشة Form لا تنتمي إلى الموديل المختار."))
+                raise ValidationError(_("screen Form Does not belong to the selected model."))
             if record.phone_field_id and record.phone_field_id.model_id != record.model_id:
-                raise ValidationError(_("حقل الجوال لا ينتمي إلى الموديل المختار."))
+                raise ValidationError(_("The mobile field does not belong to the selected model."))
 
     @api.constrains("active", "model_id", "view_id", "phone_field_id", "phone_path")
     def _check_active_mapping(self):
@@ -177,7 +177,7 @@ class WatiSmartButtonLocation(models.Model):
                 or not record.view_id
                 or (not record.phone_field_id and not _clean(record.phone_path))
             ):
-                raise ValidationError(_("أكمل الموديل والشاشة ومصدر رقم الجوال قبل تفعيل الزر."))
+                raise ValidationError(_("Complete the Model, Screen and Mobile Number Source before activating the button."))
 
     def _suggest_form_view(self):
         self.ensure_one()
@@ -234,7 +234,7 @@ class WatiSmartButtonLocation(models.Model):
     def action_auto_detect(self):
         for record in self:
             if not record.model_id:
-                raise UserError(_("اختر التطبيق والموديل أولًا."))
+                raise UserError(_("Choose the application and model first."))
             if not record.view_id:
                 record.view_id = record._suggest_form_view()
             record.phone_field_id = False
@@ -245,8 +245,8 @@ class WatiSmartButtonLocation(models.Model):
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
-                "title": _("زر WhatsApp الذكي"),
-                "message": _("تم اكتشاف الشاشة ومصدر رقم الجوال قدر الإمكان. راجع القيم ثم فعّل المكان."),
+                "title": _("button WhatsApp Smart"),
+                "message": _("The screen and mobile number source are detected as much as possible. Review the values and then activate the location."),
                 "type": "success",
                 "sticky": False,
             },
@@ -322,7 +322,7 @@ class WatiSmartButtonLocation(models.Model):
         if "<sheet" in arch:
             return f'<data><xpath expr="//form/sheet" position="before"><header>{button}</header></xpath></data>'
         raise ValidationError(
-            _("تعذر تركيب زر WhatsApp على هذه الشاشة لأنها لا تحتوي Header أو Sheet. اختر Form View آخر.")
+            _("Unable to install a button WhatsApp On this screen because it does not contain Header Or Sheet. Choose Form View Another.")
         )
 
     def _sync_generated_view(self):
@@ -333,7 +333,7 @@ class WatiSmartButtonLocation(models.Model):
                 current.active = False
             return
         if self.mapping_state != "ready":
-            raise ValidationError(_("أكمل إعداد مكان زر WhatsApp قبل التفعيل."))
+            raise ValidationError(_("Complete setting the button location WhatsApp Before activation."))
         vals = {
             "name": f"WATI Smart Button · {self.model_name} · {self.id}",
             "model": self.model_name,
@@ -397,8 +397,8 @@ class WatiSmartButtonLocation(models.Model):
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
-                "title": _("زر WhatsApp الذكي"),
-                "message": _("تم تحديث ظهور الزر في شاشات Odoo."),
+                "title": _("button WhatsApp Smart"),
+                "message": _("The button appearance in screens has been updated Odoo."),
                 "type": "success",
                 "sticky": False,
             },
@@ -409,28 +409,28 @@ class WatiUniversalComposeWizard(models.TransientModel):
     _name = "wati.universal.compose.wizard"
     _description = "Universal WhatsApp Composer"
 
-    rule_id = fields.Many2one("wati.smart.button.location", string="مكان الزر", readonly=True)
-    source_model = fields.Char(string="الموديل", readonly=True)
-    source_res_id = fields.Integer(string="رقم السجل", readonly=True)
-    record_name = fields.Char(string="السجل", readonly=True)
-    partner_id = fields.Many2one("res.partner", string="العميل", readonly=True)
-    phone = fields.Char(string="رقم WhatsApp", required=True)
+    rule_id = fields.Many2one("wati.smart.button.location", string="Button location", readonly=True)
+    source_model = fields.Char(string="Model", readonly=True)
+    source_res_id = fields.Integer(string="Registration number", readonly=True)
+    record_name = fields.Char(string="Record", readonly=True)
+    partner_id = fields.Many2one("res.partner", string="Customer", readonly=True)
+    phone = fields.Char(string="No WhatsApp", required=True)
     send_mode = fields.Selection(
-        [("session", "رسالة عادية"), ("template", "قالب WhatsApp")],
-        string="طريقة الإرسال",
+        [("session", "Regular message"), ("template", "Template WhatsApp")],
+        string="Transmission method",
         required=True,
         default="session",
     )
-    message = fields.Text(string="الرسالة")
+    message = fields.Text(string="The message")
     template_id = fields.Many2one(
         "wati.template",
-        string="القالب",
+        string="Template",
         domain="[('status', '=', 'approved'), ('active', '=', True)]",
     )
     parameter_ids = fields.One2many(
         "wati.universal.compose.parameter",
         "wizard_id",
-        string="متغيرات القالب",
+        string="Template variables",
     )
     request_key = fields.Char(default=lambda self: uuid.uuid4().hex, readonly=True)
 
@@ -518,28 +518,28 @@ class WatiUniversalComposeWizard(models.TransientModel):
         self.ensure_one()
         phone = normalize_whatsapp_number(self.phone)
         if not phone:
-            raise UserError(_("لم يتم العثور على رقم WhatsApp صالح لهذا السجل."))
+            raise UserError(_("No number found WhatsApp Valid for this record."))
         idem = WatiIdempotency(self.env)
         scope = "universal_whatsapp_send"
         key = _clean(self.request_key) or uuid.uuid4().hex
         if not idem.acquire_durable(scope, key, ttl_seconds=3600):
-            raise UserError(_("تم تنفيذ هذا الإرسال مسبقًا. لن نرسل الرسالة مرتين."))
+            raise UserError(_("This submission has been done previously. We will not send the message twice."))
 
         conversation = self._conversation(phone)
         try:
             if self.send_mode == "session":
                 text = _clean(self.message)
                 if not text:
-                    raise UserError(_("اكتب الرسالة أولًا."))
+                    raise UserError(_("Write the message first."))
                 conversation.with_user(self.env.user).send_session_message(text)
-                success_message = _("تم قبول الرسالة في WATI ✅")
+                success_message = _("The message has been accepted WATI ✅")
             else:
                 if not self.template_id or self.template_id.status != "approved":
-                    raise UserError(_("اختر قالب WhatsApp معتمدًا."))
+                    raise UserError(_("Choose a template WhatsApp Certified."))
                 missing = self.parameter_ids.filtered(lambda line: not _clean(line.value))
                 if missing:
                     raise UserError(
-                        _("أكمل قيم متغيرات القالب: %s")
+                        _("Complete the template variable values: %s")
                         % ", ".join(missing.mapped("param_name"))
                     )
                 custom_params = [
@@ -566,13 +566,13 @@ class WatiUniversalComposeWizard(models.TransientModel):
                         "unread_count": 0,
                     }
                 )
-                success_message = _("تم قبول القالب في WATI ✅")
+                success_message = _("The template has been accepted WATI ✅")
         except (UserError, WatiConfigurationError, WatiRequestError) as exc:
             idem.release_durable(scope, key)
             if isinstance(exc, UserError):
                 raise
             detail = _clean(getattr(exc, "response_text", "") or str(exc))[:800]
-            raise UserError(_("تعذر إرسال WhatsApp: %s") % detail) from exc
+            raise UserError(_("Unable to send WhatsApp: %s") % detail) from exc
         except Exception:
             # Unknown failures are not released automatically: WATI may already
             # have accepted the external side effect before Odoo failed locally.
@@ -601,8 +601,8 @@ class WatiUniversalComposeParameter(models.TransientModel):
         required=True,
         ondelete="cascade",
     )
-    param_name = fields.Char(string="المتغير", required=True, readonly=True)
-    value = fields.Char(string="القيمة")
+    param_name = fields.Char(string="variable", required=True, readonly=True)
+    value = fields.Char(string="Value")
 
 
 class ResPartnerWatiTimeline(models.Model):
@@ -614,11 +614,11 @@ class ResPartnerWatiTimeline(models.Model):
         compute="_compute_wati_timeline",
     )
     wati_message_count = fields.Integer(
-        string="رسائل WhatsApp",
+        string="Messages WhatsApp",
         compute="_compute_wati_timeline",
     )
     wati_last_message_at = fields.Datetime(
-        string="آخر تواصل WhatsApp",
+        string="Last communication WhatsApp",
         compute="_compute_wati_timeline",
     )
 

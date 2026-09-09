@@ -12,9 +12,9 @@ class WatiConversationAccount(models.Model):
 
     account_move_ids = fields.Many2many(
         "account.move", "wati_account_move_conversation_rel", "conversation_id", "move_id",
-        string="الفواتير المرتبطة", copy=False,
+        string="Associated invoices", copy=False,
     )
-    account_move_count = fields.Integer(string="عدد الفواتير", compute="_compute_account_move_count")
+    account_move_count = fields.Integer(string="Number of invoices", compute="_compute_account_move_count")
 
     def _compute_account_move_count(self):
         for conversation in self:
@@ -24,10 +24,10 @@ class WatiConversationAccount(models.Model):
         self.ensure_one()
         moves = self.account_move_ids.filtered(lambda move: move.move_type in _CUSTOMER_MOVE_TYPES)
         if not moves:
-            raise UserError(_("لا توجد فواتير عميل مرتبطة بهذه المحادثة."))
+            raise UserError(_("There are no customer invoices associated with this conversation."))
         if len(moves) == 1:
             return {"type": "ir.actions.act_window", "name": moves.display_name, "res_model": "account.move", "res_id": moves.id, "view_mode": "form", "target": "current"}
-        return {"type": "ir.actions.act_window", "name": _("فواتير العميل"), "res_model": "account.move", "view_mode": "list,form", "domain": [("id", "in", moves.ids)], "target": "current"}
+        return {"type": "ir.actions.act_window", "name": _("Client invoices"), "res_model": "account.move", "view_mode": "list,form", "domain": [("id", "in", moves.ids)], "target": "current"}
 
 
 class AccountMoveWati(models.Model):
@@ -35,20 +35,20 @@ class AccountMoveWati(models.Model):
 
     wati_conversation_ids = fields.Many2many(
         "wati.conversation", "wati_account_move_conversation_rel", "move_id", "conversation_id",
-        string="محادثات WhatsApp المرتبطة", copy=False,
+        string="Conversations WhatsApp associated", copy=False,
     )
-    wati_conversation_count = fields.Integer(string="عدد محادثات WhatsApp", compute="_compute_wati_summary")
-    wati_message_count = fields.Integer(string="رسائل WhatsApp", compute="_compute_wati_summary")
-    wati_last_message = fields.Text(string="آخر رسالة WhatsApp", compute="_compute_wati_summary")
-    wati_last_message_at = fields.Datetime(string="آخر نشاط WhatsApp", compute="_compute_wati_summary")
-    wati_last_status = fields.Char(string="آخر حالة WhatsApp", compute="_compute_wati_summary")
+    wati_conversation_count = fields.Integer(string="Number of conversations WhatsApp", compute="_compute_wati_summary")
+    wati_message_count = fields.Integer(string="Messages WhatsApp", compute="_compute_wati_summary")
+    wati_last_message = fields.Text(string="Last message WhatsApp", compute="_compute_wati_summary")
+    wati_last_message_at = fields.Datetime(string="Latest activity WhatsApp", compute="_compute_wati_summary")
+    wati_last_status = fields.Char(string="Latest case WhatsApp", compute="_compute_wati_summary")
 
     def _wati_validate_customer_move(self):
         self.ensure_one()
         if self.move_type not in _CUSTOMER_MOVE_TYPES:
-            raise UserError(_("WhatsApp متاح لفواتير العملاء والإشعارات الدائنة فقط."))
+            raise UserError(_("WhatsApp Available for customer invoices and credit notes only."))
         if not self.partner_id:
-            raise UserError(_("حدد العميل أولًا قبل فتح WhatsApp."))
+            raise UserError(_("Select the client first before opening WhatsApp."))
 
     def _wati_partner_phones(self):
         self.ensure_one()
@@ -88,7 +88,7 @@ class AccountMoveWati(models.Model):
         if not conversation:
             phones = self._wati_partner_phones()
             if not phones:
-                raise UserError(_("أضف رقم جوال أو هاتف للعميل قبل فتح WhatsApp."))
+                raise UserError(_("Add the customer’s mobile number or phone before unlocking WhatsApp."))
             phone = phones[0]
             display_name = self.partner_id.display_name or self.name or phone
             conversation = Conversation.create({"name": display_name, "wa_id": phone, "partner_id": self.partner_id.id, "sender_name": display_name, "status": "local", "last_message_at": fields.Datetime.now()})
@@ -136,7 +136,7 @@ class AccountMoveWati(models.Model):
     def action_open_wati_conversations(self):
         self.ensure_one()
         conversation = self._wati_get_or_create_conversation()
-        return {"type": "ir.actions.act_window", "name": _("محادثات WhatsApp"), "res_model": "wati.conversation", "view_mode": "list,form", "domain": [("id", "in", (self.wati_conversation_ids | conversation).ids)], "context": {"create": False}}
+        return {"type": "ir.actions.act_window", "name": _("Conversations WhatsApp"), "res_model": "wati.conversation", "view_mode": "list,form", "domain": [("id", "in", (self.wati_conversation_ids | conversation).ids)], "context": {"create": False}}
 
 
 class WatiAutomationRuleAccountPresets(models.Model):
@@ -147,20 +147,20 @@ class WatiAutomationRuleAccountPresets(models.Model):
         definitions = dict(super()._wati_preset_definitions())
         definitions.update({
             "invoice_posted": {
-                "label": _("الفواتير · عند الترحيل"),
+                "label": _("Invoices · When deported"),
                 "model": "account.move",
                 "field": "state",
                 "target": "posted",
                 "recipient_path": "partner_id.phone",
-                "name": _("الفواتير · إرسال عند الترحيل"),
+                "name": _("Invoices · Send on migration"),
             },
             "invoice_paid": {
-                "label": _("الفواتير · عند السداد"),
+                "label": _("Invoices · Upon payment"),
                 "model": "account.move",
                 "field": "payment_state",
                 "target": "paid",
                 "recipient_path": "partner_id.phone",
-                "name": _("الفواتير · إرسال عند السداد"),
+                "name": _("Invoices · Submit upon payment"),
             },
         })
         return definitions

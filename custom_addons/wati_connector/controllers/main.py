@@ -291,7 +291,7 @@ class WatiWebhookController(http.Controller):
         conversation = request.env["wati.conversation"].browse(conversation_id).exists()
         if not conversation:
             return request.make_json_response(
-                {"ok": False, "message": "المحادثة غير موجودة."}, status=404
+                {"ok": False, "message": "The conversation does not exist."}, status=404
             )
 
         idem = WatiIdempotency(request.env)
@@ -301,7 +301,7 @@ class WatiWebhookController(http.Controller):
             return request.make_json_response(
                 {
                     "ok": True,
-                    "message": "تم تجاهل إعادة إرسال مكررة.",
+                    "message": "Duplicate resubmission was ignored.",
                     "duplicate_suppressed": True,
                 },
                 status=200,
@@ -321,5 +321,5 @@ class WatiWebhookController(http.Controller):
             raise
 
         return request.make_json_response(
-            {"ok": True, "message": "تم الإرسال إلى WATI."}, status=200
+            {"ok": True, "message": "Sent to WATI."}, status=200
         )

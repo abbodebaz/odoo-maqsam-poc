@@ -37,7 +37,7 @@ class WatiWorkspace extends Component {
             );
         } catch (error) {
             console.error("WATI workspace load error", error);
-            this.notification.add("تعذر تحميل مساحة WhatsApp. حاول تحديث الصفحة.", {
+            this.notification.add("Unable to load space WhatsApp. Try refreshing the page.", {
                 type: "danger",
             });
         } finally {
@@ -104,7 +104,7 @@ class WatiHelpCenter extends Component {
             this.state.selectedArticleId = firstArticle ? firstArticle.id : null;
         } catch (error) {
             console.error("WATI help center load error", error);
-            this.notification.add("تعذر تحميل مركز المساعدة.", { type: "danger" });
+            this.notification.add("The Help Center could not be loaded.", { type: "danger" });
         } finally {
             this.state.loading = false;
         }

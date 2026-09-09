@@ -13,39 +13,39 @@
   const overlay = document.createElement("div");
   overlay.className = "wati-list-overlay is-hidden";
   overlay.innerHTML = `
-    <div class="wati-list-modal" role="dialog" aria-modal="true" aria-label="قائمة WhatsApp تفاعلية">
+    <div class="wati-list-modal" role="dialog" aria-modal="true" aria-label="List WhatsApp Interactive">
       <div class="wati-list-head">
-        <div><strong>قائمة تفاعلية</strong><span>حتى 10 خيارات موزعة على أقسام</span></div>
-        <button class="wati-list-close" type="button" aria-label="إغلاق">×</button>
+        <div><strong>Interactive menu</strong><span>Even 10 Options are divided into sections</span></div>
+        <button class="wati-list-close" type="button" aria-label="Close">×</button>
       </div>
       <div class="wati-list-layout">
         <div class="wati-list-form">
           <div class="wati-list-fields">
-            <label>العنوان <small>اختياري · 60</small><input class="list-header" maxlength="60" placeholder="مثال: اختر الخدمة" /></label>
-            <label class="wide">نص الرسالة <small>مطلوب · 1024</small><textarea class="list-body" maxlength="1024" rows="4" placeholder="اختر من القائمة أدناه..."></textarea></label>
-            <label>نص زر القائمة <small>مطلوب · 20</small><input class="list-button-text" maxlength="20" value="عرض الخيارات" /></label>
-            <label>التذييل <small>اختياري · 60</small><input class="list-footer" maxlength="60" placeholder="مثال: بيت الإباء" /></label>
+            <label>Address <small>Optional · 60</small><input class="list-header" maxlength="60" placeholder="Example: Choose the service" /></label>
+            <label class="wide">Message text <small>Wanted · 1024</small><textarea class="list-body" maxlength="1024" rows="4" placeholder="Choose from the list below..."></textarea></label>
+            <label>Menu button text <small>Wanted · 20</small><input class="list-button-text" maxlength="20" value="View options" /></label>
+            <label>Footer <small>Optional · 60</small><input class="list-footer" maxlength="60" placeholder="Example: The house of fathers" /></label>
           </div>
           <div class="wati-list-sections-head">
-            <div><strong>الأقسام والخيارات</strong><span class="wati-list-counter">0 / 10 خيارات</span></div>
-            <button class="wati-list-add-section" type="button">+ إضافة قسم</button>
+            <div><strong>Sections and options</strong><span class="wati-list-counter">0 / 10 Options</span></div>
+            <button class="wati-list-add-section" type="button">+ Add section</button>
           </div>
           <div class="wati-list-sections"></div>
         </div>
         <aside class="wati-list-preview">
-          <span>معاينة</span>
+          <span>Preview</span>
           <div class="wati-list-preview-bubble">
             <strong class="list-preview-header"></strong>
-            <div class="list-preview-body">اكتب نص الرسالة...</div>
+            <div class="list-preview-body">Type the message text...</div>
             <small class="list-preview-footer"></small>
-            <button type="button" class="list-preview-button">☷ عرض الخيارات</button>
+            <button type="button" class="list-preview-button">☷ View options</button>
             <div class="list-preview-options"></div>
           </div>
         </aside>
       </div>
       <div class="wati-list-actions">
-        <button class="wati-list-cancel" type="button">إلغاء</button>
-        <button class="wati-list-send" type="button">إرسال القائمة</button>
+        <button class="wati-list-cancel" type="button">Cancel</button>
+        <button class="wati-list-send" type="button">Submit list</button>
       </div>
     </div>`;
   document.body.appendChild(overlay);
@@ -81,7 +81,7 @@
 
   function updateCounter() {
     const count = totalRows();
-    counter.textContent = `${count} / 10 خيارات`;
+    counter.textContent = `${count} / 10 Options`;
     counter.classList.toggle("limit", count >= 10);
   }
 
@@ -90,10 +90,10 @@
     row.className = "wati-list-row";
     row.innerHTML = `
       <div class="wati-list-row-fields">
-        <input class="row-title" maxlength="24" placeholder="عنوان الخيار · 24" />
-        <input class="row-description" maxlength="72" placeholder="وصف اختياري · 72" />
+        <input class="row-title" maxlength="24" placeholder="Option title · 24" />
+        <input class="row-description" maxlength="72" placeholder="Optional description · 72" />
       </div>
-      <button type="button" class="wati-list-remove-row" title="حذف الخيار">×</button>`;
+      <button type="button" class="wati-list-remove-row" title="Delete option">×</button>`;
     row.querySelector(".row-title").value = title;
     row.querySelector(".row-description").value = description;
     row.querySelectorAll("input").forEach((element) => element.addEventListener("input", preview));
@@ -106,22 +106,22 @@
   }
 
   function addRow(section, title = "", description = "") {
-    if (totalRows() >= 10) return notify("الحد الأقصى 10 خيارات.", true);
+    if (totalRows() >= 10) return notify("max 10 Options.", true);
     section.querySelector(".wati-list-rows").appendChild(rowTemplate(title, description));
     updateCounter();
     preview();
   }
 
   function addSection(title = "", seedRows = true) {
-    if (sectionsBox.children.length >= 10) return notify("الحد الأقصى 10 أقسام.", true);
+    if (sectionsBox.children.length >= 10) return notify("max 10 Sections.", true);
     const section = document.createElement("section");
     section.className = "wati-list-section";
     section.innerHTML = `
       <div class="wati-list-section-head">
-        <input class="section-title" maxlength="24" placeholder="عنوان القسم · 24" />
+        <input class="section-title" maxlength="24" placeholder="Section title · 24" />
         <div>
-          <button type="button" class="wati-list-add-row">+ خيار</button>
-          <button type="button" class="wati-list-remove-section" title="حذف القسم">حذف</button>
+          <button type="button" class="wati-list-add-row">+ Cucumber</button>
+          <button type="button" class="wati-list-remove-section" title="Delete the partition">Delete</button>
         </div>
       </div>
       <div class="wati-list-rows"></div>`;
@@ -158,10 +158,10 @@
     const h = header.value.trim();
     const b = body.value.trim();
     const f = footer.value.trim();
-    const bt = buttonText.value.trim() || "عرض الخيارات";
+    const bt = buttonText.value.trim() || "View options";
     q(".list-preview-header").textContent = h;
     q(".list-preview-header").style.display = h ? "block" : "none";
-    q(".list-preview-body").textContent = b || "اكتب نص الرسالة...";
+    q(".list-preview-body").textContent = b || "Type the message text...";
     q(".list-preview-footer").textContent = f;
     q(".list-preview-footer").style.display = f ? "block" : "none";
     q(".list-preview-button").textContent = `☷ ${bt}`;
@@ -192,20 +192,20 @@
     header.value = "";
     body.value = "";
     footer.value = "";
-    buttonText.value = "عرض الخيارات";
+    buttonText.value = "View options";
     sectionsBox.replaceChildren();
-    const first = addSection("الخيارات", false);
-    addRow(first, "الخيار الأول", "");
-    addRow(first, "الخيار الثاني", "");
+    const first = addSection("Options", false);
+    addRow(first, "First option", "");
+    addRow(first, "The second option", "");
     updateCounter();
     preview();
   }
 
   function open() {
     if (!Number(localStorage.getItem("watiInboxSelected") || 0)) {
-      return notify("اختر محادثة أولًا.", true);
+      return notify("Choose a conversation first.", true);
     }
-    if (input.disabled) return notify("استلم المحادثة أولًا.", true);
+    if (input.disabled) return notify("Receive the conversation first.", true);
     reset();
     overlay.classList.remove("is-hidden");
     window.setTimeout(() => body.focus(), 40);
@@ -216,16 +216,16 @@
   }
 
   function validate(sections) {
-    if (!body.value.trim()) return "اكتب نص الرسالة أولًا.";
-    if (!buttonText.value.trim()) return "اكتب نص زر فتح القائمة.";
+    if (!body.value.trim()) return "Write the body of the message first.";
+    if (!buttonText.value.trim()) return "Type the text for the Open Menu button.";
     const rows = sections.flatMap((section) => section.rows);
-    if (!rows.length) return "أضف خيارًا واحدًا على الأقل.";
-    if (rows.length > 10) return "الحد الأقصى 10 خيارات.";
+    if (!rows.length) return "Add at least one option.";
+    if (rows.length > 10) return "max 10 Options.";
     if (sections.length > 1 && sections.some((section) => !section.title)) {
-      return "اكتب عنوانًا لكل قسم عند استخدام أكثر من قسم.";
+      return "Give each section a title when using more than one.";
     }
     const normalized = rows.map((row) => row.title.toLocaleLowerCase());
-    if (new Set(normalized).size !== normalized.length) return "اجعل عنوان كل خيار مختلفًا.";
+    if (new Set(normalized).size !== normalized.length) return "Make the title of each option different.";
     return "";
   }
 
@@ -249,7 +249,7 @@
 
     sending = true;
     sendButton.disabled = true;
-    sendButton.textContent = "جاري الإرسال...";
+    sendButton.textContent = "Sending...";
     try {
       const response = await fetch("/wati/inbox/send-list", {
         method: "POST",
@@ -261,18 +261,18 @@
         body: form.toString(),
       });
       const payload = await response.json().catch(() => ({}));
-      if (!response.ok || !payload.ok) throw new Error(payload.message || `فشل الإرسال (${response.status})`);
+      if (!response.ok || !payload.ok) throw new Error(payload.message || `Transmission failed (${response.status})`);
       close(true);
-      notify("تم قبول القائمة التفاعلية في WATI ✅");
+      notify("Interactive menu accepted in WATI ✅");
       const refresh = document.getElementById("refreshButton");
       window.setTimeout(() => refresh?.click(), 900);
       window.setTimeout(() => refresh?.click(), 2300);
     } catch (error) {
-      notify(error.message || "تعذر إرسال القائمة التفاعلية.", true);
+      notify(error.message || "The interactive menu could not be sent.", true);
     } finally {
       sending = false;
       sendButton.disabled = false;
-      sendButton.textContent = "إرسال القائمة";
+      sendButton.textContent = "Submit list";
     }
   }
 

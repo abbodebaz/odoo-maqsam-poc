@@ -141,20 +141,20 @@ def _build_template_contract(item):
     slots = _normalise_slots(slots)
     if state == "invalid":
         message = _(
-            "WATI يعرّف %(api)s متغيرات للإرسال بينما نص القالب يعرض %(body)s. "
-            "تم منع التفعيل حتى يتطابق عقد القالب بدل التخمين.",
+            "WATI Defines %(api)s Variables to send while the template text is displayed %(body)s. "
+            "Activation is prevented until template nodes match instead of guessing.",
             api=len(api_names),
             body=len(body_tokens),
         )
     elif slots and any(slot["token"] != slot["api_name"] for slot in slots):
         message = _(
-            "تمت مطابقة %(count)s متغيرات ظاهرة مع أسماء WATI API الحقيقية. الإرسال متطابق.",
+            "Matched %(count)s Visible variables with names WATI API The real one. Transmission is identical.",
             count=len(slots),
         )
     elif slots:
-        message = _("عقد متغيرات WATI متطابق: %s متغيرات.", len(slots))
+        message = _("Hold variables WATI Identical: %s variables.", len(slots))
     else:
-        message = _("هذا القالب لا يحتاج متغيرات للإرسال.")
+        message = _("This template does not require variables for submission.")
 
     return {
         "version": 1,
@@ -180,24 +180,24 @@ class WatiAutomationRuleTemplateContract(models.Model):
         copy=False,
     )
     template_contract_json = fields.Text(
-        string="عقد متغيرات WATI",
+        string="Hold variables WATI",
         readonly=True,
         copy=False,
     )
     template_contract_state = fields.Selection(
         [
-            ("unknown", "غير مفحوص"),
-            ("valid", "متطابق"),
-            ("invalid", "غير متطابق"),
+            ("unknown", "Unexamined"),
+            ("valid", "Identical"),
+            ("invalid", "Not matching"),
         ],
-        string="تطابق متغيرات WATI",
+        string="Match variables WATI",
         default="unknown",
         readonly=True,
         copy=False,
         index=True,
     )
     template_contract_message = fields.Text(
-        string="نتيجة تطابق المتغيرات",
+        string="Result of matching variables",
         readonly=True,
         copy=False,
     )
@@ -356,8 +356,8 @@ class WatiAutomationRuleTemplateContract(models.Model):
             ]
             if not by_language:
                 return None, _(
-                    "القالب «%(name)s» موجود لكن النسخة المختارة باللغة %(lang)s لم تعد متاحة. "
-                    "اختر القالب من جديد قبل التفعيل.",
+                    "Template «%(name)s» Available, but the selected version is in the language %(lang)s No longer available. "
+                    "Choose the template again before activation.",
                     name=self.template_name,
                     lang=self.template_language,
                 )
@@ -395,7 +395,7 @@ class WatiAutomationRuleTemplateContract(models.Model):
                         rule.with_context(wati_contract_internal=True).write(
                             {
                                 "template_contract_state": "invalid",
-                                "template_contract_message": error or _("تعذر تحديد عقد القالب."),
+                                "template_contract_message": error or _("The template node could not be determined."),
                             }
                         )
                 except Exception as exc:
@@ -409,11 +409,11 @@ class WatiAutomationRuleTemplateContract(models.Model):
 
             if rule.template_contract_state != "valid":
                 message = rule.template_contract_message or _(
-                    "لم يتم التحقق من تطابق متغيرات القالب مع WATI."
+                    "Template variables are not verified to match WATI."
                 )
                 if raise_error:
                     raise ValidationError(
-                        _("لا يمكن تفعيل/إرسال الأتمتة:\n%s") % message
+                        _("Cannot activate/Submit automation:\n%s") % message
                     )
                 return False
         return True
@@ -423,7 +423,7 @@ class WatiAutomationRuleTemplateContract(models.Model):
         effective_channel = self._effective_channel()
         if not effective_channel:
             raise UserError(
-                _("حدد رقم قناة WATI في الإعدادات أولًا قبل اختيار القالب.")
+                _("Select a channel number WATI In the settings first before choosing the template.")
             )
 
         templates = self._fetch_wati_templates_guarded()
@@ -457,7 +457,7 @@ class WatiAutomationRuleTemplateContract(models.Model):
 
         if not values:
             raise UserError(
-                _("لم أجد أي قالب Approved صالح لقناة WATI الحالية.")
+                _("I couldn’t find any template Approved Valid for channel WATI current.")
             )
 
         unique = {}
@@ -472,7 +472,7 @@ class WatiAutomationRuleTemplateContract(models.Model):
 
         return {
             "type": "ir.actions.act_window",
-            "name": _("اختر قالب WATI المعتمد"),
+            "name": _("Choose a template WATI Approved"),
             "res_model": "wati.automation.template.choice",
             "view_mode": "list",
             "views": [
@@ -490,17 +490,17 @@ class WatiAutomationRuleTemplateContract(models.Model):
     def action_fetch_template_params(self):
         self.ensure_one()
         if not self.template_name:
-            raise UserError(_("اختر قالب WATI أولًا."))
+            raise UserError(_("Choose a template WATI First."))
         self._validate_template_live(force=True, raise_error=True)
         mapped = self._auto_map_parameters()
         return {
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
-                "title": _("تمت مزامنة عقد القالب"),
+                "title": _("Template nodes are synchronized"),
                 "message": (
                     (self.template_contract_message or "")
-                    + (_(" تم اقتراح %s ربط تلقائي.", mapped) if mapped else "")
+                    + (_(" been suggested %s Automatic connection.", mapped) if mapped else "")
                 ).strip(),
                 "type": "success",
                 "sticky": False,
@@ -551,14 +551,14 @@ class WatiAutomationRuleTemplateContract(models.Model):
                 continue
             current = rule.readiness_message or ""
             if rule.template_contract_state == "valid":
-                line = "✅ عقد متغيرات WATI متطابق"
+                line = "✅ Hold variables WATI Identical"
                 if line not in current:
                     rule.readiness_message = (current + "\n" + line).strip()
             else:
                 rule.readiness_state = "incomplete"
                 line = "❌ " + (
                     rule.template_contract_message
-                    or "لم يتم التحقق من عقد متغيرات WATI."
+                    or "Variable nodes are not verified WATI."
                 )
                 if line not in current:
                     rule.readiness_message = (current + "\n" + line).strip()
@@ -584,10 +584,10 @@ class WatiAutomationRuleTemplateContract(models.Model):
         actual_names = [item["name"] for item in params]
         if actual_names != expected_names:
             return [], _(
-                "عقد الإرسال غير متطابق. WATI يتوقع %(expected)s بينما الصفوف الحالية %(actual)s. "
-                "اضغط إعادة المزامنة قبل التفعيل.",
-                expected=", ".join(expected_names) or "بدون متغيرات",
-                actual=", ".join(actual_names) or "بدون متغيرات",
+                "Transmission contract mismatch. WATI expected %(expected)s While the current rows %(actual)s. "
+                "Click Resync before activation.",
+                expected=", ".join(expected_names) or "No variables",
+                actual=", ".join(actual_names) or "No variables",
             )
         return params, ""
 
@@ -671,14 +671,14 @@ class WatiAutomationParameterTemplateContract(models.Model):
     _inherit = "wati.automation.parameter"
 
     placeholder_token = fields.Char(
-        string="موضع المتغير في الرسالة",
+        string="The position of the variable in the message",
         copy=False,
-        help="مثل 1 في {{1}}. يستخدم للمعاينة فقط، وليس بالضرورة اسم WATI API.",
+        help="Like 1 In {{1}}. Used for preview only, not necessarily a name WATI API.",
     )
     api_param_name = fields.Char(
-        string="اسم المتغير في WATI API",
+        string="Variable name in WATI API",
         copy=False,
-        help="الاسم الحقيقي الذي يجب إرساله داخل customParams إلى WATI.",
+        help="The real name that must be sent within customParams To WATI.",
     )
 
     @api.depends("sequence", "param_name", "placeholder_token", "api_param_name")
@@ -716,7 +716,7 @@ class WatiAutomationTemplateChoiceContract(models.TransientModel):
                     {"token": token, "api_name": token}
                     for token in _template_body_tokens({"body": self.body or ""})
                 ],
-                "message": _("سيتم التحقق من عقد القالب Live قبل التفعيل."),
+                "message": _("The template contract will be verified Live Before activation."),
             }
 
         rule.parameter_ids.unlink()

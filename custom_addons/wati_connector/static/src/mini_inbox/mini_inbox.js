@@ -173,7 +173,7 @@ export class WatiMiniInbox extends Component {
             }
         } catch (error) {
             if (!silent) {
-                this.notification.add("تعذر تحديث محادثات WhatsApp السريعة.", {
+                this.notification.add("Unable to update conversations WhatsApp The quick one.", {
                     type: "danger",
                 });
             }
@@ -229,14 +229,14 @@ export class WatiMiniInbox extends Component {
                 { conversation_id: Number(conversationId) },
                 { silent: true }
             );
-            if (!payload?.ok) throw new Error(payload?.message || "تعذر تحميل المحادثة");
+            if (!payload?.ok) throw new Error(payload?.message || "The conversation could not be loaded");
             this.state.selectedConversation =
                 payload.conversation || this.state.selectedConversation;
             this.state.messages = Array.isArray(payload.messages) ? payload.messages : [];
             this.state.assignment = payload.assignment || null;
         } catch (error) {
             if (!silent) {
-                this.notification.add(error.message || "تعذر تحميل المحادثة.", {
+                this.notification.add(error.message || "The conversation could not be loaded.", {
                     type: "danger",
                 });
             }
@@ -249,8 +249,8 @@ export class WatiMiniInbox extends Component {
     async assignCurrent(force = false) {
         if (!this.state.selectedId || this.state.assigning) return;
         if (force) {
-            const owner = this.state.assignment?.assigned_user_name || "موظف آخر";
-            if (!window.confirm(`المحادثة حاليًا عند ${owner}. هل تريد نقلها إليك؟`)) return;
+            const owner = this.state.assignment?.assigned_user_name || "Another employee";
+            if (!window.confirm(`The conversation is currently at ${owner}. Do you want it transferred to you?`)) return;
         }
         this.state.assigning = true;
         try {
@@ -259,14 +259,14 @@ export class WatiMiniInbox extends Component {
                 { conversation_id: this.state.selectedId, force: Boolean(force) },
                 { silent: true }
             );
-            if (!payload?.ok) throw new Error(payload?.message || "تعذر استلام المحادثة");
-            this.notification.add(payload.message || "تم استلام المحادثة ✅", {
+            if (!payload?.ok) throw new Error(payload?.message || "Could not receive the conversation");
+            this.notification.add(payload.message || "Conversation received ✅", {
                 type: "success",
             });
             await this.loadConversation(this.state.selectedId, true);
             await this.refreshBootstrap(true);
         } catch (error) {
-            this.notification.add(error.message || "تعذر استلام المحادثة.", {
+            this.notification.add(error.message || "Could not receive the conversation.", {
                 type: "danger",
             });
         } finally {
@@ -293,12 +293,12 @@ export class WatiMiniInbox extends Component {
                 },
                 { silent: true }
             );
-            if (!payload?.ok) throw new Error(payload?.message || "تعذر إرسال الرسالة");
+            if (!payload?.ok) throw new Error(payload?.message || "The message could not be sent");
             this.state.draft = "";
             await this.loadConversation(this.state.selectedId, true);
             await this.refreshBootstrap(true);
         } catch (error) {
-            this.notification.add(error.message || "تعذر إرسال الرسالة.", {
+            this.notification.add(error.message || "The message could not be sent.", {
                 type: "danger",
             });
         } finally {
@@ -328,23 +328,23 @@ export class WatiMiniInbox extends Component {
 
     validateAttachment(file) {
         const category = this.attachmentCategory(file);
-        if (!category) return "نوع الملف غير مدعوم في WhatsApp.";
+        if (!category) return "The file type is not supported in WhatsApp.";
         const limits = {
             image: 5 * 1024 * 1024,
             video: 16 * 1024 * 1024,
             audio: 16 * 1024 * 1024,
             document: 100 * 1024 * 1024,
         };
-        if (!file.size) return "الملف فارغ ولا يمكن إرساله.";
+        if (!file.size) return "The file is empty and cannot be sent.";
         if (file.size > limits[category]) {
-            return `حجم الملف أكبر من الحد المسموح (${limits[category] / (1024 * 1024)} MB).`;
+            return `The file size is larger than the allowed limit (${limits[category] / (1024 * 1024)} MB).`;
         }
         return "";
     }
 
     pickAttachment() {
         if (!this.canSend || this.state.sending || this.state.uploading) {
-            this.notification.add("استلم المحادثة أولًا قبل إرسال مرفق.", {
+            this.notification.add("Receive the chat first before sending an attachment.", {
                 type: "warning",
             });
             return;
@@ -363,7 +363,7 @@ export class WatiMiniInbox extends Component {
             return;
         }
         if ((this.state.draft || "").trim().length > 1024) {
-            this.notification.add("تعليق المرفق يجب ألا يتجاوز 1024 حرفًا.", {
+            this.notification.add("The attached comment must not exceed 1024 A letter.", {
                 type: "danger",
             });
             input.value = "";
@@ -390,16 +390,16 @@ export class WatiMiniInbox extends Component {
             });
             const payload = await response.json().catch(() => ({}));
             if (!response.ok || !payload.ok) {
-                throw new Error(payload.message || `تعذر إرسال المرفق (${response.status})`);
+                throw new Error(payload.message || `The attachment could not be sent (${response.status})`);
             }
             this.state.draft = "";
-            this.notification.add("تم إرسال المرفق إلى WATI ✅", { type: "success" });
+            this.notification.add("The attachment has been sent to WATI ✅", { type: "success" });
             await this.refreshBootstrap(true);
             window.setTimeout(() => this.loadConversation(this.state.selectedId, true), 900);
             window.setTimeout(() => this.loadConversation(this.state.selectedId, true), 2400);
         } catch (error) {
             console.error("WATI Mini Inbox attachment error", error);
-            this.notification.add(error.message || "تعذر إرسال المرفق.", {
+            this.notification.add(error.message || "The attachment could not be sent.", {
                 type: "danger",
             });
         } finally {
@@ -451,12 +451,12 @@ export class WatiMiniInbox extends Component {
 
     messagePlaceholder(type) {
         const clean = String(type || "").toLowerCase();
-        if (clean.includes("image") || clean.includes("sticker")) return "📷 صورة";
-        if (clean.includes("video")) return "🎥 فيديو";
-        if (clean.includes("audio") || clean.includes("voice")) return "🎵 رسالة صوتية";
-        if (clean.includes("document") || clean.includes("file")) return "📎 ملف";
-        if (clean.includes("location")) return "📍 موقع";
-        return "رسالة";
+        if (clean.includes("image") || clean.includes("sticker")) return "📷 Image";
+        if (clean.includes("video")) return "🎥 Video";
+        if (clean.includes("audio") || clean.includes("voice")) return "🎵 Voice message";
+        if (clean.includes("document") || clean.includes("file")) return "📎 File";
+        if (clean.includes("location")) return "📍 Location";
+        return "Message";
     }
 }
 

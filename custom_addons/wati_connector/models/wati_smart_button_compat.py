@@ -32,11 +32,11 @@ class ResPartnerWatiTimelinePhoneCompat(models.Model):
         compute="_compute_wati_timeline_runtime_safe",
     )
     wati_message_count = fields.Integer(
-        string="رسائل WhatsApp",
+        string="Messages WhatsApp",
         compute="_compute_wati_timeline_runtime_safe",
     )
     wati_last_message_at = fields.Datetime(
-        string="آخر تواصل WhatsApp",
+        string="Last communication WhatsApp",
         compute="_compute_wati_timeline_runtime_safe",
     )
 

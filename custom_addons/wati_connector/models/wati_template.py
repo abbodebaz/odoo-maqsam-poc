@@ -22,29 +22,29 @@ _TEMPLATE_NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 _NAMED_VARIABLE_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
 
 _STATUS_SELECTION = [
-    ("draft", "مسودة"),
-    ("pending", "قيد مراجعة Meta"),
-    ("pending_internal", "قيد المعالجة"),
-    ("approved", "معتمد"),
-    ("rejected", "مرفوض"),
-    ("paused", "متوقف مؤقتًا"),
-    ("disabled", "معطل"),
-    ("deleted", "محذوف"),
-    ("unknown", "غير معروف"),
+    ("draft", "Draft"),
+    ("pending", "Under review Meta"),
+    ("pending_internal", "In process"),
+    ("approved", "Certified"),
+    ("rejected", "Rejected"),
+    ("paused", "Paused"),
+    ("disabled", "Disabled"),
+    ("deleted", "Deleted"),
+    ("unknown", "Unknown"),
 ]
 
 _QUALITY_SELECTION = [
-    ("unknown", "غير معروف"),
-    ("green", "جيد"),
-    ("yellow", "متوسط"),
-    ("red", "منخفض"),
+    ("unknown", "Unknown"),
+    ("green", "Good"),
+    ("yellow", "Average"),
+    ("red", "Low"),
 ]
 
 _CATEGORY_SELECTION = [
-    ("UTILITY", "خدمي (Utility)"),
-    ("MARKETING", "تسويقي (Marketing)"),
-    ("AUTHENTICATION", "مصادقة (Authentication)"),
-    ("UNKNOWN", "غير معروف"),
+    ("UTILITY", "My service (Utility)"),
+    ("MARKETING", "Marketing (Marketing)"),
+    ("AUTHENTICATION", "Authentication (Authentication)"),
+    ("UNKNOWN", "Unknown"),
 ]
 
 
@@ -55,33 +55,33 @@ class WatiTemplate(models.Model):
     _rec_name = "name"
 
     name = fields.Char(
-        string="اسم القالب",
+        string="Template name",
         required=True,
         index=True,
-        help="اسم تقني ثابت بصيغة lowercase مع أرقام وشرطة سفلية فقط.",
+        help="Fixed technical name in lowercase With numbers and underscores only.",
     )
     language = fields.Char(
-        string="اللغة",
+        string="Language",
         required=True,
         default="ar",
         index=True,
-        help="رمز اللغة المستخدم في WATI/Meta، مثل ar أو en.",
+        help="Language code used in WATI/MetaLike ar Or en.",
     )
     category = fields.Selection(
         _CATEGORY_SELECTION,
-        string="التصنيف",
+        string="Category",
         required=True,
         default="UTILITY",
         index=True,
     )
     sub_category = fields.Char(
-        string="النوع الفرعي",
+        string="Subtype",
         default="STANDARD",
         readonly=True,
     )
     status = fields.Selection(
         _STATUS_SELECTION,
-        string="الحالة",
+        string="Status",
         default="draft",
         required=True,
         readonly=True,
@@ -89,15 +89,15 @@ class WatiTemplate(models.Model):
     )
     quality = fields.Selection(
         _QUALITY_SELECTION,
-        string="جودة القالب",
+        string="Mold quality",
         default="unknown",
         required=True,
         readonly=True,
         index=True,
     )
     source = fields.Selection(
-        [("odoo", "تم إنشاؤه في Odoo"), ("wati", "مستورَد من WATI")],
-        string="المصدر",
+        [("odoo", "It was created in Odoo"), ("wati", "Imported from WATI")],
+        string="Source",
         default="odoo",
         required=True,
         readonly=True,
@@ -105,28 +105,28 @@ class WatiTemplate(models.Model):
     )
 
     body = fields.Text(
-        string="نص الرسالة",
+        string="Message text",
         required=True,
-        help="استخدم المتغيرات بصيغة {{name}} أو {{1}}.",
+        help="Use variables in a formula {{name}} Or {{1}}.",
     )
-    footer = fields.Char(string="التذييل")
-    header_type = fields.Char(string="نوع الترويسة", readonly=True)
-    header_text = fields.Char(string="نص الترويسة", readonly=True)
-    buttons_json = fields.Text(string="بيانات الأزرار", readonly=True)
+    footer = fields.Char(string="Footer")
+    header_type = fields.Char(string="Header type", readonly=True)
+    header_text = fields.Char(string="Header text", readonly=True)
+    buttons_json = fields.Text(string="Button data", readonly=True)
 
     variable_ids = fields.One2many(
         "wati.template.variable",
         "template_id",
-        string="متغيرات القالب",
+        string="Template variables",
         copy=True,
     )
     variable_count = fields.Integer(
-        string="عدد المتغيرات",
+        string="Number of variables",
         compute="_compute_variable_count",
         store=True,
     )
     preview_text = fields.Text(
-        string="معاينة",
+        string="Preview",
         compute="_compute_preview_text",
     )
 
@@ -134,17 +134,17 @@ class WatiTemplate(models.Model):
     meta_template_id = fields.Char(string="Meta Template ID", readonly=True, index=True)
     waba_id = fields.Char(string="WABA ID", readonly=True, index=True)
     channel_phone_number = fields.Char(
-        string="قناة WhatsApp",
+        string="channel WhatsApp",
         readonly=True,
         index=True,
     )
 
-    rejection_reason = fields.Text(string="سبب الرفض", readonly=True)
-    submitted_at = fields.Datetime(string="تاريخ الإرسال للمراجعة", readonly=True)
-    last_synced_at = fields.Datetime(string="آخر مزامنة", readonly=True)
-    provider_request = fields.Text(string="آخر طلب إلى WATI", readonly=True)
-    provider_response = fields.Text(string="آخر استجابة من WATI", readonly=True)
-    last_error = fields.Text(string="آخر خطأ", readonly=True)
+    rejection_reason = fields.Text(string="Reason for rejection", readonly=True)
+    submitted_at = fields.Datetime(string="Date submitted for review", readonly=True)
+    last_synced_at = fields.Datetime(string="Last sync", readonly=True)
+    provider_request = fields.Text(string="Last request to WATI", readonly=True)
+    provider_response = fields.Text(string="Latest response from WATI", readonly=True)
+    last_error = fields.Text(string="Another error", readonly=True)
     active = fields.Boolean(default=True)
 
     @api.depends("variable_ids")
@@ -218,7 +218,7 @@ class WatiTemplate(models.Model):
             if len(name) > 512 or not _TEMPLATE_NAME_RE.fullmatch(name):
                 raise ValidationError(
                     _(
-                        "اسم القالب يجب أن يبدأ بحرف صغير ويحتوي فقط على أحرف إنجليزية صغيرة وأرقام وشرطة سفلية (_)."
+                        "The template name must start with a lowercase letter and contain only lowercase letters, numbers, and underscores (_)."
                     )
                 )
             duplicate = self.search_count(
@@ -231,7 +231,7 @@ class WatiTemplate(models.Model):
             )
             if duplicate:
                 raise ValidationError(
-                    _("يوجد قالب بنفس الاسم واللغة بالفعل. الاسم واللغة يجب أن يكونا فريدين.")
+                    _("A template with the same name and language already exists. Name and language must be unique.")
                 )
 
     @api.constrains("body", "footer")
@@ -240,11 +240,11 @@ class WatiTemplate(models.Model):
             body = record.body or ""
             footer = record.footer or ""
             if not body.strip():
-                raise ValidationError(_("نص القالب لا يمكن أن يكون فارغًا."))
+                raise ValidationError(_("Template text cannot be empty."))
             if len(body) > 1024:
-                raise ValidationError(_("نص القالب تجاوز 1024 حرفًا."))
+                raise ValidationError(_("Template text overflow 1024 A letter."))
             if len(footer) > 60:
-                raise ValidationError(_("تذييل القالب تجاوز 60 حرفًا."))
+                raise ValidationError(_("Overflow template footer 60 A letter."))
 
     @api.constrains("body")
     def _check_placeholder_contract(self):
@@ -253,19 +253,19 @@ class WatiTemplate(models.Model):
             mode = placeholder_mode(tokens)
             if mode == "mixed":
                 raise ValidationError(
-                    _("لا تخلط بين متغيرات مرقمة مثل {{1}} ومتغيرات مسماة مثل {{name}} في القالب نفسه.")
+                    _("Do not confuse numbered variables e.g {{1}} And named variables such as {{name}} In the same template.")
                 )
             if mode == "positional":
                 expected = [str(index) for index in range(1, len(tokens) + 1)]
                 if tokens != expected:
                     raise ValidationError(
-                        _("المتغيرات المرقمة يجب أن تكون متسلسلة بالترتيب: {{1}}, {{2}}, {{3}} ...")
+                        _("Numbered variables must be serialized in order: {{1}}, {{2}}, {{3}} ...")
                     )
             if mode == "named":
                 invalid = [token for token in tokens if not _NAMED_VARIABLE_RE.fullmatch(token)]
                 if invalid:
                     raise ValidationError(
-                        _("اسم المتغير غير صالح: %s. استخدم أحرفًا إنجليزية وأرقامًا وشرطة سفلية فقط.")
+                        _("Invalid variable name: %s. Use only English letters, numbers, and underscores.")
                         % invalid[0]
                     )
 
@@ -316,14 +316,14 @@ class WatiTemplate(models.Model):
         ensure_feature_access(self.env, "templates")
         if self.source != "odoo":
             raise UserError(
-                _("القالب المستورَد من WATI مرآة لحالة Meta. أنشئ نسخة قابلة للتعديل أولًا.")
+                _("Template imported from WATI Mirror for case Meta. Create an editable version first.")
             )
         if self.status != "draft":
-            raise UserError(_("يمكن إرسال المسودات فقط إلى Meta للمراجعة."))
+            raise UserError(_("Only drafts can be sent to Meta For review."))
         if self.category not in {"UTILITY", "MARKETING"}:
             raise UserError(
                 _(
-                    "إنشاء قوالب المصادقة والأنواع المتقدمة يحتاج عقدًا مختلفًا مع Meta/WATI. النسخة الحالية تدعم STANDARD Utility وMarketing فقط لتجنب إرسال Payload غير موثوق."
+                    "Creating authentication templates and advanced types needs a different contract with Meta/WATI. The current version supports STANDARD Utility AndMarketing Just to avoid sending Payload Unreliable."
                 )
             )
         self._check_identity()
@@ -333,7 +333,7 @@ class WatiTemplate(models.Model):
         missing = self.variable_ids.filtered(lambda line: not clean(line.sample_value))
         if missing:
             raise UserError(
-                _("أدخل قيمة مثال لكل متغير قبل الإرسال للمراجعة. المتغير الناقص: %s")
+                _("Enter an example value for each variable before submitting for review. Missing variable: %s")
                 % missing[0].name
             )
 
@@ -373,7 +373,7 @@ class WatiTemplate(models.Model):
             message = (
                 getattr(exc, "response_text", "")
                 or str(exc)
-                or _("تعذر إرسال القالب إلى WATI.")
+                or _("The template could not be sent to WATI.")
             )
             self.sudo().write(
                 {
@@ -381,7 +381,7 @@ class WatiTemplate(models.Model):
                     "last_error": clean(message)[:3000],
                 }
             )
-            raise UserError(_("تعذر إرسال القالب إلى WATI: %s") % clean(message)[:1200]) from exc
+            raise UserError(_("The template could not be sent to WATI: %s") % clean(message)[:1200]) from exc
 
         status_value = "pending"
         if isinstance(response_payload, dict):
@@ -410,9 +410,9 @@ class WatiTemplate(models.Model):
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
-                "title": _("تم إرسال القالب للمراجعة"),
+                "title": _("The template has been sent for review"),
                 "message": _(
-                    "أرسل Odoo القالب إلى WATI بنجاح. ستتحدث حالة Meta تلقائيًا عبر Webhook أو يمكنك الضغط على «تحديث الحالة»."
+                    "Send Odoo Template to WATI Successfully. A case will occur Meta Automatically via Webhook Or you can press «Status update»."
                 ),
                 "type": "success",
                 "sticky": False,
@@ -456,7 +456,7 @@ class WatiTemplate(models.Model):
             try:
                 payload = response.json()
             except ValueError as exc:
-                raise UserError(_("WATI أعاد استجابة غير مفهومة أثناء مزامنة القوالب.")) from exc
+                raise UserError(_("WATI Returned an unintelligible response while synchronizing templates.")) from exc
             items = find_template_list(payload)
             if not items:
                 break
@@ -472,7 +472,7 @@ class WatiTemplate(models.Model):
             items = self._fetch_remote_templates()
         except (WatiConfigurationError, WatiRequestError) as exc:
             detail = clean(getattr(exc, "response_text", "") or str(exc))[:1200]
-            raise UserError(_("تعذر مزامنة القوالب من WATI: %s") % detail) from exc
+            raise UserError(_("Unable to sync templates from WATI: %s") % detail) from exc
 
         synced = 0
         now = fields.Datetime.now()
@@ -507,8 +507,8 @@ class WatiTemplate(models.Model):
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
-                "title": _("مزامنة قوالب WhatsApp"),
-                "message": _("تمت مزامنة %s قالبًا من WATI.") % synced,
+                "title": _("Sync templates WhatsApp"),
+                "message": _("Synchronized %s Template from WATI.") % synced,
                 "type": "success",
                 "sticky": False,
                 "next": {"type": "ir.actions.client", "tag": "soft_reload"},
@@ -571,7 +571,7 @@ class WatiTemplate(models.Model):
             items = self._fetch_remote_templates()
         except (WatiConfigurationError, WatiRequestError) as exc:
             detail = clean(getattr(exc, "response_text", "") or str(exc))[:1200]
-            raise UserError(_("تعذر تحديث حالة القالب من WATI: %s") % detail) from exc
+            raise UserError(_("Unable to update template status from WATI: %s") % detail) from exc
 
         found = set()
         now = fields.Datetime.now()
@@ -592,7 +592,7 @@ class WatiTemplate(models.Model):
             selected[key].sudo().write(
                 {
                     "last_synced_at": now,
-                    "last_error": _("لم يظهر هذا القالب في نتيجة WATI الحالية."),
+                    "last_error": _("This template did not appear in a result WATI current."),
                 }
             )
 
@@ -600,8 +600,8 @@ class WatiTemplate(models.Model):
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
-                "title": _("تحديث حالة القوالب"),
-                "message": _("تم تحديث %s من %s قالبًا.") % (len(found), len(selected)),
+                "title": _("Update template status"),
+                "message": _("has been updated %s Who %s Template.") % (len(found), len(selected)),
                 "type": "success" if found else "warning",
                 "sticky": False,
                 "next": {"type": "ir.actions.client", "tag": "soft_reload"},
@@ -617,7 +617,7 @@ class WatiTemplate(models.Model):
             if not record.waba_id:
                 raise UserError(
                     _(
-                        "لا يمكن حذف القالب من Meta بدون WABA ID. نفّذ «تحديث الحالة» أو «مزامنة من WATI» أولًا."
+                        "The template cannot be deleted from Meta Without WABA ID. Execute «Status update» Or «Sync from WATI» First."
                     )
                 )
             try:
@@ -633,7 +633,7 @@ class WatiTemplate(models.Model):
             except (WatiConfigurationError, WatiRequestError) as exc:
                 detail = clean(getattr(exc, "response_text", "") or str(exc))[:1200]
                 record.sudo().write({"last_error": detail})
-                raise UserError(_("تعذر حذف القالب من WATI/Meta: %s") % detail) from exc
+                raise UserError(_("Unable to delete template from WATI/Meta: %s") % detail) from exc
 
             record.sudo().write(
                 {
@@ -737,20 +737,20 @@ class WatiTemplateVariable(models.Model):
 
     template_id = fields.Many2one(
         "wati.template",
-        string="القالب",
+        string="Template",
         required=True,
         ondelete="cascade",
         index=True,
     )
-    position = fields.Integer(string="الترتيب", required=True, default=1)
-    name = fields.Char(string="المتغير", required=True)
+    position = fields.Integer(string="Ranking", required=True, default=1)
+    name = fields.Char(string="variable", required=True)
     sample_value = fields.Char(
-        string="قيمة المثال",
-        help="مثال واقعي ترسله Meta أثناء مراجعة القالب.",
+        string="Example value",
+        help="A real-life example you send Meta While reviewing the template.",
     )
 
     @api.constrains("name")
     def _check_name(self):
         for record in self:
             if not clean(record.name):
-                raise ValidationError(_("اسم المتغير لا يمكن أن يكون فارغًا."))
+                raise ValidationError(_("The variable name cannot be empty."))

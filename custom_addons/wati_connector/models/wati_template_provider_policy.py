@@ -30,7 +30,7 @@ class WatiTemplateProviderPolicy(models.Model):
                 if len(name) > 512 or not _TEMPLATE_NAME_RE.fullmatch(name):
                     raise ValidationError(
                         _(
-                            "اسم القالب يجب أن يبدأ بحرف إنجليزي صغير ويحتوي فقط على أحرف إنجليزية صغيرة وأرقام وشرطة سفلية (_). مثال: order_ready_ar"
+                            "The template name must start with a lowercase letter and contain only lowercase letters, numbers, and underscores (_). Example: order_ready_ar"
                         )
                     )
 
@@ -44,7 +44,7 @@ class WatiTemplateProviderPolicy(models.Model):
             )
             if duplicate:
                 raise ValidationError(
-                    _("يوجد قالب بنفس الاسم واللغة بالفعل. الاسم واللغة يجب أن يكونا فريدين.")
+                    _("A template with the same name and language already exists. Name and language must be unique.")
                 )
 
     @api.constrains("body", "footer", "source")
@@ -55,11 +55,11 @@ class WatiTemplateProviderPolicy(models.Model):
             body = record.body or ""
             footer = record.footer or ""
             if not body.strip():
-                raise ValidationError(_("نص القالب لا يمكن أن يكون فارغًا."))
+                raise ValidationError(_("Template text cannot be empty."))
             if len(body) > 1024:
-                raise ValidationError(_("نص القالب تجاوز 1024 حرفًا."))
+                raise ValidationError(_("Template text overflow 1024 A letter."))
             if len(footer) > 60:
-                raise ValidationError(_("تذييل القالب تجاوز 60 حرفًا."))
+                raise ValidationError(_("Overflow template footer 60 A letter."))
 
     @api.constrains("body", "source")
     def _check_placeholder_contract(self):
@@ -70,19 +70,19 @@ class WatiTemplateProviderPolicy(models.Model):
             mode = placeholder_mode(tokens)
             if mode == "mixed":
                 raise ValidationError(
-                    _("لا تخلط بين متغيرات مرقمة مثل {{1}} ومتغيرات مسماة مثل {{name}} في القالب نفسه.")
+                    _("Do not confuse numbered variables e.g {{1}} And named variables such as {{name}} In the same template.")
                 )
             if mode == "positional":
                 expected = [str(index) for index in range(1, len(tokens) + 1)]
                 if tokens != expected:
                     raise ValidationError(
-                        _("المتغيرات المرقمة يجب أن تكون متسلسلة بالترتيب: {{1}}, {{2}}, {{3}} ...")
+                        _("Numbered variables must be serialized in order: {{1}}, {{2}}, {{3}} ...")
                     )
             if mode == "named":
                 invalid = [token for token in tokens if not _NAMED_VARIABLE_RE.fullmatch(token)]
                 if invalid:
                     raise ValidationError(
-                        _("اسم المتغير غير صالح: %s. استخدم أحرفًا إنجليزية وأرقامًا وشرطة سفلية فقط.")
+                        _("Invalid variable name: %s. Use only English letters, numbers, and underscores.")
                         % invalid[0]
                     )
 

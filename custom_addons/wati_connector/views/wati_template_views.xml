@@ -4,27 +4,27 @@
         <field name="name">wati.template.search</field>
         <field name="model">wati.template</field>
         <field name="arch" type="xml">
-            <search string="بحث في قوالب WhatsApp">
-                <field name="name" string="اسم القالب"/>
-                <field name="language" string="اللغة"/>
-                <field name="category" string="التصنيف"/>
-                <field name="status" string="الحالة"/>
-                <field name="channel_phone_number" string="القناة"/>
+            <search string="Search templates WhatsApp">
+                <field name="name" string="Template name"/>
+                <field name="language" string="Language"/>
+                <field name="category" string="Category"/>
+                <field name="status" string="Status"/>
+                <field name="channel_phone_number" string="Channel"/>
                 <separator/>
-                <filter name="draft" string="مسودات" domain="[('status', '=', 'draft')]"/>
-                <filter name="pending" string="قيد المراجعة" domain="[('status', 'in', ['pending', 'pending_internal'])]"/>
-                <filter name="approved" string="معتمدة" domain="[('status', '=', 'approved')]"/>
-                <filter name="rejected" string="مرفوضة" domain="[('status', '=', 'rejected')]"/>
-                <filter name="attention" string="تحتاج انتباه" domain="[('status', 'in', ['rejected', 'paused', 'disabled', 'unknown'])]"/>
+                <filter name="draft" string="Drafts" domain="[('status', '=', 'draft')]"/>
+                <filter name="pending" string="Under review" domain="[('status', 'in', ['pending', 'pending_internal'])]"/>
+                <filter name="approved" string="Certified" domain="[('status', '=', 'approved')]"/>
+                <filter name="rejected" string="Rejected" domain="[('status', '=', 'rejected')]"/>
+                <filter name="attention" string="Need attention" domain="[('status', 'in', ['rejected', 'paused', 'disabled', 'unknown'])]"/>
                 <separator/>
-                <filter name="odoo_source" string="أنشئت في Odoo" domain="[('source', '=', 'odoo')]"/>
-                <filter name="wati_source" string="مستوردة من WATI" domain="[('source', '=', 'wati')]"/>
+                <filter name="odoo_source" string="Established in Odoo" domain="[('source', '=', 'odoo')]"/>
+                <filter name="wati_source" string="Imported from WATI" domain="[('source', '=', 'wati')]"/>
                 <separator/>
                 <group>
-                    <filter name="group_status" string="الحالة" context="{'group_by': 'status'}"/>
-                    <filter name="group_category" string="التصنيف" context="{'group_by': 'category'}"/>
-                    <filter name="group_language" string="اللغة" context="{'group_by': 'language'}"/>
-                    <filter name="group_source" string="المصدر" context="{'group_by': 'source'}"/>
+                    <filter name="group_status" string="Status" context="{'group_by': 'status'}"/>
+                    <filter name="group_category" string="Category" context="{'group_by': 'category'}"/>
+                    <filter name="group_language" string="Language" context="{'group_by': 'language'}"/>
+                    <filter name="group_source" string="Source" context="{'group_by': 'source'}"/>
                 </group>
             </search>
         </field>
@@ -34,7 +34,7 @@
         <field name="name">wati.template.list</field>
         <field name="model">wati.template</field>
         <field name="arch" type="xml">
-            <list string="مركز قوالب WhatsApp"
+            <list string="Mold center WhatsApp"
                   default_order="write_date desc, id desc"
                   decoration-success="status == 'approved'"
                   decoration-danger="status == 'rejected'"
@@ -43,21 +43,21 @@
                 <header>
                     <button name="action_sync_from_wati"
                             type="object"
-                            string="مزامنة من WATI"
+                            string="Sync from WATI"
                             icon="fa-refresh"
                             class="btn-primary"
                             display="always"/>
                 </header>
-                <field name="name" string="القالب"/>
-                <field name="language" string="اللغة"/>
-                <field name="category" string="التصنيف"/>
-                <field name="status" string="الحالة" widget="badge"/>
-                <field name="quality" string="الجودة" widget="badge"/>
-                <field name="source" string="المصدر" optional="show"/>
-                <field name="variable_count" string="المتغيرات"/>
-                <field name="channel_phone_number" string="القناة" optional="hide"/>
-                <field name="last_synced_at" string="آخر مزامنة" optional="show"/>
-                <field name="submitted_at" string="أرسل للمراجعة" optional="hide"/>
+                <field name="name" string="Template"/>
+                <field name="language" string="Language"/>
+                <field name="category" string="Category"/>
+                <field name="status" string="Status" widget="badge"/>
+                <field name="quality" string="Quality" widget="badge"/>
+                <field name="source" string="Source" optional="show"/>
+                <field name="variable_count" string="Variables"/>
+                <field name="channel_phone_number" string="Channel" optional="hide"/>
+                <field name="last_synced_at" string="Last sync" optional="show"/>
+                <field name="submitted_at" string="Send for review" optional="hide"/>
             </list>
         </field>
     </record>
@@ -66,30 +66,30 @@
         <field name="name">wati.template.form</field>
         <field name="model">wati.template</field>
         <field name="arch" type="xml">
-            <form string="قالب WhatsApp" delete="false">
+            <form string="Template WhatsApp" delete="false">
                 <header>
                     <button name="action_submit_for_approval"
                             type="object"
-                            string="إرسال للمراجعة"
+                            string="Submit for review"
                             class="btn-primary"
                             icon="fa-paper-plane"
                             invisible="status != 'draft' or source != 'odoo'"/>
                     <button name="action_refresh_status"
                             type="object"
-                            string="تحديث الحالة"
+                            string="Status update"
                             icon="fa-refresh"
                             invisible="status == 'draft' and not wati_template_id and not meta_template_id"/>
                     <button name="action_duplicate_draft"
                             type="object"
-                            string="إنشاء نسخة جديدة"
+                            string="Create a new copy"
                             icon="fa-copy"
                             invisible="status == 'draft' and source == 'odoo'"/>
                     <button name="action_delete_remote"
                             type="object"
-                            string="حذف من WATI / Meta"
+                            string="Delete from WATI / Meta"
                             icon="fa-trash"
                             class="btn-secondary"
-                            confirm="سيتم طلب حذف هذه النسخة من WATI/Meta. لا يمكن التراجع عن هذا الإجراء. هل أنت متأكد؟"
+                            confirm="You will be asked to delete this copy from WATI/Meta. This action cannot be undone. Are you sure?"
                             invisible="status == 'draft' and not wati_template_id and not meta_template_id"/>
                     <field name="status"
                            widget="statusbar"
@@ -98,41 +98,41 @@
 
                 <sheet>
                     <div class="alert alert-info" role="status" invisible="source != 'wati'">
-                        <strong>قالب مستورد من WATI.</strong>
-                        هذه النسخة مرآة للحالة الموجودة لدى WATI/Meta. إذا أردت تعديل المحتوى استخدم «إنشاء نسخة جديدة» حتى لا نفصل بيانات Odoo عن القالب الحقيقي.
+                        <strong>Template imported from WATI.</strong>
+                        This copy mirrors the existing state WATI/Meta. If you want to modify the content, use «Create a new copy» So we don’t separate data Odoo About the real template.
                     </div>
                     <div class="alert alert-warning" role="status" invisible="sub_category in [False, '', 'STANDARD']">
-                        هذا قالب متقدم من نوع <field name="sub_category" class="d-inline"/>. يتم عرضه ومراقبته داخل Odoo، لكن إنشاء الأنواع المتقدمة من Odoo غير مفعّل حتى يكون عقد الـAPI موثقًا بالكامل.
+                        This is an advanced type template <field name="sub_category" class="d-inline"/>. It is displayed and monitored inside Odoo, but creating advanced types of Odoo Inactive until the contract is...API Fully documented.
                     </div>
                     <div class="alert alert-danger" role="alert" invisible="status != 'rejected' or not rejection_reason">
-                        <strong>رفض Meta القالب:</strong>
+                        <strong>He refused Meta Template:</strong>
                         <field name="rejection_reason" class="d-inline"/>
                     </div>
                     <div class="alert alert-danger" role="alert" invisible="not last_error">
-                        <strong>آخر مشكلة في المزامنة:</strong>
+                        <strong>Another sync issue:</strong>
                         <field name="last_error" class="d-inline"/>
                     </div>
 
                     <div class="oe_title">
-                        <label for="name" string="اسم القالب"/>
+                        <label for="name" string="Template name"/>
                         <h1>
                             <field name="name"
                                    placeholder="order_ready_ar"
                                    readonly="status != 'draft' or source != 'odoo'"/>
                         </h1>
                         <div class="text-muted">
-                            الاسم ثابت بعد الإرسال ويجب أن يكون بحروف إنجليزية صغيرة وأرقام وشرطة سفلية فقط.
+                            The name is fixed after submission and must be in lower case letters, numbers and underscores only.
                         </div>
                     </div>
 
                     <group>
-                        <group string="الهوية">
+                        <group string="Identity">
                             <field name="language" readonly="status != 'draft' or source != 'odoo'" placeholder="ar"/>
                             <field name="category" readonly="status != 'draft' or source != 'odoo'"/>
                             <field name="sub_category"/>
                             <field name="source"/>
                         </group>
-                        <group string="حالة Meta / WATI">
+                        <group string="case Meta / WATI">
                             <field name="status" widget="badge"/>
                             <field name="quality" widget="badge"/>
                             <field name="submitted_at"/>
@@ -141,52 +141,52 @@
                     </group>
 
                     <notebook>
-                        <page string="المحتوى" name="content">
+                        <page string="Content" name="content">
                             <group>
                                 <field name="body"
-                                       string="نص الرسالة"
-                                       placeholder="مرحبًا {{name}}، طلبك أصبح جاهزًا."
+                                       string="Message text"
+                                       placeholder="Hello {{name}}Your order is ready."
                                        readonly="status != 'draft' or source != 'odoo'"
                                        nolabel="1"/>
                             </group>
 
-                            <group string="متغيرات القالب" invisible="not variable_count">
+                            <group string="Template variables" invisible="not variable_count">
                                 <div class="text-muted mb-2">
-                                    قيمة المثال ترسل مع تعريف القالب لمساعدة المراجعة وفهم شكل الرسالة. استخدم بيانات واقعية وغير حساسة.
+                                    The example value is sent with the template definition to aid review and understanding of the message format. Use factual, non-sensitive data.
                                 </div>
                                 <field name="variable_ids" readonly="status != 'draft' or source != 'odoo'" nolabel="1">
                                     <list editable="bottom" create="false" delete="false">
                                         <field name="position" string="#" readonly="1"/>
-                                        <field name="name" string="المتغير" readonly="1"/>
-                                        <field name="sample_value" string="قيمة مثال" required="1"/>
+                                        <field name="name" string="variable" readonly="1"/>
+                                        <field name="sample_value" string="Example value" required="1"/>
                                     </list>
                                 </field>
                             </group>
 
-                            <group string="معاينة الرسالة">
+                            <group string="Preview the message">
                                 <field name="preview_text" readonly="1" nolabel="1"/>
                             </group>
 
-                            <group string="تفاصيل إضافية">
-                                <field name="footer" readonly="status != 'draft' or source != 'odoo'" placeholder="اختياري — حتى 60 حرفًا"/>
+                            <group string="Additional details">
+                                <field name="footer" readonly="status != 'draft' or source != 'odoo'" placeholder="Optional — Even 60 A letter"/>
                                 <field name="header_type" invisible="not header_type"/>
                                 <field name="header_text" invisible="not header_text"/>
                             </group>
                         </page>
 
-                        <page string="الاعتماد والمزامنة" name="provider">
+                        <page string="Accreditation and synchronization" name="provider">
                             <div class="alert alert-light border" role="status">
-                                <strong>دورة حياة القالب:</strong>
-                                مسودة في Odoo ← إرسال إلى WATI ← مراجعة Meta ← اعتماد أو رفض ← متابعة الجودة والتصنيف عبر Webhook.
+                                <strong>Mold life cycle:</strong>
+                                draft in Odoo ← Send to WATI ← Review Meta ← Accept or reject ← Follow up on quality and classification across Webhook.
                             </div>
                             <group>
-                                <group string="المعرفات">
+                                <group string="Identifiers">
                                     <field name="wati_template_id"/>
                                     <field name="meta_template_id"/>
                                     <field name="waba_id"/>
                                     <field name="channel_phone_number"/>
                                 </group>
-                                <group string="المراجعة">
+                                <group string="Review">
                                     <field name="submitted_at"/>
                                     <field name="last_synced_at"/>
                                     <field name="rejection_reason" invisible="not rejection_reason"/>
@@ -194,7 +194,7 @@
                             </group>
                         </page>
 
-                        <page string="مكونات مستوردة" name="imported_components" invisible="not header_type and not header_text and buttons_json in [False, '', '[]']">
+                        <page string="Imported components" name="imported_components" invisible="not header_type and not header_text and buttons_json in [False, '', '[]']">
                             <group>
                                 <field name="header_type"/>
                                 <field name="header_text"/>
@@ -202,7 +202,7 @@
                             </group>
                         </page>
 
-                        <page string="تفاصيل تقنية" name="technical" groups="base.group_system">
+                        <page string="Technical details" name="technical" groups="base.group_system">
                             <group>
                                 <field name="provider_request" widget="text"/>
                                 <field name="provider_response" widget="text"/>
@@ -216,19 +216,19 @@
     </record>
 
     <record id="action_wati_templates" model="ir.actions.act_window">
-        <field name="name">مركز القوالب</field>
+        <field name="name">Template Center</field>
         <field name="res_model">wati.template</field>
         <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_wati_template_search"/>
         <field name="context">{'default_source': 'odoo', 'default_status': 'draft'}</field>
         <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">ابدأ بإضافة أول قالب WhatsApp</p>
-            <p>أنشئ مسودة في Odoo أو اضغط «مزامنة من WATI» لاستيراد القوالب الحالية ومتابعة اعتمادها.</p>
+            <p class="o_view_nocontent_smiling_face">Start by adding your first block WhatsApp</p>
+            <p>Create a draft in Odoo Or click «Sync from WATI» To import existing templates and follow up on their approval.</p>
         </field>
     </record>
 
     <menuitem id="menu_wati_templates"
-              name="مركز القوالب"
+              name="Template Center"
               parent="wati_connector.menu_wati_root"
               action="action_wati_templates"
               sequence="25"

@@ -22,7 +22,7 @@
     function setComposerEnabled(enabled, note) {
         if (messageInput) {
             messageInput.disabled = !enabled;
-            messageInput.placeholder = enabled ? "اكتب رسالة..." : (note || "استلم المحادثة أولًا...");
+            messageInput.placeholder = enabled ? "Write a message..." : (note || "Receive the conversation first...");
             messageInput.setAttribute("aria-disabled", enabled ? "false" : "true");
         }
         if (sendButton) {
@@ -54,11 +54,11 @@
     }
 
     function renderEmptyState() {
-        setBadge("اختر محادثة", "unassigned");
-        statusValue.textContent = "لم يتم اختيار محادثة";
+        setBadge("Choose a conversation", "unassigned");
+        statusValue.textContent = "No conversation selected";
         assignedUserValue.textContent = "—";
         actionBox.replaceChildren();
-        setComposerEnabled(false, "اختر محادثة أولًا...");
+        setComposerEnabled(false, "Choose a conversation first...");
     }
 
     async function assignMe(force = false, previousUserName = "") {
@@ -67,7 +67,7 @@
 
         if (force) {
             const confirmed = window.confirm(
-                `المحادثة حاليًا عند ${previousUserName || "موظف آخر"}.\n\nهل تريد نقلها إليك؟`
+                `The conversation is currently at ${previousUserName || "Another employee"}.\n\nDo you want it transferred to you?`
             );
             if (!confirmed) return;
         }
@@ -92,7 +92,7 @@
                 body: body.toString(),
             });
             const payload = await response.json().catch(() => ({}));
-            if (!response.ok || !payload.ok) throw new Error(payload.message || "تعذر استلام المحادثة");
+            if (!response.ok || !payload.ok) throw new Error(payload.message || "Could not receive the conversation");
 
             await refreshAssignment(true);
             setComposerEnabled(true);
@@ -100,7 +100,7 @@
             window.setTimeout(refreshInboxData, 500);
             if (messageInput) window.setTimeout(() => messageInput.focus(), 80);
         } catch (error) {
-            window.alert(error.message || "تعذر استلام المحادثة.");
+            window.alert(error.message || "Could not receive the conversation.");
             await refreshAssignment(true);
         } finally {
             busy = false;
@@ -112,44 +112,44 @@
         actionBox.replaceChildren();
 
         if (!data.wati_email) {
-            setBadge("إعداد مطلوب", "warning", "أضف WATI Operator Email لحساب المستخدم");
-            statusValue.textContent = "بريد WATI غير مضبوط";
+            setBadge("Setup required", "warning", "Add WATI Operator Email For the user account");
+            statusValue.textContent = "Mail WATI Not set";
             assignedUserValue.textContent = data.current_user_name || "—";
-            actionBox.appendChild(makeActionButton("أضف بريد WATI لحساب المستخدم", null, "secondary", true));
-            setComposerEnabled(false, "أضف WATI Operator Email في حساب المستخدم...");
+            actionBox.appendChild(makeActionButton("Add mail WATI For the user account", null, "secondary", true));
+            setComposerEnabled(false, "Add WATI Operator Email In the user account...");
             return;
         }
 
         if (data.assigned_to_me) {
-            setBadge("✓ مسندة لي", "mine", `المحادثة مسندة إلى ${data.current_user_name || "حسابك"}`);
-            statusValue.textContent = "مسندة إليك";
+            setBadge("✓ Supported by me", "mine", `The conversation is assigned to ${data.current_user_name || "Your account"}`);
+            statusValue.textContent = "assigned to you";
             assignedUserValue.textContent = data.current_user_name || "—";
             setComposerEnabled(true);
             return;
         }
 
         if (data.is_unassigned) {
-            setBadge("غير مسندة", "unassigned");
-            statusValue.textContent = "غير مسندة";
+            setBadge("Not supported", "unassigned");
+            statusValue.textContent = "Not supported";
             assignedUserValue.textContent = "—";
-            actionBox.appendChild(makeActionButton("استلام المحادثة", () => assignMe(false)));
-            setComposerEnabled(false, "استلم المحادثة أولًا...");
+            actionBox.appendChild(makeActionButton("Receive the conversation", () => assignMe(false)));
+            setComposerEnabled(false, "Receive the conversation first...");
             return;
         }
 
-        setBadge("مسندة لموظف", "other", `المحادثة عند ${data.assigned_user_name || "موظف آخر"}`);
-        statusValue.textContent = "مسندة لموظف آخر";
+        setBadge("Assigned to an employee", "other", `Conversation at ${data.assigned_user_name || "Another employee"}`);
+        statusValue.textContent = "Assigned to another employee";
         assignedUserValue.textContent = data.assigned_user_name || "—";
         if (data.can_takeover) {
             actionBox.appendChild(
                 makeActionButton(
-                    "نقل المحادثة إليّ",
+                    "Transfer the conversation to me",
                     () => assignMe(true, data.assigned_user_name),
                     "takeover"
                 )
             );
         }
-        setComposerEnabled(false, `المحادثة عند ${data.assigned_user_name || "موظف آخر"}`);
+        setComposerEnabled(false, `Conversation at ${data.assigned_user_name || "Another employee"}`);
     }
 
     async function refreshAssignment(forceRender = false) {

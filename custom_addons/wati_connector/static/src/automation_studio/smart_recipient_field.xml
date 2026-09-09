@@ -16,7 +16,7 @@
             </select>
         </t>
         <t t-else="">
-            <div class="wati_smart_recipient_empty">لا توجد حقول هاتف مناسبة في هذا المسار.</div>
+            <div class="wati_smart_recipient_empty">There are no appropriate phone fields in this path.</div>
         </t>
     </t>
 </templates>

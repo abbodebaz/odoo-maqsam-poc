@@ -4,11 +4,11 @@ from odoo.exceptions import UserError
 
 _PHONE_TOKENS = (
     "mobile", "phone", "whatsapp", "whats_app", "telephone", "tel",
-    "جوال", "هاتف", "واتساب",
+    "Mobile", "Phone", "WhatsApp",
 )
 _RELATION_HINTS = (
     "partner", "customer", "client", "contact", "commercial_partner",
-    "عميل", "جهة اتصال",
+    "Client", "Contact",
 )
 
 
@@ -17,29 +17,29 @@ class WatiAutomationRecipient(models.Model):
 
     recipient_mode = fields.Selection(
         [
-            ("auto", "رقم العميل تلقائيًا — موصى به"),
-            ("direct", "رقم من السجل"),
-            ("related", "رقم من سجل مرتبط"),
+            ("auto", "Customer number automatically — Recommended"),
+            ("direct", "Number of register"),
+            ("related", "Number of a linked record"),
         ],
-        string="طريقة اختيار المستلم",
+        string="How to choose the recipient",
         default="auto",
         copy=True,
     )
     recipient_advanced_path = fields.Char(
-        string="مسار رقم مخصص",
+        string="Custom number path",
         copy=True,
-        help="للاستخدام المتقدم فقط. مثال: partner_id.mobile",
+        help="For advanced use only. Example: partner_id.mobile",
     )
     smart_recipient_metadata = fields.Json(
-        string="خيارات المستلم الذكية",
+        string="Smart recipient options",
         compute="_compute_smart_recipient_state",
     )
     recipient_summary = fields.Char(
-        string="المستلم",
+        string="Recipient",
         compute="_compute_smart_recipient_state",
     )
     recipient_preview_note = fields.Char(
-        string="معاينة المستلم",
+        string="Preview recipient",
         compute="_compute_smart_recipient_state",
     )
 
@@ -152,9 +152,9 @@ class WatiAutomationRecipient(models.Model):
             rule.smart_recipient_metadata = {
                 "mode": "select" if visible else "empty",
                 "placeholder": (
-                    "اختر حقل الهاتف من السجل"
+                    "Select the Phone field from the record"
                     if mode == "direct"
-                    else "اختر الرقم من سجل مرتبط"
+                    else "Select the number from a linked record"
                 ),
                 "options": [
                     {"value": item["value"], "label": item["label"]}
@@ -167,24 +167,24 @@ class WatiAutomationRecipient(models.Model):
                 None,
             )
             if rule.recipient_advanced_path:
-                rule.recipient_summary = _("مسار رقم مخصص")
-                rule.recipient_preview_note = _("سيتم استخدام المسار المتقدم الذي حدده المسؤول.")
+                rule.recipient_summary = _("Custom number path")
+                rule.recipient_preview_note = _("The advanced path specified by the administrator will be used.")
             elif mode == "auto":
-                rule.recipient_summary = _("رقم العميل تلقائيًا")
+                rule.recipient_summary = _("Customer number automatically")
                 if options:
-                    labels = "، ".join(item["label"] for item in options[:3])
-                    rule.recipient_preview_note = _("سيبحث النظام تلقائيًا بالترتيب الأنسب، مثل: %s", labels)
+                    labels = ", ".join(item["label"] for item in options[:3])
+                    rule.recipient_preview_note = _("The system will automatically search in the most appropriate order, e.g: %s", labels)
                 else:
-                    rule.recipient_preview_note = _("لم نجد حقل هاتف واضحًا بعد؛ يمكنك اختيار مسار متقدم إذا لزم.")
+                    rule.recipient_preview_note = _("We haven’t found a clear phone field yet; You can choose an advanced path if necessary.")
             elif selected:
                 rule.recipient_summary = selected["label"]
-                rule.recipient_preview_note = _("سيتم إرسال الرسالة إلى: %s", selected["label"])
+                rule.recipient_preview_note = _("The message will be sent to: %s", selected["label"])
             else:
-                rule.recipient_summary = _("اختر رقم المستلم")
+                rule.recipient_summary = _("Choose the recipient number")
                 rule.recipient_preview_note = (
-                    _("اختر حقل هاتف من نفس السجل.")
+                    _("Choose a phone field from the same record.")
                     if mode == "direct"
-                    else _("اختر حقل هاتف من سجل مرتبط.")
+                    else _("Choose a phone field from a linked record.")
                 )
 
     @api.onchange("recipient_mode")
@@ -238,7 +238,7 @@ class WatiAutomationRecipient(models.Model):
         if step == "recipient":
             mode = self.recipient_mode or "auto"
             if mode in ("direct", "related") and not (self.recipient_path or "").strip():
-                raise UserError(_("اختر رقم المستلم قبل المتابعة."))
+                raise UserError(_("Choose the recipient’s number before continuing."))
         return result
 
     @api.depends(
@@ -254,16 +254,16 @@ class WatiAutomationRecipient(models.Model):
             elif rule.recipient_path:
                 old_recipient = rule.recipient_path
             else:
-                old_recipient = "رقم العميل تلقائيًا"
+                old_recipient = "Customer number automatically"
             if rule.recipient_summary:
                 rule.human_summary = rule.human_summary.replace(
-                    f"إلى {old_recipient}", f"إلى {rule.recipient_summary}", 1
+                    f"To {old_recipient}", f"To {rule.recipient_summary}", 1
                 )
 
             if (rule.recipient_mode or "auto") == "auto" and rule._recipient_path_options():
                 lines = [
                     line for line in (rule.readiness_message or "").splitlines()
-                    if "سيبحث النظام تلقائيًا عن mobile / phone / رقم العميل المرتبط" not in line
+                    if "The system will automatically search for mobile / phone / Associated customer number" not in line
                 ]
                 rule.readiness_message = "\n".join(lines)
                 if rule.readiness_state == "warning" and not any(line.startswith("⚠️") for line in lines):

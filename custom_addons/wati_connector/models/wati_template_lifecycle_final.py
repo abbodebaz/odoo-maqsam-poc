@@ -14,11 +14,11 @@ _logger = logging.getLogger(__name__)
 
 _LANGUAGE_NAME_ALIASES = {
     "arabic": "ar",
-    "العربية": "ar",
-    "عربي": "ar",
+    "Arabic": "ar",
+    "Arabic": "ar",
     "english": "en",
-    "الإنجليزية": "en",
-    "انجليزي": "en",
+    "English": "en",
+    "English": "en",
     "french": "fr",
     "spanish": "es",
 }
@@ -141,7 +141,7 @@ class WatiTemplateLifecycleFinal(models.Model):
                 payload = response.json()
             except ValueError as exc:
                 raise UserError(
-                    _("WATI أعاد استجابة غير مفهومة أثناء التحقق من حالة القالب.")
+                    _("WATI It returned an unintelligible response while checking the template status.")
                 ) from exc
             items = find_template_list(payload)
             if not items:
@@ -185,7 +185,7 @@ class WatiTemplateLifecycleFinal(models.Model):
         )
         if status == "rejected":
             values["rejection_reason"] = reason or _(
-                "رفض Meta القالب، لكن WATI لم يُرجع سبب الرفض عبر واجهة API الحالية."
+                "He refused Meta The template, however WATI The reason for the rejection was not returned via an interface API current."
             )
         elif status in {
             "draft",
@@ -230,7 +230,7 @@ class WatiTemplateLifecycleFinal(models.Model):
             self.sudo().write(
                 {
                     "last_synced_at": fields.Datetime.now(),
-                    "last_error": _("لم يظهر هذا القالب في نتيجة WATI الحالية."),
+                    "last_error": _("This template did not appear in a result WATI current."),
                 }
             )
             _logger.warning(
@@ -261,8 +261,8 @@ class WatiTemplateLifecycleFinal(models.Model):
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
-                "title": _("تحديث حالة القوالب"),
-                "message": _("تم تحديث %s من %s قالبًا من WATI.")
+                "title": _("Update template status"),
+                "message": _("has been updated %s Who %s Template from WATI.")
                 % (len(found), len(self)),
                 "type": "success" if found else "warning",
                 "sticky": False,

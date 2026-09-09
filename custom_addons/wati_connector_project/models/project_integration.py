@@ -12,11 +12,11 @@ class WatiConversationProject(models.Model):
         "wati_project_task_conversation_rel",
         "conversation_id",
         "task_id",
-        string="مهام المشروع المرتبطة",
+        string="Associated project tasks",
         copy=False,
     )
     project_task_count = fields.Integer(
-        string="عدد مهام المشروع",
+        string="Number of project tasks",
         compute="_compute_project_task_count",
     )
 
@@ -27,7 +27,7 @@ class WatiConversationProject(models.Model):
     def action_open_project_tasks(self):
         self.ensure_one()
         if not self.project_task_ids:
-            raise UserError(_("لا توجد مهام مشروع مرتبطة بهذه المحادثة."))
+            raise UserError(_("There are no project tasks associated with this conversation."))
         if len(self.project_task_ids) == 1:
             return {
                 "type": "ir.actions.act_window",
@@ -39,7 +39,7 @@ class WatiConversationProject(models.Model):
             }
         return {
             "type": "ir.actions.act_window",
-            "name": _("مهام المشروع"),
+            "name": _("Project tasks"),
             "res_model": "project.task",
             "view_mode": "list,form",
             "domain": [("id", "in", self.project_task_ids.ids)],
@@ -55,14 +55,14 @@ class ProjectTaskWati(models.Model):
         "wati_project_task_conversation_rel",
         "task_id",
         "conversation_id",
-        string="محادثات WhatsApp المرتبطة",
+        string="Conversations WhatsApp associated",
         copy=False,
     )
-    wati_conversation_count = fields.Integer(string="عدد محادثات WhatsApp", compute="_compute_wati_summary")
-    wati_message_count = fields.Integer(string="رسائل WhatsApp", compute="_compute_wati_summary")
-    wati_last_message = fields.Text(string="آخر رسالة WhatsApp", compute="_compute_wati_summary")
-    wati_last_message_at = fields.Datetime(string="آخر نشاط WhatsApp", compute="_compute_wati_summary")
-    wati_last_status = fields.Char(string="آخر حالة WhatsApp", compute="_compute_wati_summary")
+    wati_conversation_count = fields.Integer(string="Number of conversations WhatsApp", compute="_compute_wati_summary")
+    wati_message_count = fields.Integer(string="Messages WhatsApp", compute="_compute_wati_summary")
+    wati_last_message = fields.Text(string="Last message WhatsApp", compute="_compute_wati_summary")
+    wati_last_message_at = fields.Datetime(string="Latest activity WhatsApp", compute="_compute_wati_summary")
+    wati_last_status = fields.Char(string="Latest case WhatsApp", compute="_compute_wati_summary")
 
     def _wati_customer_partner(self):
         self.ensure_one()
@@ -129,7 +129,7 @@ class ProjectTaskWati(models.Model):
         if not conversation:
             phones = self._wati_partner_phones()
             if not phones:
-                raise UserError(_("أضف رقم جوال أو هاتف لعميل المهمة أو عميل المشروع قبل فتح WhatsApp."))
+                raise UserError(_("Add a mobile or phone number for the task client or project client before opening WhatsApp."))
             phone = phones[0]
             display_name = partner.display_name if partner else (self.name or phone)
             conversation = Conversation.create(
@@ -192,7 +192,7 @@ class ProjectTaskWati(models.Model):
         conversation = self._wati_get_or_create_conversation()
         return {
             "type": "ir.actions.act_window",
-            "name": _("محادثات WhatsApp"),
+            "name": _("Conversations WhatsApp"),
             "res_model": "wati.conversation",
             "view_mode": "list,form",
             "domain": [("id", "in", (self.wati_conversation_ids | conversation).ids)],

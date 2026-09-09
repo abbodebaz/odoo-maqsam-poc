@@ -22,7 +22,7 @@ class WatiMediaController(http.Controller):
 
         conversation = request.env["wati.conversation"].browse(conversation_id).exists()
         if not conversation:
-            return request.make_json_response({"ok": False, "message": "المحادثة غير موجودة."}, status=404)
+            return request.make_json_response({"ok": False, "message": "The conversation does not exist."}, status=404)
 
         latest = request.env["wati.message"].search(
             [("conversation_id", "=", conversation.id)],

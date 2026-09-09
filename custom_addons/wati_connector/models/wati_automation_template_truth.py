@@ -48,15 +48,15 @@ class WatiAutomationRuleTemplateTruth(models.Model):
     def action_fetch_template_params(self):
         self.ensure_one()
         if not self.template_name:
-            raise UserError(_("اختر قالب WATI أولًا."))
+            raise UserError(_("Choose a template WATI First."))
 
         try:
             response = WatiClient(self.env).get_message_templates(page_size=200, page_number=1)
             payload = response.json()
         except WatiError as exc:
-            raise UserError(_("تعذر الاتصال بـ WATI لجلب القالب: %s", exc)) from exc
+            raise UserError(_("Unable to contact WATI To bring the template: %s", exc)) from exc
         except ValueError as exc:
-            raise UserError(_("WATI أعاد استجابة غير مفهومة عند جلب القوالب.")) from exc
+            raise UserError(_("WATI Returned an unintelligible response when fetching templates.")) from exc
 
         wanted = (self.template_name or "").strip().casefold()
         template = next(
@@ -64,7 +64,7 @@ class WatiAutomationRuleTemplateTruth(models.Model):
             None,
         )
         if not template:
-            raise UserError(_("لم أجد Template باسم %s داخل حساب WATI.", self.template_name))
+            raise UserError(_("I did not find Template In the name of %s Inside an account WATI.", self.template_name))
 
         body = _template_body(template)
         if "template_body" in self._fields:
@@ -86,16 +86,16 @@ class WatiAutomationRuleTemplateTruth(models.Model):
         metadata_ignored = bool(body_count and metadata_count and body_count != metadata_count)
 
         if not param_names:
-            message = _("تمت مزامنة القالب، ولا توجد متغيرات في نص الرسالة.")
+            message = _("The template is synchronized, and there are no variables in the message body.")
             notification_type = "warning"
         else:
-            parts = [_("تمت مزامنة %s متغيرات كما تظهر في نص القالب.", len(param_names))]
+            parts = [_("Synchronized %s Variables as they appear in the template text.", len(param_names))]
             if created:
-                parts.append(_("تم إنشاء %s ربط جديد.", created))
+                parts.append(_("has been created %s New link.", created))
             if auto_mapped:
-                parts.append(_("تم اقتراح %s ربط تلقائي.", auto_mapped))
+                parts.append(_("been suggested %s Automatic connection.", auto_mapped))
             if metadata_ignored:
-                parts.append(_("تم تجاهل بيانات WATI الإضافية لأنها لا تطابق عدد متغيرات النص."))
+                parts.append(_("Data was ignored WATI Extra because it does not match the number of text variables."))
             message = " ".join(parts)
             notification_type = "success"
 
@@ -103,7 +103,7 @@ class WatiAutomationRuleTemplateTruth(models.Model):
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
-                "title": _("تمت مزامنة متغيرات القالب"),
+                "title": _("Template variables are synchronized"),
                 "message": message,
                 "type": notification_type,
                 "sticky": False,

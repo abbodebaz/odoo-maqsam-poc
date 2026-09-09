@@ -14,18 +14,18 @@ _TEMPLATE_KIND_SELECTION = [
 ]
 
 _HEADER_TYPE_SELECTION = [
-    ("NONE", "بدون"),
-    ("TEXT", "نص"),
-    ("IMAGE", "صورة"),
-    ("VIDEO", "فيديو"),
-    ("DOCUMENT", "مستند"),
+    ("NONE", "Without"),
+    ("TEXT", "Text"),
+    ("IMAGE", "Image"),
+    ("VIDEO", "Video"),
+    ("DOCUMENT", "Document"),
 ]
 
 _BUTTON_TYPE_SELECTION = [
-    ("NONE", "بدون أزرار"),
-    ("QUICK_REPLY", "رد سريع"),
-    ("URL", "زيارة موقع"),
-    ("PHONE", "اتصال"),
+    ("NONE", "No buttons"),
+    ("QUICK_REPLY", "Fast reply"),
+    ("URL", "Visit site"),
+    ("PHONE", "Contact"),
 ]
 
 
@@ -34,43 +34,43 @@ class WatiTemplateBuilder(models.Model):
 
     template_kind = fields.Selection(
         _TEMPLATE_KIND_SELECTION,
-        string="نوع القالب",
+        string="Template type",
         default="STANDARD",
         required=True,
         copy=True,
     )
     builder_header_type = fields.Selection(
         _HEADER_TYPE_SELECTION,
-        string="نوع الترويسة",
+        string="Header type",
         default="NONE",
         required=True,
         copy=True,
     )
-    builder_header_text = fields.Char(string="نص الترويسة", copy=True)
-    header_media_url = fields.Char(string="رابط الوسائط", copy=True)
-    header_media_filename = fields.Char(string="اسم ملف المستند", copy=True)
+    builder_header_text = fields.Char(string="Header text", copy=True)
+    header_media_url = fields.Char(string="Media link", copy=True)
+    header_media_filename = fields.Char(string="Document file name", copy=True)
 
     builder_button_type = fields.Selection(
         _BUTTON_TYPE_SELECTION,
-        string="نوع الزر",
+        string="Button type",
         default="NONE",
         required=True,
         copy=True,
     )
-    builder_button_text = fields.Char(string="نص الزر", copy=True)
-    builder_button_url = fields.Char(string="رابط الزر", copy=True)
-    builder_button_phone = fields.Char(string="رقم الاتصال", copy=True)
+    builder_button_text = fields.Char(string="Button text", copy=True)
+    builder_button_url = fields.Char(string="Button link", copy=True)
+    builder_button_phone = fields.Char(string="Contact number", copy=True)
 
     builder_header_preview = fields.Char(
-        string="معاينة الترويسة",
+        string="Header preview",
         compute="_compute_builder_preview",
     )
     builder_button_preview = fields.Char(
-        string="معاينة الزر",
+        string="Preview the button",
         compute="_compute_builder_preview",
     )
     advanced_kind_notice = fields.Char(
-        string="ملاحظة النوع المتقدم",
+        string="Note advanced type",
         compute="_compute_advanced_kind_notice",
     )
 
@@ -83,18 +83,18 @@ class WatiTemplateBuilder(models.Model):
     )
     def _compute_builder_preview(self):
         header_labels = {
-            "IMAGE": "🖼️ صورة",
-            "VIDEO": "🎬 فيديو",
-            "DOCUMENT": "📎 مستند",
+            "IMAGE": "🖼️ Image",
+            "VIDEO": "🎬 Video",
+            "DOCUMENT": "📎 Document",
         }
         button_labels = {
-            "QUICK_REPLY": "رد سريع",
-            "URL": "زيارة الموقع",
-            "PHONE": "اتصال",
+            "QUICK_REPLY": "Fast reply",
+            "URL": "Visit the website",
+            "PHONE": "Contact",
         }
         for record in self:
             if record.builder_header_type == "TEXT":
-                record.builder_header_preview = record.builder_header_text or "عنوان الرسالة"
+                record.builder_header_preview = record.builder_header_text or "Message title"
             elif record.builder_header_type == "DOCUMENT" and record.header_media_filename:
                 record.builder_header_preview = "📎 %s" % record.header_media_filename
             else:
@@ -108,13 +108,13 @@ class WatiTemplateBuilder(models.Model):
     def _compute_advanced_kind_notice(self):
         notices = {
             "CATALOG": _(
-                "تم اختيار Catalog. WATI يدعم هذا النوع، لكنه يحتاج إعدادات كتالوج/منتجات إضافية قبل الإرسال للمراجعة."
+                "selected Catalog. WATI This type is supported, but requires catalog settings/Additional products before submitting for review."
             ),
             "CAROUSEL": _(
-                "تم اختيار Carousel. WATI يدعم هذا النوع، لكنه يحتاج إعداد البطاقات ومحتوى كل بطاقة قبل الإرسال للمراجعة."
+                "selected Carousel. WATI This type is supported, but requires the preparation of cards and the content of each card before sending for review."
             ),
             "LIMITED_TIME_OFFER": _(
-                "تم اختيار Limited-time offer. WATI يدعم هذا النوع، لكنه يحتاج إعداد بيانات العرض ووقت الانتهاء قبل الإرسال للمراجعة."
+                "selected Limited-time offer. WATI This type is supported, but requires display data and end time to be set before submission for review."
             ),
         }
         for record in self:
@@ -255,31 +255,31 @@ class WatiTemplateBuilder(models.Model):
         if self.template_kind != "STANDARD":
             raise UserError(
                 _(
-                    "نوع %s تم اختياره بنجاح، لكن إرساله للمراجعة يحتاج إعداداته المتقدمة الخاصة داخل WATI. يمكنك حفظ المسودة الآن، وسنفعّل محرره المتخصص بدون إرسال Payload ناقص إلى Meta."
+                    "Type %s It has been selected successfully, but submitting it for review requires its own advanced settings within WATI. You can save the draft now, and we will activate its specialized editor without submitting Payload Minus to Meta."
                 )
                 % self.template_kind
             )
 
         if self.builder_header_type == "TEXT":
             if not clean(self.builder_header_text):
-                raise UserError(_("اكتب نص الترويسة قبل إرسال القالب للمراجعة."))
+                raise UserError(_("Write the header text before submitting the template for review."))
             if len(self.builder_header_text or "") > 60:
-                raise ValidationError(_("نص الترويسة تجاوز 60 حرفًا."))
+                raise ValidationError(_("Header text overflow 60 A letter."))
         elif self.builder_header_type in {"IMAGE", "VIDEO", "DOCUMENT"}:
             if not clean(self.header_media_url):
-                raise UserError(_("أدخل رابط الوسائط المستخدم في ترويسة القالب."))
+                raise UserError(_("Enter the media link used in the template header."))
             if self.builder_header_type == "DOCUMENT" and not clean(self.header_media_filename):
-                raise UserError(_("أدخل اسم ملف المستند، مثال: invoice.pdf"))
+                raise UserError(_("Enter the file name of the document, e.g: invoice.pdf"))
 
         if self.builder_button_type != "NONE":
             if not clean(self.builder_button_text):
-                raise UserError(_("اكتب نص الزر قبل إرسال القالب للمراجعة."))
+                raise UserError(_("Type the button text before submitting the template for review."))
             if len(self.builder_button_text or "") > 20:
-                raise ValidationError(_("نص الزر تجاوز 20 حرفًا."))
+                raise ValidationError(_("Override button text 20 A letter."))
         if self.builder_button_type == "URL" and not clean(self.builder_button_url):
-            raise UserError(_("أدخل رابط زر زيارة الموقع."))
+            raise UserError(_("Enter the link to the visit website button."))
         if self.builder_button_type == "PHONE" and not clean(self.builder_button_phone):
-            raise UserError(_("أدخل رقم الهاتف الخاص بزر الاتصال."))
+            raise UserError(_("Enter the phone number for the call button."))
 
     def _build_submission_payload(self):
         self.ensure_one()

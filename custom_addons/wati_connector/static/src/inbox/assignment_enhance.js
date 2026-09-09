@@ -25,7 +25,7 @@
     function setComposerEnabled(enabled, note) {
         if (messageInput) {
             messageInput.disabled = !enabled;
-            messageInput.placeholder = enabled ? "اكتب رسالة..." : (note || "استلم المحادثة أولًا...");
+            messageInput.placeholder = enabled ? "Write a message..." : (note || "Receive the conversation first...");
         }
         if (sendButton) sendButton.disabled = !enabled;
     }
@@ -51,7 +51,7 @@
 
         if (force) {
             const confirmed = window.confirm(
-                `المحادثة حاليًا عند ${previousUserName || "موظف آخر"}.\n\nهل تريد نقلها إليك؟`
+                `The conversation is currently at ${previousUserName || "Another employee"}.\n\nDo you want it transferred to you?`
             );
             if (!confirmed) return;
         }
@@ -73,11 +73,11 @@
                 body: body.toString(),
             });
             const payload = await response.json().catch(() => ({}));
-            if (!response.ok || !payload.ok) throw new Error(payload.message || "تعذر استلام المحادثة");
+            if (!response.ok || !payload.ok) throw new Error(payload.message || "Could not receive the conversation");
             await refreshAssignment(true);
             window.setTimeout(() => window.location.reload(), 250);
         } catch (error) {
-            window.alert(error.message || "تعذر استلام المحادثة.");
+            window.alert(error.message || "Could not receive the conversation.");
         } finally {
             busy = false;
         }
@@ -87,7 +87,7 @@
         const id = selectedId();
         if (!id) {
             box.replaceChildren();
-            setComposerEnabled(false, "اختر محادثة أولًا...");
+            setComposerEnabled(false, "Choose a conversation first...");
             lastConversationId = 0;
             return;
         }
@@ -113,30 +113,30 @@
                 box.replaceChildren();
 
                 if (!data.wati_email) {
-                    const badge = makeButton("⚠ أضف بريد WATI لحسابك", true);
+                    const badge = makeButton("⚠ Add mail WATI For your account", true);
                     box.appendChild(badge);
-                    setComposerEnabled(false, "أضف WATI Operator Email في حساب المستخدم...");
+                    setComposerEnabled(false, "Add WATI Operator Email In the user account...");
                     return;
                 }
 
                 if (data.assigned_to_me) {
-                    box.appendChild(makeButton(`✓ عندي — ${data.current_user_name}`, true));
+                    box.appendChild(makeButton(`✓ I have it — ${data.current_user_name}`, true));
                     setComposerEnabled(true);
                 } else if (data.is_unassigned) {
-                    const button = makeButton("استلام المحادثة");
+                    const button = makeButton("Receive the conversation");
                     button.addEventListener("click", () => assignMe(false));
                     box.appendChild(button);
-                    setComposerEnabled(false, "استلم المحادثة أولًا...");
+                    setComposerEnabled(false, "Receive the conversation first...");
                 } else {
-                    const badge = makeButton(`عند ${data.assigned_user_name}`, true);
+                    const badge = makeButton(`At ${data.assigned_user_name}`, true);
                     box.appendChild(badge);
                     if (data.can_takeover) {
-                        const button = makeButton("أخذ المحادثة", false, "takeover");
-                        button.title = `نقل المحادثة من ${data.assigned_user_name} إليك`;
+                        const button = makeButton("Take the conversation", false, "takeover");
+                        button.title = `Move the conversation from ${data.assigned_user_name} To you`;
                         button.addEventListener("click", () => assignMe(true, data.assigned_user_name));
                         box.appendChild(button);
                     }
-                    setComposerEnabled(false, `المحادثة عند ${data.assigned_user_name}`);
+                    setComposerEnabled(false, `Conversation at ${data.assigned_user_name}`);
                 }
             }
         } catch (error) {

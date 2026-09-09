@@ -4,25 +4,25 @@
         <field name="name">wati.webhook.event.list.monitor</field>
         <field name="model">wati.webhook.event</field>
         <field name="arch" type="xml">
-            <list string="مراقبة Webhook" create="false" edit="false" delete="false"
+            <list string="Monitor Webhook" create="false" edit="false" delete="false"
                   default_order="received_at desc, id desc"
                   decoration-success="processing_state == 'processed'"
                   decoration-warning="processing_state == 'needs_attention'"
                   decoration-muted="processing_state in ('duplicate', 'audit_only')">
-                <field name="received_at" string="الوقت"/>
-                <field name="event_label" string="الحدث"/>
-                <field name="wa_id" string="رقم WhatsApp"/>
-                <field name="status" string="حالة WATI" widget="badge"/>
-                <field name="processing_state" string="المعالجة" widget="badge"
+                <field name="received_at" string="time"/>
+                <field name="event_label" string="Event"/>
+                <field name="wa_id" string="No WhatsApp"/>
+                <field name="status" string="case WATI" widget="badge"/>
+                <field name="processing_state" string="Processing" widget="badge"
                        decoration-success="processing_state == 'processed'"
                        decoration-warning="processing_state == 'needs_attention'"
                        decoration-muted="processing_state in ('duplicate', 'audit_only')"/>
-                <field name="linked_message_id" string="الرسالة" optional="show"/>
-                <field name="linked_conversation_id" string="المحادثة" optional="hide"/>
-                <field name="linked_automation_log_id" string="تشغيل الأتمتة" optional="hide"/>
-                <field name="processing_note" string="النتيجة" optional="show"/>
-                <field name="event_type" string="نوع الحدث الخام" optional="hide"/>
-                <field name="source_version" string="النسخة" optional="hide"/>
+                <field name="linked_message_id" string="The message" optional="show"/>
+                <field name="linked_conversation_id" string="Conversation" optional="hide"/>
+                <field name="linked_automation_log_id" string="Run automation" optional="hide"/>
+                <field name="processing_note" string="Result" optional="show"/>
+                <field name="event_type" string="Raw event type" optional="hide"/>
+                <field name="source_version" string="Version" optional="hide"/>
                 <field name="external_id" string="External ID" optional="hide"/>
                 <field name="conversation_uid" string="Conversation ID" optional="hide"/>
                 <field name="is_duplicate_variant" column_invisible="True"/>
@@ -34,7 +34,7 @@
         <field name="name">wati.webhook.event.form.monitor</field>
         <field name="model">wati.webhook.event</field>
         <field name="arch" type="xml">
-            <form string="تفاصيل Webhook" create="false" edit="false" delete="false">
+            <form string="Details Webhook" create="false" edit="false" delete="false">
                 <sheet>
                     <div class="oe_title">
                         <span class="text-muted">WATI Webhook Monitor</span>
@@ -47,55 +47,55 @@
                     </div>
 
                     <div class="alert alert-success" role="status" invisible="processing_state != 'processed'">
-                        <strong>تمت المعالجة بنجاح.</strong>
-                        تم ربط هذا الحدث ببيانات Odoo المناسبة.
+                        <strong>Processing completed successfully.</strong>
+                        This event has been linked to data Odoo The occasion.
                     </div>
                     <div class="alert alert-warning" role="alert" invisible="processing_state != 'needs_attention'">
-                        <strong>يحتاج انتباه.</strong>
-                        وصلت حالة من WATI لكن لم يتم العثور على رسالة مرتبطة داخل Odoo.
+                        <strong>Needs attention.</strong>
+                        A state has arrived WATI But no associated message was found inside Odoo.
                     </div>
                     <div class="alert alert-secondary" role="status" invisible="processing_state != 'duplicate'">
-                        <strong>Callback مكرر.</strong>
-                        هذه نسخة إضافية من نفس الحدث وتم الاحتفاظ بها للتدقيق فقط.
+                        <strong>Callback Duplicate.</strong>
+                        This is an additional transcript of the same event and has been kept for review only.
                     </div>
                     <div class="alert alert-info" role="status" invisible="processing_state != 'audit_only'">
-                        <strong>سجل تقني.</strong>
-                        تم حفظ الحدث للتدقيق ولا يحتاج إجراءً إضافيًا.
+                        <strong>Technical record.</strong>
+                        The event has been saved for auditing and requires no additional action.
                     </div>
 
-                    <group col="2" string="ماذا وصل من WATI؟">
+                    <group col="2" string="What arrived from WATI?">
                         <group>
-                            <field name="event_label" string="الحدث" readonly="1"/>
-                            <field name="status" string="حالة WATI" readonly="1"/>
-                            <field name="wa_id" string="رقم WhatsApp" readonly="1"/>
-                            <field name="received_at" string="وقت الاستقبال" readonly="1"/>
+                            <field name="event_label" string="Event" readonly="1"/>
+                            <field name="status" string="case WATI" readonly="1"/>
+                            <field name="wa_id" string="No WhatsApp" readonly="1"/>
+                            <field name="received_at" string="Reception time" readonly="1"/>
                         </group>
                         <group>
-                            <field name="processing_state" string="حالة المعالجة" widget="badge" readonly="1"/>
-                            <field name="processing_note" string="نتيجة المعالجة" readonly="1"/>
-                            <field name="source_version" string="نسخة Callback" readonly="1"/>
-                            <field name="duplicate_of_id" string="نسخة من" readonly="1" invisible="not is_duplicate_variant"/>
+                            <field name="processing_state" string="Processing status" widget="badge" readonly="1"/>
+                            <field name="processing_note" string="Treatment result" readonly="1"/>
+                            <field name="source_version" string="Copy Callback" readonly="1"/>
+                            <field name="duplicate_of_id" string="Copy of" readonly="1" invisible="not is_duplicate_variant"/>
                             <field name="is_duplicate_variant" invisible="1"/>
                         </group>
                     </group>
 
-                    <group col="2" string="الربط داخل Odoo">
+                    <group col="2" string="Linkage inside Odoo">
                         <group>
-                            <field name="linked_message_id" string="الرسالة المرتبطة" readonly="1"/>
-                            <field name="linked_conversation_id" string="المحادثة المرتبطة" readonly="1"/>
+                            <field name="linked_message_id" string="Associated message" readonly="1"/>
+                            <field name="linked_conversation_id" string="Associated conversation" readonly="1"/>
                         </group>
                         <group>
-                            <field name="linked_automation_log_id" string="تشغيل الأتمتة المرتبط" readonly="1"/>
+                            <field name="linked_automation_log_id" string="Run associated automation" readonly="1"/>
                         </group>
                     </group>
 
                     <notebook>
-                        <page string="تفاصيل تقنية" groups="base.group_system">
+                        <page string="Technical details" groups="base.group_system">
                             <group col="2">
                                 <group>
-                                    <field name="event_type" string="نوع الحدث الخام" readonly="1"/>
-                                    <field name="event_family" string="العائلة الموحدة" readonly="1"/>
-                                    <field name="event_key" string="بصمة الحدث" readonly="1"/>
+                                    <field name="event_type" string="Raw event type" readonly="1"/>
+                                    <field name="event_family" string="Unified family" readonly="1"/>
+                                    <field name="event_key" string="Event fingerprint" readonly="1"/>
                                     <field name="external_id" string="External ID" readonly="1"/>
                                 </group>
                                 <group>
@@ -117,30 +117,30 @@
         <field name="name">wati.webhook.event.search.monitor</field>
         <field name="model">wati.webhook.event</field>
         <field name="arch" type="xml">
-            <search string="بحث في مراقبة Webhook">
-                <field name="wa_id" string="رقم WhatsApp"/>
+            <search string="Search in monitoring Webhook">
+                <field name="wa_id" string="No WhatsApp"/>
                 <field name="external_id" string="External ID"/>
                 <field name="conversation_uid" string="Conversation ID"/>
-                <field name="event_type" string="نوع الحدث الخام"/>
-                <field name="linked_message_id" string="الرسالة المرتبطة"/>
-                <field name="linked_conversation_id" string="المحادثة المرتبطة"/>
+                <field name="event_type" string="Raw event type"/>
+                <field name="linked_message_id" string="Associated message"/>
+                <field name="linked_conversation_id" string="Associated conversation"/>
                 <separator/>
-                <filter name="primary_callbacks" string="بدون التكرارات" domain="[('is_duplicate_variant', '=', False)]"/>
-                <filter name="needs_attention" string="تحتاج انتباه" domain="[('processing_state', '=', 'needs_attention')]"/>
-                <filter name="processed" string="تمت المعالجة" domain="[('processing_state', '=', 'processed')]"/>
-                <filter name="duplicates" string="Callbacks مكررة" domain="[('processing_state', '=', 'duplicate')]"/>
-                <filter name="audit_only" string="سجل تقني" domain="[('processing_state', '=', 'audit_only')]"/>
+                <filter name="primary_callbacks" string="No duplicates" domain="[('is_duplicate_variant', '=', False)]"/>
+                <filter name="needs_attention" string="Need attention" domain="[('processing_state', '=', 'needs_attention')]"/>
+                <filter name="processed" string="Processed" domain="[('processing_state', '=', 'processed')]"/>
+                <filter name="duplicates" string="Callbacks Duplicate" domain="[('processing_state', '=', 'duplicate')]"/>
+                <filter name="audit_only" string="Technical record" domain="[('processing_state', '=', 'audit_only')]"/>
                 <separator/>
-                <filter name="sent" string="تم الإرسال" domain="[('event_family', '=', 'sent')]"/>
-                <filter name="delivered" string="تم التسليم" domain="[('event_family', '=', 'delivered')]"/>
-                <filter name="read" string="تمت القراءة" domain="[('event_family', '=', 'read')]"/>
-                <filter name="replied" string="رد العميل" domain="[('event_family', '=', 'replied')]"/>
-                <filter name="failed" string="فشل" domain="[('event_family', '=', 'failed')]"/>
+                <filter name="sent" string="Sent" domain="[('event_family', '=', 'sent')]"/>
+                <filter name="delivered" string="Delivered" domain="[('event_family', '=', 'delivered')]"/>
+                <filter name="read" string="Read done" domain="[('event_family', '=', 'read')]"/>
+                <filter name="replied" string="Customer response" domain="[('event_family', '=', 'replied')]"/>
+                <filter name="failed" string="Failed" domain="[('event_family', '=', 'failed')]"/>
                 <separator/>
-                <filter name="group_family" string="تجميع: الحدث" context="{'group_by': 'event_family'}"/>
-                <filter name="group_processing" string="تجميع: المعالجة" context="{'group_by': 'processing_state'}"/>
-                <filter name="group_status" string="تجميع: حالة WATI" context="{'group_by': 'status'}"/>
-                <filter name="group_day" string="تجميع: اليوم" context="{'group_by': 'received_at:day'}"/>
+                <filter name="group_family" string="Compilation: Event" context="{'group_by': 'event_family'}"/>
+                <filter name="group_processing" string="Compilation: Processing" context="{'group_by': 'processing_state'}"/>
+                <filter name="group_status" string="Compilation: case WATI" context="{'group_by': 'status'}"/>
+                <filter name="group_day" string="Compilation: Today" context="{'group_by': 'received_at:day'}"/>
             </search>
         </field>
     </record>
@@ -149,7 +149,7 @@
         <field name="name">wati.webhook.event.graph.monitor</field>
         <field name="model">wati.webhook.event</field>
         <field name="arch" type="xml">
-            <graph string="تحليل Webhook" type="bar">
+            <graph string="Analysis Webhook" type="bar">
                 <field name="event_family"/>
             </graph>
         </field>
@@ -159,7 +159,7 @@
         <field name="name">wati.webhook.event.pivot.monitor</field>
         <field name="model">wati.webhook.event</field>
         <field name="arch" type="xml">
-            <pivot string="تحليل Webhook">
+            <pivot string="Analysis Webhook">
                 <field name="event_family" type="row"/>
                 <field name="processing_state" type="col"/>
             </pivot>
@@ -167,20 +167,20 @@
     </record>
 
     <record id="action_wati_webhook_events" model="ir.actions.act_window">
-        <field name="name">مراقبة Webhook</field>
+        <field name="name">Monitor Webhook</field>
         <field name="res_model">wati.webhook.event</field>
         <field name="view_mode">list,graph,pivot,form</field>
         <field name="view_id" ref="wati_connector.view_wati_webhook_event_list_monitor"/>
         <field name="search_view_id" ref="wati_connector.view_wati_webhook_event_search_monitor"/>
         <field name="context">{'search_default_primary_callbacks': 1}</field>
         <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">مراقبة تكامل WATI مع Odoo</p>
-            <p>ستظهر هنا أحداث WATI بعد توحيد أنواعها وربطها بالرسائل والمحادثات، مع إخفاء Callbacks المكررة افتراضيًا.</p>
+            <p class="o_view_nocontent_smiling_face">Integration monitoring WATI With Odoo</p>
+            <p>Events will appear here WATI After unifying their types and linking them to messages and conversations, with concealment Callbacks Duplicate by default.</p>
         </field>
     </record>
 
     <record id="menu_wati_webhook_events" model="ir.ui.menu">
-        <field name="name">مراقبة Webhook</field>
+        <field name="name">Monitor Webhook</field>
         <field name="sequence">90</field>
     </record>
 </odoo>

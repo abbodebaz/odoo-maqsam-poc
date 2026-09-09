@@ -11,16 +11,16 @@
                         <div class="d-flex align-items-center gap-2">
                             <i class="fa fa-whatsapp fa-lg text-success" title="WhatsApp"/>
                             <div class="min-w-0">
-                                <strong>إعدادات WATI WhatsApp</strong>
-                                <div class="text-muted">إعدادات مرتبة حسب الوظيفة للوصول السريع بدون تشتيت.</div>
+                                <strong>Settings WATI WhatsApp</strong>
+                                <div class="text-muted">Settings organized by function for quick, distraction-free access.</div>
                             </div>
                         </div>
                     </div>
 
                     <notebook name="wati_settings_notebook" class="wati_settings_notebook">
-                        <page string="🔌 الاتصال و WATI" name="wati_settings_connection">
+                        <page string="🔌 Contact and WATI" name="wati_settings_connection">
                             <block title="WATI API" name="wati_api_settings">
-                                <setting string="الاتصال بـ WATI" help="بيانات الربط الأساسية مع WATI API." class="wati-setting-item">
+                                <setting string="Contact WATI" help="Basic linking data with WATI API." class="wati-setting-item">
                                     <div class="content-group wati-setting-content">
                                         <div class="mb-3">
                                             <label for="wati_api_endpoint" class="o_light_label d-block mb-1"/>
@@ -31,106 +31,106 @@
                                             <field name="wati_api_token" password="True" class="w-100"/>
                                         </div>
                                         <div class="d-flex align-items-center gap-2 flex-wrap">
-                                            <button name="action_wati_test_connection" type="object" string="اختبار الاتصال" class="btn btn-primary"/>
-                                            <span class="text-muted small">الـToken محفوظ في Backend Odoo ولا يظهر للمتصفح.</span>
+                                            <button name="action_wati_test_connection" type="object" string="Connection test" class="btn btn-primary"/>
+                                            <span class="text-muted small">TheToken Saved in Backend Odoo It does not appear in the browser.</span>
                                         </div>
                                     </div>
                                 </setting>
                             </block>
 
-                            <block title="Webhook والاستقبال" name="wati_webhook_settings">
-                                <setting string="Webhook الوارد" help="استقبال رسائل العملاء وتحديثات الرسائل والقوالب." class="wati-setting-item">
+                            <block title="Webhook And the reception" name="wati_webhook_settings">
+                                <setting string="Webhook Incoming" help="Receive customer messages and updates to messages and templates." class="wati-setting-item">
                                     <div class="content-group wati-setting-content">
                                         <div class="mb-3">
                                             <label for="wati_webhook_token" class="o_light_label d-block mb-1"/>
-                                            <field name="wati_webhook_token" password="True" placeholder="ضع نصًا سريًا طويلًا" class="w-100"/>
+                                            <field name="wati_webhook_token" password="True" placeholder="Create a long secret text" class="w-100"/>
                                         </div>
                                         <div class="mb-2">
                                             <label for="wati_webhook_url" class="o_light_label d-block mb-1"/>
                                             <field name="wati_webhook_url" readonly="1" class="w-100"/>
                                         </div>
                                         <div class="text-muted small wati-helper-text">
-                                            انسخ الرابط كما هو إلى WATI، ثم فعّل أحداث الرسائل والقوالب والجودة والتصنيف.
+                                            Copy the link as is to WATI, then turn on Messages, Templates, Quality, and Sorting events.
                                         </div>
                                     </div>
                                 </setting>
                             </block>
                         </page>
 
-                        <page string="👥 الصلاحيات" name="wati_settings_access">
-                            <block title="صلاحيات مساحة WhatsApp" name="wati_workspace_access_settings">
+                        <page string="👥 Permissions" name="wati_settings_access">
+                            <block title="Space powers WhatsApp" name="wati_workspace_access_settings">
                                 <div class="wati-settings-note alert alert-info mb16" role="status">
-                                    <strong>تحكم مركزي بالصلاحيات.</strong>
-                                    اختر من يستطيع الوصول لكل جزء. خيار «مشرف WhatsApp فقط» يعتمد على دور <strong>WATI Administrator</strong> بدون منح صلاحيات مدير Odoo الكاملة.
+                                    <strong>Central control of powers.</strong>
+                                    Choose who can access each part. Cucumber «Supervisor WhatsApp Only» Depends on the role <strong>WATI Administrator</strong> Without granting administrator powers Odoo Complete.
                                 </div>
 
-                                <setting string="سجل المحادثات" help="الوصول إلى سجل المحادثات التاريخي." class="wati-setting-item">
+                                <setting string="Conversation Log" help="Access historical conversation history." class="wati-setting-item">
                                     <div class="content-group wati-setting-content">
                                         <field name="wati_access_conversations" class="w-100"/>
-                                        <div class="text-muted small mt8">اجعله متاحًا لفريق الخدمة أو للمشرفين فقط.</div>
+                                        <div class="text-muted small mt8">Make it available to the service team or administrators only.</div>
                                     </div>
                                 </setting>
 
-                                <setting string="سجل الرسائل" help="الوصول إلى جميع الرسائل الواردة والصادرة." class="wati-setting-item">
+                                <setting string="Message Log" help="Access all incoming and outgoing messages." class="wati-setting-item">
                                     <div class="content-group wati-setting-content">
                                         <field name="wati_access_messages" class="w-100"/>
-                                        <div class="text-muted small mt8">صندوق الوارد اليومي لا يتأثر بهذا الخيار.</div>
+                                        <div class="text-muted small mt8">Your daily inbox is not affected by this option.</div>
                                     </div>
                                 </setting>
 
-                                <setting string="مركز القوالب" help="إنشاء القوالب ومزامنتها وإرسالها للمراجعة." class="wati-setting-item">
+                                <setting string="Template Center" help="Create templates, sync them, and submit them for review." class="wati-setting-item">
                                     <div class="content-group wati-setting-content">
                                         <field name="wati_access_templates" class="w-100"/>
-                                        <div class="text-muted small mt8">يفضل قصره على المشرفين.</div>
+                                        <div class="text-muted small mt8">It is preferable to limit it to moderators.</div>
                                     </div>
                                 </setting>
 
-                                <setting string="مركز الأتمتة" help="إنشاء الأتمتات وتعديلها وتفعيلها." class="wati-setting-item">
+                                <setting string="Automation Center" help="Create, modify and activate automations." class="wati-setting-item">
                                     <div class="content-group wati-setting-content">
                                         <field name="wati_access_automation" class="w-100"/>
-                                        <div class="text-muted small mt8">أي تعديل هنا قد يغيّر سلوك الإرسال التلقائي.</div>
+                                        <div class="text-muted small mt8">Any modification here may change the behavior of the automatic submission.</div>
                                     </div>
                                 </setting>
 
-                                <setting string="سجل التشغيل" help="مراجعة نتائج الأتمتة وأخطاء الإرسال." class="wati-setting-item">
+                                <setting string="Run Log" help="Review automation results and transmission errors." class="wati-setting-item">
                                     <div class="content-group wati-setting-content">
                                         <field name="wati_access_automation_logs" class="w-100"/>
-                                        <div class="text-muted small mt8">مناسب للمشرف أو فريق الجودة.</div>
+                                        <div class="text-muted small mt8">Suitable for supervisor or quality team.</div>
                                     </div>
                                 </setting>
 
-                                <setting string="مراقبة Webhook" help="مراجعة الـCallbacks وحالات المعالجة." class="wati-setting-item">
+                                <setting string="Monitor Webhook" help="Review theCallbacks and treatment cases." class="wati-setting-item">
                                     <div class="content-group wati-setting-content">
                                         <field name="wati_access_monitor" class="w-100"/>
-                                        <div class="text-muted small mt8">ميزة تشغيلية متقدمة للمشرفين.</div>
+                                        <div class="text-muted small mt8">Advanced operational feature for administrators.</div>
                                     </div>
                                 </setting>
                             </block>
                         </page>
 
-                        <page string="💬 صندوق الوارد" name="wati_settings_inbox">
-                            <block title="ميزات صندوق الوارد" name="wati_inbox_feature_settings">
-                                <setting string="المحادثات السريعة داخل Odoo"
-                                         help="فعّل لإظهار نافذة WhatsApp المصغّرة من أي شاشة، أو عطّل لإخفائها."
+                        <page string="💬 Inbox" name="wati_settings_inbox">
+                            <block title="Inbox features" name="wati_inbox_feature_settings">
+                                <setting string="Quick conversations inside Odoo"
+                                         help="Activate to show a window WhatsApp Thumbnails from any screen, or disable them to hide them."
                                          class="wati-setting-item">
                                     <field name="wati_enable_mini_inbox"/>
                                 </setting>
 
-                                <setting string="الأزرار التفاعلية"
-                                         help="فعّل لإظهار أداة الأزرار التفاعلية داخل صندوق الوارد، أو عطّل لإخفائها من الواجهة."
+                                <setting string="Interactive buttons"
+                                         help="Enable to show the interactive buttons widget inside the inbox, or disable to hide it from the interface."
                                          class="wati-setting-item">
                                     <field name="wati_enable_interactive_buttons"/>
                                 </setting>
 
-                                <setting string="القوائم التفاعلية"
-                                         help="فعّل لإظهار أداة القوائم التفاعلية داخل صندوق الوارد، أو عطّل لإخفائها من الواجهة."
+                                <setting string="Interactive menus"
+                                         help="Enable to show the interactive menus widget inside the inbox, or disable to hide it from the interface."
                                          class="wati-setting-item">
                                     <field name="wati_enable_interactive_lists"/>
                                 </setting>
                             </block>
                         </page>
 
-                        <page string="⚡ الأزرار وسجل العميل" name="wati_settings_smart">
+                        <page string="⚡ Buttons and customer history" name="wati_settings_smart">
                             <div id="wati_smart_button_settings_slot"/>
                         </page>
                     </notebook>

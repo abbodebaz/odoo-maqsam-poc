@@ -58,8 +58,8 @@
 
             if (conversationCount && rowsById.size) {
                 conversationCount.textContent = activeFilter === "all"
-                    ? `${visible} محادثة`
-                    : `${visible} مطابقة من ${rowsById.size}`;
+                    ? `${visible} Conversation`
+                    : `${visible} Matching from ${rowsById.size}`;
             }
             setActiveButton();
         }

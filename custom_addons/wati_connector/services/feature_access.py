@@ -8,21 +8,21 @@ VALID_ACCESS_MODES = {ACCESS_ALL, ACCESS_ADMIN}
 
 FEATURE_ACCESS_REGISTRY = {
     "conversations": {
-        "label": "سجل المحادثات",
+        "label": "Conversation Log",
         "parameter": "wati_connector.access_conversations",
         "default": ACCESS_ALL,
         "menu_xmlids": ["wati_connector.menu_wati_conversations"],
         "acl_xmlids": [],
     },
     "messages": {
-        "label": "سجل الرسائل",
+        "label": "Message Log",
         "parameter": "wati_connector.access_messages",
         "default": ACCESS_ALL,
         "menu_xmlids": ["wati_connector.menu_wati_messages"],
         "acl_xmlids": [],
     },
     "templates": {
-        "label": "مركز القوالب",
+        "label": "Template Center",
         "parameter": "wati_connector.access_templates",
         "default": ACCESS_ADMIN,
         "menu_xmlids": ["wati_connector.menu_wati_templates"],
@@ -32,7 +32,7 @@ FEATURE_ACCESS_REGISTRY = {
         ],
     },
     "automation": {
-        "label": "مركز الأتمتة",
+        "label": "Automation Center",
         "parameter": "wati_connector.access_automation",
         "default": ACCESS_ADMIN,
         "menu_xmlids": ["wati_connector.menu_wati_automation_rules"],
@@ -45,14 +45,14 @@ FEATURE_ACCESS_REGISTRY = {
         ],
     },
     "automation_logs": {
-        "label": "سجل التشغيل",
+        "label": "Run Log",
         "parameter": "wati_connector.access_automation_logs",
         "default": ACCESS_ADMIN,
         "menu_xmlids": ["wati_connector.menu_wati_automation_logs"],
         "acl_xmlids": ["wati_connector.access_wati_automation_log_supervisor"],
     },
     "monitor": {
-        "label": "مراقبة Webhook",
+        "label": "Monitor Webhook",
         "parameter": "wati_connector.access_monitor",
         "default": ACCESS_ADMIN,
         "menu_xmlids": ["wati_connector.menu_wati_webhook_events"],
@@ -100,9 +100,9 @@ def can_access_feature(env, feature_id, user=None):
 def ensure_feature_access(env, feature_id, user=None):
     if can_access_feature(env, feature_id, user=user):
         return True
-    label = feature_definition(feature_id).get("label") or "هذه الميزة"
+    label = feature_definition(feature_id).get("label") or "This feature"
     raise AccessError(
-        f"لا تملك صلاحية الوصول إلى {label}. تواصل مع مشرف WhatsApp إذا كنت تحتاج هذه الصلاحية."
+        f"You do not have access to {label}. Contact a supervisor WhatsApp If you need this permission."
     )
 
 

@@ -22,11 +22,11 @@ class WatiConversationTransport(models.Model):
         target = (self.wa_id or "").strip()
         text = (text or "").strip()
         if not target:
-            raise UserError(_("لا يوجد رقم WhatsApp لهذه المحادثة."))
+            raise UserError(_("There is no number WhatsApp for this conversation."))
         if not text:
-            raise UserError(_("اكتب الرسالة أولًا."))
+            raise UserError(_("Write the message first."))
         if len(text) > 4096:
-            raise UserError(_("الرسالة أطول من الحد المسموح في WhatsApp (4096 حرفًا)."))
+            raise UserError(_("The message is longer than the allowed limit WhatsApp (4096 A letter)."))
 
         client = WatiClient(self.env)
         local_message_id = str(uuid.uuid4())
@@ -40,20 +40,20 @@ class WatiConversationTransport(models.Model):
                 channel_number=channel_number,
             )
         except WatiConfigurationError as exc:
-            raise UserError(_("إعدادات WATI API غير مكتملة. راجع Settings → WATI WhatsApp.")) from exc
+            raise UserError(_("Settings WATI API Incomplete. See Settings → WATI WhatsApp.")) from exc
         except WatiRequestError as exc:
             detail = (exc.response_text or str(exc) or "").strip()[:800]
             if exc.status_code in (400, 409) and "session" in detail.lower():
                 raise UserError(
                     _(
-                        "لا يمكن إرسال رسالة عادية لأن جلسة WhatsApp غير مفتوحة. "
-                        "استخدم Template معتمد لبدء المحادثة.\n\n%s"
+                        "A regular message cannot be sent because it is a session WhatsApp Not open. "
+                        "Use Template Approved to start the conversation.\n\n%s"
                     )
                     % detail
                 ) from exc
             if exc.status_code:
-                raise UserError(_("WATI رفض إرسال الرسالة (%s): %s") % (exc.status_code, detail)) from exc
-            raise UserError(_("تعذر إرسال رسالة WhatsApp: %s") % detail) from exc
+                raise UserError(_("WATI Refused to send the message (%s): %s") % (exc.status_code, detail)) from exc
+            raise UserError(_("Unable to send a message WhatsApp: %s") % detail) from exc
 
         now = fields.Datetime.now()
         Message = self.env["wati.message"].sudo()

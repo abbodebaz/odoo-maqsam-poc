@@ -44,7 +44,7 @@ class WatiCustomerContextController(http.Controller):
     def customer_context(self, conversation_id=None, **kwargs):
         conversation = _conversation_from_request(conversation_id)
         if not conversation:
-            return request.make_json_response({"ok": False, "message": "المحادثة غير موجودة."}, status=404)
+            return request.make_json_response({"ok": False, "message": "The conversation does not exist."}, status=404)
 
         partner = _conversation_partner(conversation, persist=False)
 
@@ -66,7 +66,7 @@ class WatiCustomerContextController(http.Controller):
         if partner:
             partner_payload = {
                 "id": partner.id,
-                "name": partner.display_name or partner.name or "عميل Odoo",
+                "name": partner.display_name or partner.name or "Client Odoo",
                 "phone": _partner_phone_value(partner) or "",
                 "email": partner.email or "",
                 "url": _partner_url(partner),
@@ -119,14 +119,14 @@ class WatiCustomerContextController(http.Controller):
     def create_customer(self, conversation_id=None, name=None, **kwargs):
         conversation = _conversation_from_request(conversation_id)
         if not conversation:
-            return request.make_json_response({"ok": False, "message": "المحادثة غير موجودة."}, status=404)
+            return request.make_json_response({"ok": False, "message": "The conversation does not exist."}, status=404)
 
         partner = _conversation_partner(conversation, persist=True)
         if partner:
             return request.make_json_response(
                 {
                     "ok": True,
-                    "message": "المحادثة مرتبطة بعميل Odoo بالفعل.",
+                    "message": "The conversation is related to a client Odoo Indeed.",
                     "partner_id": partner.id,
                     "partner_name": partner.display_name,
                     "partner_url": _partner_url(partner),
@@ -136,7 +136,7 @@ class WatiCustomerContextController(http.Controller):
 
         clean_name = (name or conversation.sender_name or conversation.name or "").strip()
         if not clean_name or clean_name.lower() == "whatsapp":
-            clean_name = conversation.wa_id or "عميل WhatsApp"
+            clean_name = conversation.wa_id or "Client WhatsApp"
 
         partner_model = request.env["res.partner"]
         values = {"name": clean_name}
@@ -153,7 +153,7 @@ class WatiCustomerContextController(http.Controller):
         return request.make_json_response(
             {
                 "ok": True,
-                "message": f"تم إنشاء العميل {partner.display_name} ✅",
+                "message": f"The client has been created {partner.display_name} ✅",
                 "partner_id": partner.id,
                 "partner_name": partner.display_name,
                 "partner_url": _partner_url(partner),
@@ -170,12 +170,12 @@ class WatiCustomerContextController(http.Controller):
     def create_ticket(self, conversation_id=None, subject=None, description=None, priority=None, **kwargs):
         conversation = _conversation_from_request(conversation_id)
         if not conversation:
-            return request.make_json_response({"ok": False, "message": "المحادثة غير موجودة."}, status=404)
+            return request.make_json_response({"ok": False, "message": "The conversation does not exist."}, status=404)
 
         partner = _conversation_partner(conversation, persist=True)
         if not partner:
             return request.make_json_response(
-                {"ok": False, "message": "أنشئ العميل أو اربط المحادثة بعميل Odoo أولًا."},
+                {"ok": False, "message": "Create the customer or associate the conversation with a customer Odoo First."},
                 status=409,
             )
 
@@ -198,7 +198,7 @@ class WatiCustomerContextController(http.Controller):
         return request.make_json_response(
             {
                 "ok": True,
-                "message": f"تم إنشاء التذكرة {ticket.name} ✅",
+                "message": f"The ticket has been created {ticket.name} ✅",
                 "ticket_id": ticket.id,
                 "ticket_name": ticket.name,
                 "ticket_url": _record_form_url("wati.support.ticket", ticket.id),
@@ -215,12 +215,12 @@ class WatiCustomerContextController(http.Controller):
     def create_opportunity(self, conversation_id=None, name=None, expected_revenue=None, description=None, **kwargs):
         conversation = _conversation_from_request(conversation_id)
         if not conversation:
-            return request.make_json_response({"ok": False, "message": "المحادثة غير موجودة."}, status=404)
+            return request.make_json_response({"ok": False, "message": "The conversation does not exist."}, status=404)
 
         partner = _conversation_partner(conversation, persist=True)
         if not partner:
             return request.make_json_response(
-                {"ok": False, "message": "أنشئ العميل أو اربط المحادثة بعميل Odoo أولًا."},
+                {"ok": False, "message": "Create the customer or associate the conversation with a customer Odoo First."},
                 status=409,
             )
 
@@ -229,7 +229,7 @@ class WatiCustomerContextController(http.Controller):
         except (TypeError, ValueError):
             revenue = 0.0
 
-        lead_name = (name or "").strip() or f"فرصة WhatsApp - {partner.display_name}"
+        lead_name = (name or "").strip() or f"Chance WhatsApp - {partner.display_name}"
         values = {
             "name": lead_name,
             "type": "opportunity",
@@ -247,7 +247,7 @@ class WatiCustomerContextController(http.Controller):
         return request.make_json_response(
             {
                 "ok": True,
-                "message": f"تم إنشاء فرصة البيع {lead.name} ✅",
+                "message": f"A sales opportunity has been created {lead.name} ✅",
                 "opportunity_id": lead.id,
                 "opportunity_name": lead.name,
                 "opportunity_url": _record_form_url("crm.lead", lead.id),

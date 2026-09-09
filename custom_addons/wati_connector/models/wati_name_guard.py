@@ -9,7 +9,7 @@ _GENERIC_NAMES = {
     "none",
     "null",
     "-",
-    "عميل واتساب",
+    "WhatsApp client",
 }
 
 
@@ -37,7 +37,7 @@ class WatiConversationNameGuard(models.Model):
                 vals["sender_name"] = wa_id or False
 
             if _is_generic(vals.get("name")):
-                vals["name"] = sender or wa_id or "رقم غير متوفر"
+                vals["name"] = sender or wa_id or "Number not available"
 
             normalized_list.append(vals)
         return super().create(normalized_list)
@@ -65,7 +65,7 @@ class WatiConversationNameGuard(models.Model):
 
             if "name" in normalized and _is_generic(normalized.get("name")):
                 sender = _meaningful(normalized.get("sender_name")) or _meaningful(record.sender_name)
-                normalized["name"] = sender or wa_id or "رقم غير متوفر"
+                normalized["name"] = sender or wa_id or "Number not available"
 
             result = super(WatiConversationNameGuard, record).write(normalized) and result
         return result

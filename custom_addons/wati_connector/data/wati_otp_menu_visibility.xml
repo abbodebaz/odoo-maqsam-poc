@@ -12,7 +12,7 @@
               sequence="32"/>
 
     <menuitem id="menu_wati_otp_logs"
-              name="سجل OTP"
+              name="Register OTP"
               parent="menu_wati_root"
               action="action_wati_otp_logs"
               groups="wati_connector.group_wati_supervisor,base.group_system"

@@ -8,22 +8,22 @@
             <xpath expr="//field[@name='template_name']" position="after">
                 <button name="action_fetch_template_params"
                         type="object"
-                        string="جلب متغيرات القالب من WATI"
+                        string="Fetch template variables from WATI"
                         icon="fa-download"
                         class="btn-secondary"/>
             </xpath>
 
             <xpath expr="//field[@name='parameter_ids']" position="before">
                 <div class="alert alert-info" role="alert">
-                    <strong>بدون كتابة Variables يدويًا:</strong>
-                    بعد حفظ اسم القالب اضغط «جلب متغيرات القالب من WATI»، ثم اربط كل متغير بحقل Odoo المناسب.
-                    ويمكن استخدام «قيمة ثابتة / احتياطية» إذا كان الحقل قد يكون فارغًا.
+                    <strong>Without writing Variables Manually:</strong>
+                    After saving the template name, click «Fetch template variables from WATI»Then associate each variable with a field Odoo appropriate.
+                    can be used «Fixed value / backup» If the field may be empty.
                 </div>
             </xpath>
 
             <xpath expr="//field[@name='static_value']" position="attributes">
-                <attribute name="string">قيمة ثابتة / احتياطية</attribute>
-                <attribute name="placeholder">قيمة ثابتة أو بديلة عند فراغ حقل Odoo</attribute>
+                <attribute name="string">Fixed value / backup</attribute>
+                <attribute name="placeholder">Fixed or alternative value when a field is empty Odoo</attribute>
             </xpath>
         </field>
     </record>

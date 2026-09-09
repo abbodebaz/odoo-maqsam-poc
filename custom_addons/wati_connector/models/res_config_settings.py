@@ -8,8 +8,8 @@ from ..services.feature_access import sync_feature_access_controls
 
 
 _FEATURE_ACCESS_SELECTION = [
-    ("all", "كل مستخدمي WhatsApp"),
-    ("admin", "مشرفو WhatsApp فقط"),
+    ("all", "All users WhatsApp"),
+    ("admin", "Moderators WhatsApp Only"),
 ]
 
 
@@ -19,82 +19,82 @@ class ResConfigSettings(models.TransientModel):
     wati_api_endpoint = fields.Char(
         string="WATI API Endpoint",
         config_parameter="wati_connector.api_endpoint",
-        help="انسخ API Endpoint من WATI كما هو، مثال: https://live-mt-server.wati.io/xxxxxx",
+        help="Copy API Endpoint Who WATI As it is, example: https://live-mt-server.wati.io/xxxxxx",
     )
     wati_api_token = fields.Char(
         string="WATI API Token",
         config_parameter="wati_connector.api_token",
-        help="Bearer / Access Token الخاص بـWATI. يمكنك لصق التوكن فقط أو القيمة التي تبدأ بـ Bearer.",
+        help="Bearer / Access Token ForWATI. You can paste only the token or the value starting with Bearer.",
     )
     wati_webhook_token = fields.Char(
         string="Webhook Secret Token",
         config_parameter="wati_connector.webhook_token",
-        help="سر مستقل لحماية Webhook بين WATI وOdoo. لا تستخدم WATI API Token هنا.",
+        help="Independent secret to protect Webhook Between WATI AndOdoo. Do not use WATI API Token Here.",
     )
     wati_webhook_url = fields.Char(
         string="Webhook URL",
         compute="_compute_wati_webhook_url",
-        help="انسخ هذا الرابط كاملًا كما هو إلى WATI Webhooks.",
+        help="Copy this entire link as is to WATI Webhooks.",
     )
     wati_enable_interactive_buttons = fields.Boolean(
-        string="الأزرار التفاعلية في صندوق الوارد",
+        string="Interactive buttons in the inbox",
         config_parameter="wati_connector.enable_interactive_buttons",
         default=False,
-        help="عند التفعيل يظهر زر «أزرار» لموظفي خدمة العملاء لإرسال Reply Buttons من صندوق الوارد.",
+        help="When activated, a button appears «Buttons» For customer service staff to send Reply Buttons From your inbox.",
     )
     wati_enable_interactive_lists = fields.Boolean(
-        string="القوائم التفاعلية في صندوق الوارد",
+        string="Interactive menus in your inbox",
         config_parameter="wati_connector.enable_interactive_lists",
         default=False,
-        help="عند التفعيل يظهر زر «قائمة» لموظفي خدمة العملاء لإرسال Interactive Lists من صندوق الوارد.",
+        help="When activated, a button appears «List» For customer service staff to send Interactive Lists From your inbox.",
     )
     wati_enable_mini_inbox = fields.Boolean(
-        string="المحادثات السريعة داخل Odoo",
+        string="Quick conversations inside Odoo",
         config_parameter="wati_connector.enable_mini_inbox",
         default=False,
-        help="إظهار زر WhatsApp في شريط Odoo لفتح نافذة محادثات سريعة بدون مغادرة الشاشة الحالية.",
+        help="Show button WhatsApp In a bar Odoo Opens the Quick Chats window without leaving the current screen.",
     )
 
     # Workspace feature access. These are company-level policies. Individual
     # users receive the WATI role separately in Odoo access rights.
     wati_access_conversations = fields.Selection(
         _FEATURE_ACCESS_SELECTION,
-        string="سجل المحادثات",
+        string="Conversation Log",
         config_parameter="wati_connector.access_conversations",
         default="all",
         required=True,
     )
     wati_access_messages = fields.Selection(
         _FEATURE_ACCESS_SELECTION,
-        string="سجل الرسائل",
+        string="Message Log",
         config_parameter="wati_connector.access_messages",
         default="all",
         required=True,
     )
     wati_access_templates = fields.Selection(
         _FEATURE_ACCESS_SELECTION,
-        string="مركز القوالب",
+        string="Template Center",
         config_parameter="wati_connector.access_templates",
         default="admin",
         required=True,
     )
     wati_access_automation = fields.Selection(
         _FEATURE_ACCESS_SELECTION,
-        string="مركز الأتمتة",
+        string="Automation Center",
         config_parameter="wati_connector.access_automation",
         default="admin",
         required=True,
     )
     wati_access_automation_logs = fields.Selection(
         _FEATURE_ACCESS_SELECTION,
-        string="سجل التشغيل",
+        string="Run Log",
         config_parameter="wati_connector.access_automation_logs",
         default="admin",
         required=True,
     )
     wati_access_monitor = fields.Selection(
         _FEATURE_ACCESS_SELECTION,
-        string="مراقبة Webhook",
+        string="Monitor Webhook",
         config_parameter="wati_connector.access_monitor",
         default="admin",
         required=True,
@@ -125,7 +125,7 @@ class ResConfigSettings(models.TransientModel):
         try:
             return WatiConfig.normalize_endpoint(value)
         except WatiConfigurationError as exc:
-            raise UserError(_("WATI API Endpoint يجب أن يبدأ بـ http:// أو https://")) from exc
+            raise UserError(_("WATI API Endpoint Must start with http:// Or https://")) from exc
 
     def _normalize_wati_token(self, value):
         return WatiConfig.normalize_token(value)
@@ -135,7 +135,7 @@ class ResConfigSettings(models.TransientModel):
         endpoint = self._normalize_wati_endpoint(self.wati_api_endpoint)
         token = self._normalize_wati_token(self.wati_api_token)
         if not endpoint or not token:
-            raise UserError(_("أدخل WATI API Endpoint وAccess Token أولًا."))
+            raise UserError(_("Enter WATI API Endpoint AndAccess Token First."))
 
         client = WatiClient(self.env, endpoint=endpoint, token=token)
         attempts = []
@@ -170,13 +170,13 @@ class ResConfigSettings(models.TransientModel):
             if auth_errors:
                 raise UserError(
                     _(
-                        "WATI لم يقبل التوثيق على المسارات التي اختبرناها. تأكد أن API Endpoint هو رابط الحساب نفسه وأن Access Token صحيح. يمكنك لصق التوكن مع أو بدون كلمة Bearer.\n\nنتائج الاختبار:\n%s"
+                        "WATI It did not accept documentation on the paths we tested. Make sure that API Endpoint It is the link to the account itself and that Access Token True. You can paste the token with or without the word Bearer.\n\nTest results:\n%s"
                     )
                     % "\n".join(attempts)
                 )
             raise UserError(
                 _(
-                    "لم نجد مسار API صالح على هذا WATI Endpoint. انسخ API Endpoint من WATI → API Docs بدون أي /api/... إضافية.\n\nنتائج الاختبار:\n%s"
+                    "We couldn’t find a path API Valid on this WATI Endpoint. Copy API Endpoint Who WATI → API Docs Without any /api/... Additional.\n\nTest results:\n%s"
                 )
                 % "\n".join(attempts)
             )
@@ -193,11 +193,11 @@ class ResConfigSettings(models.TransientModel):
         if count is None and isinstance(payload, dict) and isinstance(payload.get("result"), dict):
             count = payload["result"].get("count")
 
-        message = _("تم الاتصال بـWATI بنجاح ✅ — API %s") % successful_version
+        message = _("ContactedWATI Successfully ✅ — API %s") % successful_version
         if count is not None:
-            message += _(" — عدد جهات الاتصال: %s") % count
+            message += _(" — Number of contacts: %s") % count
         if successful_version == "V1":
-            message += _(" — تم اعتماد V1 لهذا الحساب.")
+            message += _(" — has been approved V1 for this account.")
 
         return {
             "type": "ir.actions.client",

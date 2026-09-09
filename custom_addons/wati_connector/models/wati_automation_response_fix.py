@@ -116,7 +116,7 @@ class WatiAutomationResponseFix(models.Model):
                     record,
                     "failed",
                     phone=phone,
-                    error_message=self.template_validation_message or "القالب غير صالح للإرسال.",
+                    error_message=self.template_validation_message or "The template is not valid for submission.",
                 )
             )
             return False
@@ -136,9 +136,9 @@ class WatiAutomationResponseFix(models.Model):
                     "failed",
                     phone=phone,
                     error_message=(
-                        "لم يتم استدعاء WATI لأن متغيرات القالب التالية بدون قيمة: "
+                        "Not called WATI Because the following template variables are worthless: "
                         + ", ".join(filter(None, empty_params))
-                        + ". اربطها بحقل Odoo أو ضع قيمة احتياطية."
+                        + ". Link it to a field Odoo Or set a reserve value."
                     ),
                 )
             )
@@ -167,7 +167,7 @@ class WatiAutomationResponseFix(models.Model):
                     record,
                     "failed",
                     phone=phone,
-                    error_message="إعدادات WATI API غير مكتملة.",
+                    error_message="Settings WATI API Incomplete.",
                 )
             )
             return False
@@ -180,9 +180,9 @@ class WatiAutomationResponseFix(models.Model):
                         "failed",
                         phone=phone,
                         error_message=(
-                            f"WATI رفض الإرسال ({exc.status_code})."
+                            f"WATI Refused to send ({exc.status_code})."
                             if exc.status_code
-                            else f"تعذر الاتصال بـ WATI: {detail}"
+                            else f"Unable to contact WATI: {detail}"
                         ),
                         response_excerpt=detail,
                     ),
@@ -199,7 +199,7 @@ class WatiAutomationResponseFix(models.Model):
             payload = None
 
         if _wati_payload_has_hard_failure(payload):
-            summary = _error_summary(payload) if isinstance(payload, dict) else "WATI أعاد خطأ في الطلب."
+            summary = _error_summary(payload) if isinstance(payload, dict) else "WATI Returned an error in the request."
             Log.create(
                 {
                     **self._log_values(

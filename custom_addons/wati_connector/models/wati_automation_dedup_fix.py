@@ -74,8 +74,8 @@ class WatiAutomationDedupFix(models.Model):
                             "status": "failed",
                             "delivery_status": "accepted_timeout",
                             "error_message": (
-                                "انتهت مهلة انتظار تأكيد التسليم من WATI؛ "
-                                "تم السماح بإعادة المحاولة تلقائيًا."
+                                "The timeout for waiting for delivery confirmation has expired WATI; "
+                                "Automatic retry allowed."
                             ),
                         }
                     )
@@ -87,7 +87,7 @@ class WatiAutomationDedupFix(models.Model):
                         record,
                         "failed",
                         phone="",
-                        error_message="لم يتم العثور على رقم WhatsApp في السجل.",
+                        error_message="No number found WhatsApp In the register.",
                     )
                 )
                 return False

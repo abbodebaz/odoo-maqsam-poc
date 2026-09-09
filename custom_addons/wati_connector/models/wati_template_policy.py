@@ -43,7 +43,7 @@ class WatiTemplatePolicy(models.Model):
             if locked:
                 raise UserError(
                     _(
-                        "لا يمكن تعديل محتوى قالب بعد إرساله للمراجعة أو إذا كان مستوردًا من WATI. أنشئ نسخة جديدة ثم عدّل النسخة."
+                        "You can’t edit the content of a template after it’s been submitted for review or if it’s imported from WATI. Create a new copy and then edit the copy."
                     )
                 )
         return super().write(vals)
@@ -60,7 +60,7 @@ class WatiTemplatePolicy(models.Model):
             if remote:
                 raise UserError(
                     _(
-                        "لا تحذف قالبًا مرتبطًا بـWATI من قائمة Odoo مباشرة. استخدم زر «حذف من WATI / Meta» حتى تبقى الحالتان متطابقتين."
+                        "Do not delete a template associated withWATI From a list Odoo directly. Use button «Delete from WATI / Meta» So the two cases remain identical."
                     )
                 )
         return super().unlink()
@@ -72,7 +72,7 @@ class WatiTemplatePolicy(models.Model):
             if not _LANGUAGE_RE.fullmatch(language):
                 raise ValidationError(
                     _(
-                        "رمز اللغة غير صالح. استخدم صيغة مثل ar أو en أو en_US أو pt_BR."
+                        "Invalid language code. Use a formula like ar Or en Or en_US Or pt_BR."
                     )
                 )
 
@@ -81,5 +81,5 @@ class WatiTemplatePolicy(models.Model):
         for record in self:
             if "{{" in (record.footer or "") or "}}" in (record.footer or ""):
                 raise ValidationError(
-                    _("لا تضع متغيرات داخل التذييل. ضع المتغيرات داخل نص القالب الرئيسي.")
+                    _("Do not put variables inside the footer. Place variables inside the main template body.")
                 )

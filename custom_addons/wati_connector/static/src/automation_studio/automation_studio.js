@@ -75,7 +75,7 @@ class WatiAutomationStudio extends Component {
             this.state.kpis = { active, attention, runsToday, successRate };
         } catch (error) {
             console.error("WATI Automation Studio load error", error);
-            this.notification.add("تعذر تحميل مركز الأتمتة.", { type: "danger" });
+            this.notification.add("The Automation Center could not be loaded.", { type: "danger" });
         } finally {
             this.state.loading = false;
         }
@@ -111,9 +111,9 @@ class WatiAutomationStudio extends Component {
     }
 
     readinessLabel(state) {
-        if (state === "ready") return "جاهزة";
-        if (state === "warning") return "تحتاج مراجعة";
-        return "غير مكتملة";
+        if (state === "ready") return "Ready";
+        if (state === "warning") return "Need review";
+        return "Incomplete";
     }
 
     readinessClass(state) {
@@ -129,7 +129,7 @@ class WatiAutomationStudio extends Component {
     async createAutomation() {
         await this.action.doAction({
             type: "ir.actions.act_window",
-            name: "إنشاء أتمتة",
+            name: "Create automation",
             res_model: "wati.automation.rule",
             views: [[false, "form"]],
             target: "current",
@@ -140,7 +140,7 @@ class WatiAutomationStudio extends Component {
     async openRule(ruleId) {
         await this.action.doAction({
             type: "ir.actions.act_window",
-            name: "الأتمتة",
+            name: "Automation",
             res_model: "wati.automation.rule",
             res_id: Number(ruleId),
             views: [[false, "form"]],
