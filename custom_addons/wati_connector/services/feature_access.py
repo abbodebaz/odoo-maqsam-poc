@@ -21,6 +21,16 @@ FEATURE_ACCESS_REGISTRY = {
         "menu_xmlids": ["wati_connector.menu_wati_messages"],
         "acl_xmlids": [],
     },
+    "templates": {
+        "label": "مركز القوالب",
+        "parameter": "wati_connector.access_templates",
+        "default": ACCESS_ADMIN,
+        "menu_xmlids": ["wati_connector.menu_wati_templates"],
+        "acl_xmlids": [
+            "wati_connector.access_wati_template_admin",
+            "wati_connector.access_wati_template_variable_admin",
+        ],
+    },
     "automation": {
         "label": "مركز الأتمتة",
         "parameter": "wati_connector.access_automation",
@@ -99,11 +109,10 @@ def ensure_feature_access(env, feature_id, user=None):
 def sync_feature_access_controls(env, feature_ids=None):
     """Synchronize menu visibility and dedicated-model ACLs from feature policy.
 
-    Odoo 19 renamed the menu relation to ``group_ids``. Features with dedicated
-    models (automation, run logs, webhook monitor) also move their ACL between
-    the base WATI user role and WATI Administrator. Conversation/message history
-    share the inbox models, so those policies only gate the history screens and
-    never revoke the data access agents require to serve customers in Inbox.
+    Odoo 19 uses ``group_ids`` on menus. Dedicated feature models move their ACL
+    between the base WATI user role and WATI Administrator according to company
+    policy. Conversation/message history share inbox models, so those policies
+    gate only their history screens and never revoke operational inbox access.
     """
 
     registry = FEATURE_ACCESS_REGISTRY
