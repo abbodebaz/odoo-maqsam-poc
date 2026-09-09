@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# The official Odoo image does not ship every regional locale. C.UTF-8 is
+# available in Debian-based images and avoids noisy locale fallbacks while Odoo
+# still handles each user's language and formatting through database settings.
+export LANG="C.UTF-8"
+export LC_ALL="C.UTF-8"
+
 : "${PGHOST:?PGHOST is required}"
 : "${PGPORT:=5432}"
 : "${PGUSER:?PGUSER is required}"
