@@ -1,0 +1,113 @@
+name: WATI Delivery Audit
+
+on:
+  push:
+    branches:
+      - chore/wati-delivery-cleanup
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compile Python
+        run: |
+          for module in custom_addons/wati_connector*; do
+            [ -d "$module" ] || continue
+            python -m compileall -q "$module"
+          done
+
+      - name: Validate manifests and XML
+        run: |
+          python - <<'PY'
+          import ast
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+          modules = [p for p in Path('custom_addons').glob('wati_connector*') if (p / '__manifest__.py').exists()]
+          for module in modules:
+              manifest_path = module / '__manifest__.py'
+              manifest = ast.literal_eval(manifest_path.read_text(encoding='utf-8'))
+              for rel in manifest.get('data', []):
+                  path = module / rel
+                  if not path.exists():
+                      raise SystemExit(f'Missing manifest file: {path}')
+              for xml in module.rglob('*.xml'):
+                  ET.parse(xml)
+          print('Manifest/XML validation passed')
+          PY
+
+      - name: Audit delivery hygiene
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import ast
+          import re
+
+          roots = [p for p in Path('custom_addons').glob('wati_connector*') if p.is_dir()]
+          runtime_ext = {'.py', '.js', '.xml'}
+          skip = {'tests', 'docs', 'migrations', 'i18n'}
+          hard_fail = []
+          warnings = []
+
+          debug_patterns = {
+              'python print': re.compile(r'(^|[^\w])print\s*\('),
+              'breakpoint': re.compile(r'\bbreakpoint\s*\('),
+              'pdb': re.compile(r'\bpdb\.set_trace\s*\('),
+              'console.log': re.compile(r'\bconsole\.log\s*\('),
+              'javascript debugger': re.compile(r'(^|[;\s])debugger\s*;'),
+          }
+          note_pattern = re.compile(r'\b(TODO|FIXME|XXX|HACK|TEMPORARY|DEBUG ONLY)\b', re.I)
+
+          for root in roots:
+              for path in root.rglob('*'):
+                  if not path.is_file():
+                      continue
+                  if path.name in {'.DS_Store'} or path.suffix in {'.pyc', '.pyo'} or '__pycache__' in path.parts:
+                      hard_fail.append(f'artifact: {path}')
+                  if path.suffix not in runtime_ext or skip.intersection(path.parts):
+                      continue
+                  text = path.read_text(encoding='utf-8')
+                  for label, pattern in debug_patterns.items():
+                      if pattern.search(text):
+                          hard_fail.append(f'{label}: {path}')
+                  if note_pattern.search(text):
+                      warnings.append(f'development marker: {path}')
+
+          core = Path('custom_addons/wati_connector')
+          manifest = ast.literal_eval((core / '__manifest__.py').read_text(encoding='utf-8'))
+          repair_data = [item for item in manifest.get('data', []) if 'repair' in Path(item).name.lower()]
+          if repair_data:
+              hard_fail.append('one-off repair XML still loaded by manifest: ' + ', '.join(repair_data))
+
+          suspicious_names = []
+          tokens = ('_fix.py', '_repair.py', '_final.py', '_truth.py', '_compat.py', '_review.py')
+          for path in (core / 'models').glob('*.py'):
+              if any(path.name.endswith(token) for token in tokens):
+                  suspicious_names.append(str(path))
+          print('SUSPICIOUS_MODEL_FILES=' + str(len(suspicious_names)))
+          for item in suspicious_names:
+              print('SUSPICIOUS_MODEL=' + item)
+          for item in warnings:
+              print('WARNING=' + item)
+          if hard_fail:
+              raise SystemExit('Delivery hygiene failures:\n' + '\n'.join(hard_fail))
+          print('Delivery hygiene passed')
+          PY
+
+      - name: Report architecture inventory
+        if: always()
+        run: |
+          echo '--- largest WATI Python files ---'
+          find custom_addons/wati_connector -name '*.py' -type f -printf '%s %p\n' | sort -nr | head -20
+          echo '--- repair/data files ---'
+          find custom_addons/wati_connector/data -type f -maxdepth 1 -print | sort
+          echo '--- migrations ---'
+          find custom_addons/wati_connector/migrations -type f -print 2>/dev/null | sort || true
