@@ -185,6 +185,10 @@ jobs:
 
           for source in (core / 'models').rglob('*.py'):
               text = source.read_text(encoding='utf-8')
+              if '_sql_constraints' in text:
+                  raise SystemExit(
+                      f'Legacy _sql_constraints found in {source}; Odoo 19 requires models.Constraint.'
+                  )
               if re.search(r'^\s*def init\s*\(self\)', text, flags=re.MULTILINE):
                   raise SystemExit(
                       f'Model init hook found in {source}; historical data work belongs in migrations.'
