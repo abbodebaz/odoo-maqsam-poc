@@ -6,7 +6,7 @@ on:
       - refactor/wati-commercial-ready
   pull_request:
     paths:
-      - 'custom_addons/wati_connector*/**'
+      - 'custom_addons/**'
       - '.github/workflows/wati-quality.yml'
       - 'odoo-railway-start.sh'
 
@@ -38,6 +38,25 @@ jobs:
           if bad:
               raise SystemExit('Tracked generated artifacts:\n' + '\n'.join(bad))
           print('Tracked-artifact audit passed.')
+          PY
+
+      - name: Enforce WATI-only addon scope
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          addons_root = Path('custom_addons')
+          unexpected = sorted(
+              path.name
+              for path in addons_root.iterdir()
+              if path.is_dir() and not path.name.startswith('wati_connector')
+          )
+          if unexpected:
+              raise SystemExit(
+                  'Non-WATI addons are not allowed in this delivery repository:\n'
+                  + '\n'.join(unexpected)
+              )
+          print('WATI-only addon scope passed.')
           PY
 
       - name: Compile Python sources
