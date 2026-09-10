@@ -78,6 +78,12 @@
     width: 100%;
 }
 
+.wati-user-integration .min-w-0 {
+    min-width: 0;
+    flex: 1 1 auto;
+    max-width: 100%;
+}
+
 .wati-user-integration__intro {
     width: 100%;
     max-width: 76rem;
