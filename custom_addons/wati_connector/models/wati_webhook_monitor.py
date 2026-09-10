@@ -1,8 +1,16 @@
 import hashlib
 import json
 import logging
+from datetime import timedelta
 
 from odoo import api, fields, models
+
+from .wati_automation_guard import (
+    _digits,
+    _extract_external_message_id,
+    _payload_broadcast_name,
+    _payload_template_name,
+)
 
 
 _logger = logging.getLogger(__name__)
@@ -65,11 +73,60 @@ def _normalise_event_family(event_type, status=""):
 
 
 def _message_identity(payload, external_id=""):
-    for key in ("whatsappMessageId", "localMessageId", "id"):
+    for key in ("whatsappMessageId", "localMessageId"):
         value = _clean(payload.get(key))
         if value:
             return value
-    return _clean(external_id)
+
+    nested_identity = _clean(_extract_external_message_id(payload))
+    if nested_identity:
+        return nested_identity
+
+    # Some WATI callback families use the top-level id as the message identity.
+    callback_id = _clean(payload.get("id"))
+    return callback_id or _clean(external_id)
+
+
+def _normalise_phone(value):
+    digits = _digits(value)
+    if digits.startswith("00"):
+        digits = digits[2:]
+    if digits.startswith("0") and len(digits) >= 9:
+        digits = "966" + digits[1:]
+    elif len(digits) == 9 and digits.startswith("5"):
+        digits = "966" + digits
+    return digits
+
+
+def _payload_source(payload):
+    if not isinstance(payload, dict):
+        return ""
+    source = _clean(payload.get("source"))
+    if source:
+        return source
+    for key in ("data", "result"):
+        nested = payload.get(key)
+        if isinstance(nested, dict):
+            source = _payload_source(nested)
+            if source:
+                return source
+    return ""
+
+
+def _is_odoo_originated_callback(payload):
+    """Return True only when the callback carries explicit Odoo-origin evidence.
+
+    WATI can send the same lifecycle events for messages created in WATI itself,
+    mobile clients, integrations, and Odoo. Those external events are useful for
+    audit but must not become alarming dashboard errors merely because Odoo does
+    not own their original send record.
+    """
+    broadcast_name = _payload_broadcast_name(payload).casefold()
+    if broadcast_name.startswith("odoo_auto_"):
+        return True
+
+    source = _payload_source(payload).casefold()
+    return source.startswith("odoo_")
 
 
 def _canonical_event_key(family, payload, external_id="", status=""):
@@ -89,32 +146,44 @@ def _canonical_event_key(family, payload, external_id="", status=""):
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 
-def _processing_truth(family, has_message=False, has_conversation=False, has_automation=False):
-    """Return a truthful monitor state for one normalized callback.
+def _processing_truth(
+    family,
+    has_message=False,
+    has_conversation=False,
+    has_automation=False,
+    odoo_origin=False,
+):
+    """Return a user-facing processing state for one normalized callback.
 
-    Lifecycle callbacks such as Delivered/Read are only considered processed when
-    Odoo can tie them to the concrete message (or to the automation run that sent
-    it). A conversation match alone is useful context but does not prove that the
-    message lifecycle was applied correctly.
+    A lifecycle callback is an actionable integration problem only when there is
+    evidence that Odoo originated the send and Odoo still cannot correlate it.
+    Lifecycle traffic belonging to activity created elsewhere in WATI remains a
+    useful audit record, but it must not inflate the dashboard alert counter.
     """
     if family in _LIFECYCLE_FAMILIES:
         if has_message or has_automation:
             return (
                 "processed",
-                "The message status is linked to data Odoo And treated successfully.",
+                "The message status was linked to its Odoo record and processed successfully.",
+            )
+        if odoo_origin:
+            return (
+                "needs_attention",
+                "This callback belongs to an Odoo-originated send, but its local message or automation run could not be found.",
             )
         return (
-            "needs_attention",
-            "A state has arrived WATI But the associated message was not found within Odoo.",
+            "audit_only",
+            "This WATI lifecycle event is not proven to originate from Odoo, so it is kept for audit only.",
         )
+
     if has_message or has_conversation or has_automation:
         return (
             "processed",
-            "The event is linked to data Odoo And treated successfully.",
+            "The event is linked to Odoo data and was processed successfully.",
         )
     return (
         "audit_only",
-        "The event is saved as a technical audit log and does not require additional action.",
+        "The event is saved as a technical audit record and does not require additional action.",
     )
 
 
@@ -207,6 +276,13 @@ class WatiWebhookEventMonitor(models.Model):
         return _payload_dict(self.payload)
 
     def _monitor_find_relations(self, payload):
+        """Find the same local records used by message and automation lifecycles.
+
+        Exact message IDs remain the strongest match. Automation callbacks also
+        support WATI broadcast names and the same conservative recent-recipient
+        fallback used by the delivery lifecycle so the monitor does not report a
+        false alert merely because a provider callback omitted an ID.
+        """
         self.ensure_one()
         message = self.env["wati.message"].sudo().browse()
         if hasattr(self, "_wati_find_existing_message"):
@@ -242,13 +318,54 @@ class WatiWebhookEventMonitor(models.Model):
                 [("wa_id", "=", wa_id)], order="id desc", limit=1
             )
 
-        automation_log = self.env["wati.automation.log"].sudo().browse()
+        Log = self.env["wati.automation.log"].sudo()
+        automation_log = Log.browse()
         if identity:
-            automation_log = self.env["wati.automation.log"].sudo().search(
+            automation_log = Log.search(
                 [("external_message_id", "=", identity)],
-                order="id desc",
+                order="create_date desc, id desc",
                 limit=1,
             )
+
+        broadcast_name = _payload_broadcast_name(payload)
+        if not automation_log and broadcast_name:
+            automation_log = Log.search(
+                [("broadcast_name", "=", broadcast_name)],
+                order="create_date desc, id desc",
+                limit=1,
+            )
+
+        if not automation_log and identity:
+            automation_log = Log.search(
+                [("response_excerpt", "ilike", identity)],
+                order="create_date desc, id desc",
+                limit=1,
+            )
+
+        if not automation_log:
+            phone = _normalise_phone(
+                payload.get("waId")
+                or payload.get("whatsappNumber")
+                or payload.get("phoneNumber")
+                or ""
+            )
+            if phone:
+                anchor = self.received_at or fields.Datetime.now()
+                cutoff = anchor - timedelta(minutes=60)
+                upper_bound = anchor + timedelta(minutes=5)
+                domain = [
+                    ("phone", "=", phone),
+                    ("status", "in", ("accepted", "sent", "delivered", "read", "failed")),
+                    ("create_date", ">=", cutoff),
+                    ("create_date", "<=", upper_bound),
+                ]
+                template_name = _payload_template_name(payload)
+                if template_name:
+                    domain.append(("template_name", "=", template_name))
+                candidates = Log.search(domain, order="create_date desc, id desc", limit=2)
+                if len(candidates) == 1:
+                    automation_log = candidates
+
         return message, conversation, automation_log
 
     def _monitor_enrich(self, payload=None, seen=None):
@@ -288,15 +405,14 @@ class WatiWebhookEventMonitor(models.Model):
 
             if duplicate:
                 processing_state = "duplicate"
-                note = (
-                    "Copy Callback additional for the same event; They are kept for auditing only."
-                )
+                note = "Additional callback for the same business event; kept for audit only."
             else:
                 processing_state, note = _processing_truth(
                     family,
                     has_message=bool(message),
                     has_conversation=bool(conversation),
                     has_automation=bool(automation_log),
+                    odoo_origin=_is_odoo_originated_callback(current_payload),
                 )
 
             event.with_context(wati_webhook_monitor_internal=True).write(
