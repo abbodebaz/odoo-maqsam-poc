@@ -2,9 +2,11 @@ import logging
 
 from odoo import api, models
 
+from .wati_automation_guard import _payload_broadcast_name
 from .wati_webhook_monitor import (
     _canonical_event_key,
     _clean,
+    _is_odoo_originated_callback,
     _message_identity,
     _normalise_event_family,
     _payload_dict,
@@ -23,11 +25,10 @@ class WatiWebhookEventMonitorFastBackfill(models.Model):
     def _repair_webhook_monitor(self):
         """Backfill monitor metadata with bounded reads and set-based writes.
 
-        Runtime callbacks are enriched one at a time for correctness. Historical
-        upgrades can contain thousands of audit rows, so this path preloads exact
-        identifiers once, classifies events in memory, then updates rows through
-        VALUES-backed SQL in bounded chunks. No per-event relation query or update
-        is issued during the historical migration.
+        Runtime callbacks use the richer relation matcher. Historical upgrades can
+        contain thousands of audit rows, so this path preloads exact message and
+        automation identifiers plus Odoo broadcast names, classifies events in
+        memory, then updates rows through bounded VALUES-backed SQL.
         """
         events = self.sudo().search([], order="received_at asc, id asc")
 
@@ -62,14 +63,16 @@ class WatiWebhookEventMonitorFastBackfill(models.Model):
             if wa_id and wa_id not in conversation_by_wa:
                 conversation_by_wa[wa_id] = conversation.id
 
-        automation_logs = self.env["wati.automation.log"].sudo().search(
-            [("external_message_id", "!=", False)]
-        )
+        automation_logs = self.env["wati.automation.log"].sudo().search([])
         automation_by_identity = {}
+        automation_by_broadcast = {}
         for log in automation_logs:
             identity = _clean(log.external_message_id)
             if identity and identity not in automation_by_identity:
                 automation_by_identity[identity] = log.id
+            broadcast_name = _clean(log.broadcast_name)
+            if broadcast_name and broadcast_name not in automation_by_broadcast:
+                automation_by_broadcast[broadcast_name] = log.id
 
         seen = {}
         rows = []
@@ -111,11 +114,15 @@ class WatiWebhookEventMonitorFastBackfill(models.Model):
             linked_automation_log_id = (
                 automation_by_identity.get(identity) if identity else False
             )
+            if not linked_automation_log_id:
+                broadcast_name = _payload_broadcast_name(payload)
+                if broadcast_name:
+                    linked_automation_log_id = automation_by_broadcast.get(broadcast_name)
 
             if duplicate_of_id:
                 processing_state = "duplicate"
                 processing_note = (
-                    "Copy Callback additional for the same event; They are kept for auditing only."
+                    "Additional callback for the same business event; kept for audit only."
                 )
                 duplicate_count += 1
             else:
@@ -124,6 +131,7 @@ class WatiWebhookEventMonitorFastBackfill(models.Model):
                     has_message=bool(linked_message_id),
                     has_conversation=bool(linked_conversation_id),
                     has_automation=bool(linked_automation_log_id),
+                    odoo_origin=_is_odoo_originated_callback(payload),
                 )
                 attention_count += int(processing_state == "needs_attention")
 
