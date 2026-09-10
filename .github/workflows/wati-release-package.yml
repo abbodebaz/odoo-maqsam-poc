@@ -50,7 +50,7 @@ jobs:
           printf '%s\n' "$GITHUB_SHA" > "dist/${ROOT}/SOURCE_COMMIT.txt"
           (cd "dist/${ROOT}" && find . -type f ! -name CHECKSUMS.txt -print0 | sort -z | xargs -0 sha256sum > CHECKSUMS.txt)
           (cd dist && zip -qr "${ROOT}.zip" "${ROOT}")
-          sha256sum "dist/${ROOT}.zip" | tee "dist/${ROOT}.zip.sha256"
+          (cd dist && sha256sum "${ROOT}.zip" | tee "${ROOT}.zip.sha256")
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "archive=${ROOT}.zip" >> "$GITHUB_OUTPUT"
 
