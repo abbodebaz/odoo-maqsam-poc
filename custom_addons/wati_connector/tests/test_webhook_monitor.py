@@ -1,6 +1,9 @@
 from odoo.tests.common import TransactionCase
 
-from ..models.wati_webhook_monitor import _processing_truth
+from ..models.wati_webhook_monitor import (
+    _is_odoo_originated_callback,
+    _processing_truth,
+)
 
 
 class TestWatiWebhookMonitor(TransactionCase):
@@ -59,32 +62,55 @@ class TestWatiWebhookMonitor(TransactionCase):
         self.assertEqual(row.linked_message_id, self.message)
         self.assertEqual(row.linked_conversation_id, self.conversation)
 
-    def test_lifecycle_event_without_message_needs_attention(self):
-        self.events.ingest(
-            {
-                "eventType": "sentMessageDELIVERED_v2",
-                "statusString": "Delivered",
-                "id": "orphan-monitor-1",
-                "whatsappMessageId": "wamid.missing-monitor-1",
-                "conversationId": "missing-conversation-monitor-1",
-                "text": None,
-                "type": "template",
-            }
-        )
-        row = self.events.search([("external_id", "=", "orphan-monitor-1")], limit=1)
-        self.assertEqual(row.event_family, "delivered")
-        self.assertEqual(row.processing_state, "needs_attention")
-        self.assertFalse(row.linked_message_id)
-
-    def test_conversation_alone_does_not_prove_lifecycle_processing(self):
+    def test_external_lifecycle_event_is_audit_only(self):
         state, note = _processing_truth(
+            "delivered",
+            has_message=False,
+            has_conversation=False,
+            has_automation=False,
+            odoo_origin=False,
+        )
+        self.assertEqual(state, "audit_only")
+        self.assertIn("audit", note.casefold())
+
+    def test_odoo_origin_without_local_record_needs_attention(self):
+        state, note = _processing_truth(
+            "delivered",
+            has_message=False,
+            has_conversation=False,
+            has_automation=False,
+            odoo_origin=True,
+        )
+        self.assertEqual(state, "needs_attention")
+        self.assertIn("Odoo-originated", note)
+
+    def test_odoo_automation_broadcast_is_origin_evidence(self):
+        self.assertTrue(
+            _is_odoo_originated_callback(
+                {
+                    "eventType": "sentMessageDELIVERED_v2",
+                    "broadcastName": "odoo_auto_12_34_20260910103000000000",
+                }
+            )
+        )
+        self.assertFalse(
+            _is_odoo_originated_callback(
+                {
+                    "eventType": "sentMessageDELIVERED_v2",
+                    "broadcastName": "wati_campaign_123",
+                }
+            )
+        )
+
+    def test_conversation_alone_does_not_create_false_alert(self):
+        state, _note = _processing_truth(
             "delivered",
             has_message=False,
             has_conversation=True,
             has_automation=False,
+            odoo_origin=False,
         )
-        self.assertEqual(state, "needs_attention")
-        self.assertIn("الرسالة", note)
+        self.assertEqual(state, "audit_only")
 
     def test_non_lifecycle_conversation_match_is_processed(self):
         state, _note = _processing_truth(
