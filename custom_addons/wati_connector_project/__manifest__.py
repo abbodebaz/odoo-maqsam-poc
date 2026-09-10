@@ -1,6 +1,6 @@
 {
     "name": "WATI Connector - Project",
-    "version": "19.0.11.0.3",
+    "version": "19.0.11.0.4",
     "summary": "Project task integration for the WATI WhatsApp Connector",
     "category": "Productivity",
     "author": "Abdulrhman Bazarah",
