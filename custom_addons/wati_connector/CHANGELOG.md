@@ -1,5 +1,15 @@
 # Changelog
 
+## 19.0.11.0.3 — Customer delivery QA hardening
+
+- Validated a fresh Odoo 19 installation against a clean PostgreSQL database and confirmed WATI send/receive operation in customer-style QA.
+- Improved the user-level WATI account and role settings layout for clearer assignment and security guidance.
+- Reworked webhook monitoring so external WATI lifecycle traffic and legacy/v2 duplicates remain audit records instead of inflating actionable integration alerts.
+- Added a dedicated `Events to Review` dashboard action for webhook events that genuinely require manual attention.
+- Added a versioned webhook-monitor migration to reclassify historical events with the new actionable-alert semantics.
+- Hardened workspace QWeb inheritance selectors after the KPI change to avoid OWL template inheritance failures.
+- Kept the core and all optional CRM, Sales, Accounting, and Project addons version-aligned.
+
 ## 19.0.11.0.2 — Warning-free template metadata
 
 - Disambiguated editable draft header labels from provider-mirrored header fields.
