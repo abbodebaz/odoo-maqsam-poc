@@ -1,5 +1,13 @@
 # Changelog
 
+## 19.0.11.0.4 — Final delivery hardening
+
+- Removed the last mixed-language runtime copy from Template Builder styling and kept the customer-facing source consistently English.
+- Moved CRM-specific customer-context logic out of the provider-facing core and into the optional `wati_connector_crm` addon, preserving a clean dependency boundary.
+- Runtime-validated installation of the optional CRM addon on the Odoo 19 QA environment after the controller split.
+- Made the release ZIP checksum file portable by referencing the archive basename instead of a build-directory path.
+- Kept the core and all optional CRM, Sales, Accounting, and Project addons version-aligned for the final bundle.
+
 ## 19.0.11.0.3 — Customer delivery QA hardening
 
 - Validated a fresh Odoo 19 installation against a clean PostgreSQL database and confirmed WATI send/receive operation in customer-style QA.
