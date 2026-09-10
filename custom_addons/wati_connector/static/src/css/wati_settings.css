@@ -105,6 +105,15 @@
     line-height: 1.55;
 }
 
+.wati-user-integration .text-muted,
+.wati-user-integration p,
+.wati-user-integration .wati-role-item,
+.wati-user-integration .wati-step,
+.wati-user-integration .wati-security-note {
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+
 .wati-role-list {
     border-top: 1px solid var(--border-color, #dee2e6);
 }
@@ -124,14 +133,25 @@
     color: var(--o-main-text-color, inherit);
 }
 
+.wati-step-list {
+    width: 100%;
+}
+
 .wati-step {
     display: flex;
     align-items: flex-start;
     gap: 12px;
-    padding: 14px;
+    width: 100%;
+    padding: 14px 16px;
     border-radius: 10px;
     background: rgba(113, 75, 103, 0.045);
-    line-height: 1.5;
+    line-height: 1.55;
+}
+
+.wati-step > div {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 100%;
 }
 
 .wati-step-number {
@@ -152,7 +172,12 @@
     border-radius: 12px;
     padding: 16px 18px;
     background: rgba(113, 75, 103, 0.05);
-    line-height: 1.55;
+    line-height: 1.6;
+}
+
+.wati-security-note .min-w-0 {
+    min-width: 0;
+    flex: 1 1 auto;
 }
 
 @media (max-width: 991.98px) {
