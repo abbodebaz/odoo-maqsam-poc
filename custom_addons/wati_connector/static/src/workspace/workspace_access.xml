@@ -13,7 +13,7 @@
         <xpath expr="//section[contains(@class, 'o_wati_kpi_grid')]/*[3]" position="attributes">
             <attribute name="t-if">state.data.permissions &amp;&amp; state.data.permissions.automation</attribute>
         </xpath>
-        <xpath expr="//button[contains(@class, 'o_wati_kpi_button')]" position="attributes">
+        <xpath expr="//section[contains(@class, 'o_wati_kpi_grid')]/*[4]" position="attributes">
             <attribute name="t-if">state.data.permissions &amp;&amp; state.data.permissions.monitor</attribute>
         </xpath>
     </t>
