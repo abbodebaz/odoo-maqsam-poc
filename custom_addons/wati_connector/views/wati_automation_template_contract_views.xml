@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_automation_rule_form_template_contract" model="ir.ui.view">
+        <field name="name">wati.automation.rule.form.template.contract</field>
+        <field name="model">wati.automation.rule</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_automation_rule_form_builder"/>
+        <field name="priority">165</field>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('wati_mapping_head_smart')]" position="after">
+                <div class="alert alert-light border mt-2 mb-3" role="status" invisible="not template_name">
+                    <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                        <div>
+                            <strong>Match the template with WATI</strong>
+                            <div class="text-muted small">We check the name of each variable that will actually be sent to WATIAnd not just its form within the message.</div>
+                        </div>
+                        <field name="template_contract_state" widget="badge" readonly="1"
+                               decoration-success="template_contract_state == 'valid'"
+                               decoration-warning="template_contract_state == 'unknown'"
+                               decoration-danger="template_contract_state == 'invalid'"/>
+                    </div>
+                    <field name="template_contract_message" nolabel="1" readonly="1"
+                           invisible="not template_contract_message"/>
+                </div>
+            </xpath>
+
+            <xpath expr="//field[@name='parameter_ids']/list/field[@name='template_variable_label']" position="after">
+                <field name="api_param_name" string="Name WATI API" optional="hide" readonly="1" groups="base.group_system"/>
+                <field name="placeholder_token" column_invisible="True"/>
+            </xpath>
+
+            <xpath expr="//field[@name='server_action_id']" position="after">
+                <field name="template_external_id" readonly="1"/>
+                <field name="template_contract_state" readonly="1"/>
+                <field name="template_contract_message" readonly="1"/>
+                <field name="template_contract_json" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

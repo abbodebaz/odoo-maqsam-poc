@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_otp_bridge_list" model="ir.ui.view">
+        <field name="name">wati.otp.bridge.list</field>
+        <field name="model">wati.otp.bridge</field>
+        <field name="arch" type="xml">
+            <list string="OTP Bridge" decoration-success="mapping_state == 'ready' and active" decoration-muted="not active">
+                <field name="sequence" widget="handle"/>
+                <field name="active" widget="boolean_toggle"/>
+                <field name="name"/>
+                <field name="technical_key"/>
+                <field name="trigger_mode"/>
+                <field name="app_menu_id" optional="show"/>
+                <field name="model_id"/>
+                <field name="otp_field_id" optional="show"/>
+                <field name="template_id"/>
+                <field name="mapping_state" widget="badge"/>
+                <field name="sent_count"/>
+                <field name="failure_count"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_wati_otp_bridge_form" model="ir.ui.view">
+        <field name="name">wati.otp.bridge.form</field>
+        <field name="model">wati.otp.bridge</field>
+        <field name="arch" type="xml">
+            <form string="WATI OTP Bridge">
+                <header>
+                    <button name="action_auto_detect_fields" type="object" string="Automatically detect fields" icon="fa-magic" class="btn-secondary" invisible="trigger_mode != 'field' or not model_id"/>
+                    <button name="action_sync" type="object" string="Sync with Odoo" icon="fa-refresh" class="btn-secondary" invisible="trigger_mode != 'field'"/>
+                    <button name="action_open_test" type="object" string="Template testing" icon="fa-paper-plane" class="btn-primary" invisible="not template_id"/>
+                    <field name="active" widget="boolean_toggle"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_logs" type="object" class="oe_stat_button" icon="fa-list-alt">
+                            <field name="run_count" widget="statinfo" string="Attempts"/>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="Example: OTP Driver login"/></h1>
+                    </div>
+
+                    <div class="alert alert-info" role="alert">
+                        <strong>OTP Bridge It does not create or verify OTP.</strong>
+                        The company’s application remains the sole source, validity, and verification of the code, and this feature is only responsible for sending it via a template WATI Authentication Approved.
+                    </div>
+
+                    <group string="1. Linking method">
+                        <group>
+                            <field name="trigger_mode"/>
+                            <field name="technical_key" placeholder="driver_login"/>
+                        </group>
+                        <group>
+                            <field name="mapping_state" readonly="1" widget="badge"/>
+                            <field name="mapping_summary" readonly="1" nolabel="1"/>
+                        </group>
+                    </group>
+
+                    <group string="2. Where is it located? OTP In Odoo?">
+                        <group>
+                            <field name="available_app_menu_ids" invisible="1"/>
+                            <field name="available_model_ids" invisible="1"/>
+                            <field name="app_menu_id" options="{'no_create': True}" domain="[('id', 'in', available_app_menu_ids)]"/>
+                            <field name="model_id" options="{'no_create': True}" domain="[('id', 'in', available_model_ids)]"/>
+                        </group>
+                        <group invisible="trigger_mode != 'field'">
+                            <field name="otp_field_id" options="{'no_create': True}"/>
+                            <div class="text-muted">When this field is changed to a non-empty value, the system will read and send the code, and will not save the code in a log OTP Bridge.</div>
+                        </group>
+                        <group invisible="trigger_mode != 'hook'">
+                            <div class="alert alert-secondary" role="alert">
+                                In position Integration Hook Application and Model can be left blank. The custom application passes the code directly using <strong>Integration key</strong>.
+                            </div>
+                        </group>
+                    </group>
+
+                    <group string="3. Where do we get the mobile number from?">
+                        <group>
+                            <field name="phone_field_id" options="{'no_create': True}" invisible="not model_id"/>
+                            <field name="phone_path" placeholder="Example: driver_id.mobile Or partner_id.mobile" invisible="not model_id"/>
+                        </group>
+                        <group>
+                            <div class="text-muted" invisible="not model_id">Choose a direct field or use a path to a relationship. button «Automatically detect fields» He tries mobile / phone / WhatsApp and common relationships.</div>
+                        </group>
+                    </group>
+
+                    <group string="4. Template WATI Authentication">
+                        <group>
+                            <field name="template_id" options="{'no_create': True}"/>
+                            <field name="code_param_name" placeholder="Example: 1 Or otp"/>
+                        </group>
+                        <group>
+                            <field name="channel_number" placeholder="Optional — Leave blank to use the default channel"/>
+                            <field name="dedup_seconds"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Follow and record">
+                            <group>
+                                <group>
+                                    <field name="run_count" readonly="1"/>
+                                    <field name="sent_count" readonly="1"/>
+                                </group>
+                                <group>
+                                    <field name="failure_count" readonly="1"/>
+                                    <field name="skipped_count" readonly="1"/>
+                                </group>
+                            </group>
+                            <group string="Internal engine" groups="base.group_system">
+                                <field name="model_name" readonly="1"/>
+                                <field name="base_automation_id" readonly="1"/>
+                                <field name="server_action_id" readonly="1"/>
+                            </group>
+                        </page>
+
+                        <page string="User guide">
+                            <div class="o_wati_otp_guide">
+                                <h3>The first method: No-Code — Without modifying the driver application</h3>
+                                <ol>
+                                    <li>Choose «Without programming — When a field changes OTP».</li>
+                                    <li>Select the application and then the model that contains it OTP.</li>
+                                    <li>Press «Automatically detect fields», and then review the field OTP And mobile number.</li>
+                                    <li>Choose a template Authentication Certified and imported from WATI.</li>
+                                    <li>See variable OTP in the mold; It is often automatically filled from the first variable.</li>
+                                    <li>Press «Template testing» On a test number, then activate the link and press «Sync with Odoo».</li>
+                                    <li>From this moment: The company’s application generates OTP As usual, andWATI Connector Sends it automatically when the field changes.</li>
+                                </ol>
+
+                                <h3 class="mt-4">The second method: Integration Hook — So OTP It is not saved in a field</h3>
+                                <p>If the driver application generates the code inside Method Just, choose Integration Hook And give the binding a fixed key like <code>driver_login</code>. The app developer adds only one appeal:</p>
+                                <pre>env["wati.otp.bridge"].sudo().send_by_key(
+    "driver_login",
+    record=driver_record,
+    code=otp_code,
+    phone=driver_mobile,
+)</pre>
+                                <p>Can be deleted <code>phone</code> If a field is selected/Mobile path in connectivity. Failed WATI Repeats <code>False</code> Logic should not be stopped OTP The original.</p>
+
+                                <h3 class="mt-4">Responsibilities of each system</h3>
+                                <ul>
+                                    <li><strong>Company application:</strong> generating OTP, validity period, number of attempts, and code verification.</li>
+                                    <li><strong>OTP Bridge:</strong> Read/Receive the code, prevent duplicate transmission, and send it across WATI.</li>
+                                    <li><strong>WATI/Meta:</strong> Template Authentication Authorized and delivered message WhatsApp.</li>
+                                </ul>
+
+                                <h3 class="mt-4">Security</h3>
+                                <ul>
+                                    <li>It is not saved OTP As text in a log OTP Bridge.</li>
+                                    <li>The record only keeps a fingerprint SHA-256 For the code and a partially hidden mobile number.</li>
+                                    <li>Transmission is protected by Durable Idempotency To prevent sending the same OTP Twice at Retry Who Odoo.</li>
+                                    <li>Do not use OTP Bridge To generate or verify the code; This should remain within the original application.</li>
+                                </ul>
+                            </div>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_wati_otp_bridges" model="ir.actions.act_window">
+        <field name="name">OTP Bridge</field>
+        <field name="res_model">wati.otp.bridge</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Fasten OTP found in any application Odoo With WATI Without building a new integration</p>
+            <p>Select the application, model and field OTP Mobile number and template Authentication, or use Integration Hook If the code is not saved in a field.</p>
+        </field>
+    </record>
+
+    <record id="view_wati_otp_log_list" model="ir.ui.view">
+        <field name="name">wati.otp.log.list</field>
+        <field name="model">wati.otp.log</field>
+        <field name="arch" type="xml">
+            <list string="Register OTP" create="false" edit="false" delete="false" decoration-success="status == 'sent'" decoration-danger="status == 'failed'" decoration-warning="status == 'skipped'">
+                <field name="create_date"/>
+                <field name="status" widget="badge"/>
+                <field name="bridge_id"/>
+                <field name="source"/>
+                <field name="res_name"/>
+                <field name="phone_masked"/>
+                <field name="template_name"/>
+                <field name="triggered_by_id"/>
+                <field name="error_message" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_wati_otp_log_form" model="ir.ui.view">
+        <field name="name">wati.otp.log.form</field>
+        <field name="model">wati.otp.log</field>
+        <field name="arch" type="xml">
+            <form string="Submit details OTP" create="false" edit="false" delete="false">
+                <sheet>
+                    <div class="alert alert-info" role="alert">For security reasons the code is not saved or displayed OTP Same here.</div>
+                    <group>
+                        <group>
+                            <field name="status" widget="badge"/>
+                            <field name="bridge_id"/>
+                            <field name="source"/>
+                            <field name="template_name"/>
+                            <field name="phone_masked"/>
+                        </group>
+                        <group>
+                            <field name="model_name"/>
+                            <field name="res_id"/>
+                            <field name="res_name"/>
+                            <field name="triggered_by_id"/>
+                            <field name="create_date"/>
+                        </group>
+                    </group>
+                    <group string="Error" invisible="not error_message">
+                        <field name="error_message" nolabel="1"/>
+                    </group>
+                    <group string="response WATI Revised" invisible="not provider_excerpt">
+                        <field name="provider_excerpt" nolabel="1"/>
+                    </group>
+                    <group string="Technical diagnosis" groups="base.group_system">
+                        <field name="code_fingerprint" readonly="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_wati_otp_logs" model="ir.actions.act_window">
+        <field name="name">Register OTP</field>
+        <field name="res_model">wati.otp.log</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="view_wati_otp_test_wizard_form" model="ir.ui.view">
+        <field name="name">wati.otp.test.wizard.form</field>
+        <field name="model">wati.otp.test.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Test OTP Bridge">
+                <div class="alert alert-warning" role="alert">This is a real send-through test WhatsApp. Use your number or an authorized test number.</div>
+                <group>
+                    <field name="bridge_id"/>
+                    <field name="phone" placeholder="9665XXXXXXXX"/>
+                    <field name="code" placeholder="123456"/>
+                </group>
+                <footer>
+                    <button name="action_send" type="object" string="Send OTP Demo" class="btn-primary" icon="fa-paper-plane"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <menuitem id="menu_wati_otp_bridges" name="🔐 OTP Bridge" parent="menu_wati_root" action="action_wati_otp_bridges" groups="wati_connector.group_wati_admin" sequence="32"/>
+    <menuitem id="menu_wati_otp_logs" name="Register OTP" parent="menu_wati_root" action="action_wati_otp_logs" groups="wati_connector.group_wati_supervisor" sequence="36"/>
+</odoo>

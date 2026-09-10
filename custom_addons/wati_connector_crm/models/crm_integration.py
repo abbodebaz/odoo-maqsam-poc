@@ -1,0 +1,198 @@
+from odoo import _, api, fields, models
+from odoo.exceptions import UserError
+
+from odoo.addons.wati_connector.utils.phone import equivalent_variants, normalize_whatsapp_number
+
+
+class WatiConversationCrm(models.Model):
+    _inherit = "wati.conversation"
+
+    crm_lead_id = fields.Many2one(
+        "crm.lead",
+        string="Chance / Lead CRM",
+        ondelete="set null",
+        index=True,
+        help="Register CRM Related to this conversation WhatsApp.",
+    )
+
+    def action_open_crm_lead(self):
+        self.ensure_one()
+        if not self.crm_lead_id:
+            raise UserError(_("No chance CRM Related to this conversation."))
+        return {
+            "type": "ir.actions.act_window",
+            "name": self.crm_lead_id.display_name,
+            "res_model": "crm.lead",
+            "res_id": self.crm_lead_id.id,
+            "view_mode": "form",
+            "target": "current",
+        }
+
+
+class CrmLeadWati(models.Model):
+    _inherit = "crm.lead"
+
+    wati_conversation_count = fields.Integer(string="Conversations WhatsApp", compute="_compute_wati_summary")
+    wati_message_count = fields.Integer(string="Messages WhatsApp", compute="_compute_wati_summary")
+    wati_last_message = fields.Text(string="Last message WhatsApp", compute="_compute_wati_summary")
+    wati_last_message_at = fields.Datetime(string="Latest activity WhatsApp", compute="_compute_wati_summary")
+    wati_last_status = fields.Char(string="Latest case WhatsApp", compute="_compute_wati_summary")
+
+    def _wati_phone_values(self):
+        self.ensure_one()
+        raw_values = []
+        if self.partner_id:
+            for field_name in ("mobile", "phone"):
+                if field_name in self.partner_id._fields and self.partner_id[field_name]:
+                    raw_values.append(self.partner_id[field_name])
+        for field_name in ("mobile", "phone"):
+            if field_name in self._fields and self[field_name]:
+                raw_values.append(self[field_name])
+
+        normalized = []
+        for value in raw_values:
+            phone = normalize_whatsapp_number(value)
+            if phone and phone not in normalized:
+                normalized.append(phone)
+        return normalized
+
+    def _wati_primary_phone(self):
+        self.ensure_one()
+        phones = self._wati_phone_values()
+        return phones[0] if phones else ""
+
+    def _wati_unlinked_candidates(self):
+        self.ensure_one()
+        Conversation = self.env["wati.conversation"].sudo()
+        candidates = Conversation.browse()
+        if self.partner_id:
+            candidates = Conversation.search(
+                [("partner_id", "=", self.partner_id.id), ("crm_lead_id", "=", False)],
+                order="last_message_at desc, id desc",
+            )
+            if candidates:
+                return candidates
+        phones = self._wati_phone_values()
+        if not phones:
+            return candidates
+        variants = []
+        for phone in phones:
+            for variant in equivalent_variants(phone):
+                if variant not in variants:
+                    variants.append(variant)
+        return Conversation.search(
+            [("wa_id", "in", variants), ("crm_lead_id", "=", False)],
+            order="last_message_at desc, id desc",
+        )
+
+    def _wati_linked_conversations(self, include_candidate=True):
+        self.ensure_one()
+        Conversation = self.env["wati.conversation"].sudo()
+        linked = Conversation.search([("crm_lead_id", "=", self.id)], order="last_message_at desc, id desc")
+        if linked or not include_candidate:
+            return linked
+        return self._wati_unlinked_candidates()
+
+    def _wati_get_or_create_conversation(self):
+        self.ensure_one()
+        Conversation = self.env["wati.conversation"].sudo()
+        linked = Conversation.search([("crm_lead_id", "=", self.id)], order="last_message_at desc, id desc", limit=1)
+        if linked:
+            return linked
+        candidate = self._wati_unlinked_candidates()[:1]
+        if candidate:
+            values = {"crm_lead_id": self.id}
+            if self.partner_id and not candidate.partner_id:
+                values["partner_id"] = self.partner_id.id
+            candidate.write(values)
+            return candidate
+        phone = self._wati_primary_phone()
+        if not phone:
+            raise UserError(_("Add a mobile or telephone number to the opportunity/Client before opening WhatsApp."))
+        display_name = self.partner_id.display_name if self.partner_id else (self.contact_name or self.partner_name or self.name or phone)
+        return Conversation.create({
+            "name": display_name,
+            "wa_id": phone,
+            "partner_id": self.partner_id.id if self.partner_id else False,
+            "crm_lead_id": self.id,
+            "sender_name": display_name,
+            "status": "local",
+            "last_message_at": fields.Datetime.now(),
+        })
+
+    @api.depends("partner_id", "phone", "partner_id.phone")
+    def _compute_wati_summary(self):
+        Message = self.env["wati.message"].sudo()
+        for lead in self:
+            if not lead.id:
+                lead.wati_conversation_count = 0
+                lead.wati_message_count = 0
+                lead.wati_last_message = False
+                lead.wati_last_message_at = False
+                lead.wati_last_status = False
+                continue
+            conversations = lead._wati_linked_conversations(include_candidate=True)
+            lead.wati_conversation_count = len(conversations)
+            if not conversations:
+                lead.wati_message_count = 0
+                lead.wati_last_message = False
+                lead.wati_last_message_at = False
+                lead.wati_last_status = False
+                continue
+            lead.wati_message_count = Message.search_count([("conversation_id", "in", conversations.ids)])
+            latest = Message.search([("conversation_id", "in", conversations.ids)], order="received_at desc, id desc", limit=1)
+            if latest:
+                lead.wati_last_message = latest.text or ""
+                lead.wati_last_message_at = latest.received_at
+                lead.wati_last_status = latest.status or ""
+            else:
+                conversation = conversations[0]
+                lead.wati_last_message = conversation.last_message or ""
+                lead.wati_last_message_at = conversation.last_message_at
+                lead.wati_last_status = conversation.status or ""
+
+    def action_open_wati_inbox(self):
+        self.ensure_one()
+        conversation = self._wati_get_or_create_conversation()
+        return {"type": "ir.actions.act_url", "url": f"/wati/inbox?conversation_id={conversation.id}", "target": "self"}
+
+    def action_open_wati_conversations(self):
+        self.ensure_one()
+        self._wati_get_or_create_conversation()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Conversations WhatsApp"),
+            "res_model": "wati.conversation",
+            "view_mode": "list,form",
+            "domain": [("crm_lead_id", "=", self.id)],
+            "context": {"create": False},
+        }
+
+
+class WatiAutomationRuleCrmPresets(models.Model):
+    _inherit = "wati.automation.rule"
+
+    @api.model
+    def _wati_preset_definitions(self):
+        definitions = dict(super()._wati_preset_definitions())
+        definitions.update({
+            "crm_qualified": {
+                "label": _("CRM · Upon qualification Qualified"),
+                "model": "crm.lead",
+                "field": "stage_id",
+                "target": "Qualified",
+                "recipient_fields": ("mobile", "phone"),
+                "recipient_path": "partner_id.phone",
+                "name": _("CRM · Send at Qualified"),
+            },
+            "crm_won": {
+                "label": _("CRM · When you win Won"),
+                "model": "crm.lead",
+                "field": "stage_id",
+                "target": "Won",
+                "recipient_fields": ("mobile", "phone"),
+                "recipient_path": "partner_id.phone",
+                "name": _("CRM · Send at Won"),
+            },
+        })
+        return definitions

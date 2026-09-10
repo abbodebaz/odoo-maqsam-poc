@@ -1,0 +1,266 @@
+name: WATI Connector Quality
+
+on:
+  push:
+    branches:
+      - refactor/wati-commercial-ready
+  pull_request:
+    paths:
+      - 'custom_addons/**'
+      - 'delivery/**'
+      - '.github/workflows/wati-quality.yml'
+      - '.github/workflows/wati-release-package.yml'
+      - 'odoo-railway-start.sh'
+
+jobs:
+  static-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Audit tracked artifacts
+        run: |
+          python - <<'PY'
+          import subprocess
+
+          tracked = subprocess.check_output(['git', 'ls-files'], text=True).splitlines()
+          bad = [
+              path for path in tracked
+              if '/__pycache__/' in f'/{path}/'
+              or path.endswith(('.pyc', '.pyo'))
+              or path.endswith('/.DS_Store')
+              or path == '.DS_Store'
+          ]
+          if bad:
+              raise SystemExit('Tracked generated artifacts:\n' + '\n'.join(bad))
+          print('Tracked-artifact audit passed.')
+          PY
+
+      - name: Enforce WATI-only addon scope
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          root = Path('custom_addons')
+          unexpected = sorted(
+              path.name for path in root.iterdir()
+              if path.is_dir() and not path.name.startswith('wati_connector')
+          )
+          if unexpected:
+              raise SystemExit('Non-WATI addon directories are not allowed in this delivery repository: ' + ', '.join(unexpected))
+          print('WATI-only addon scope passed.')
+          PY
+
+      - name: Compile Python sources
+        run: |
+          for module in custom_addons/wati_connector*; do
+            [ -d "$module" ] || continue
+            python -m compileall -q "$module"
+          done
+
+      - name: Ruff correctness and debug audit
+        run: |
+          python -m pip install --quiet ruff
+          ruff check \
+            custom_addons/wati_connector \
+            custom_addons/wati_connector_crm \
+            custom_addons/wati_connector_sale \
+            custom_addons/wati_connector_account \
+            custom_addons/wati_connector_project \
+            --select E9,F63,F7,F82,T20 \
+            --exclude tests,migrations \
+            --output-format concise
+
+      - name: Enforce English runtime source
+        run: |
+          python - <<'PY'
+          from collections import defaultdict
+          from pathlib import Path
+          import re
+
+          arabic = re.compile(r'[\u0600-\u06FF]')
+          extensions = {'.py', '.xml', '.js'}
+          skipped_parts = {'tests', 'docs', 'notes', 'i18n', 'migrations'}
+          by_file = defaultdict(list)
+          for module in sorted(Path('custom_addons').glob('wati_connector*')):
+              if not module.is_dir():
+                  continue
+              for path in module.rglob('*'):
+                  if not path.is_file() or path.suffix not in extensions:
+                      continue
+                  if skipped_parts.intersection(path.parts):
+                      continue
+                  for line_no, line in enumerate(path.read_text(encoding='utf-8').splitlines(), 1):
+                      if arabic.search(line):
+                          by_file[str(path)].append(line_no)
+
+          for path, lines in sorted(by_file.items()):
+              line_list = ','.join(map(str, lines))
+              print(f'::error file={path},line={lines[0]}::Arabic runtime source lines: {line_list}')
+          if by_file:
+              raise SystemExit('Arabic runtime source remains outside i18n; WATI source must stay English-only.')
+          print('English runtime-source audit passed.')
+          PY
+
+      - name: Validate manifests, migrations and architecture boundaries
+        run: |
+          python - <<'PY'
+          import ast
+          from pathlib import Path
+          import re
+          import xml.etree.ElementTree as ET
+
+          modules = sorted(
+              path for path in Path('custom_addons').glob('wati_connector*')
+              if path.is_dir() and (path / '__manifest__.py').exists()
+          )
+          if not modules:
+              raise SystemExit('No WATI modules found')
+
+          version_re = re.compile(r'^19\.0\.\d+\.\d+\.\d+$')
+          versions = {}
+          for module in modules:
+              manifest_path = module / '__manifest__.py'
+              data = ast.literal_eval(manifest_path.read_text(encoding='utf-8'))
+              version = str(data.get('version') or '')
+              if not version_re.fullmatch(version):
+                  raise SystemExit(f'{module.name} has invalid version: {version!r}')
+              versions[module.name] = version
+              if data.get('installable') is not True:
+                  raise SystemExit(f'{module.name} must remain installable')
+              if not data.get('license'):
+                  raise SystemExit(f'{module.name} must declare a license')
+              for relative in data.get('data', []):
+                  path = module / relative
+                  if not path.exists():
+                      raise SystemExit(f'{module.name} manifest references missing file: {relative}')
+              for xml_file in module.rglob('*.xml'):
+                  try:
+                      ET.parse(xml_file)
+                  except ET.ParseError as exc:
+                      raise SystemExit(f'Invalid XML: {xml_file}: {exc}') from exc
+
+          core = Path('custom_addons/wati_connector')
+          core_manifest = ast.literal_eval((core / '__manifest__.py').read_text(encoding='utf-8'))
+          core_version = core_manifest['version']
+          mismatched = {name: version for name, version in versions.items() if version != core_version}
+          if mismatched:
+              raise SystemExit(f'WATI bundle versions must align with {core_version}: {mismatched}')
+
+          one_off_data = []
+          for relative in core_manifest.get('data', []):
+              name = Path(relative).name.casefold()
+              if 'repair' in name or 'backfill' in name or name.endswith('_final.xml'):
+                  one_off_data.append(relative)
+          if one_off_data:
+              raise SystemExit(
+                  'One-off data work must live in versioned migrations, not production data XML: '
+                  + ', '.join(one_off_data)
+              )
+
+          migration_dir = core / 'migrations' / core_version
+          if not (migration_dir / 'post-migration.py').exists():
+              raise SystemExit(f'Missing release migration: {migration_dir / "post-migration.py"}')
+
+          bad_model_names = [
+              str(path)
+              for path in (core / 'models').glob('*.py')
+              if path.name.endswith(('_fix.py', '_repair.py', '_final.py'))
+          ]
+          if bad_model_names:
+              raise SystemExit('Development-era model filenames remain:\n' + '\n'.join(bad_model_names))
+
+          forbidden_dependencies = {'crm', 'sale', 'sale_management', 'account', 'project', 'helpdesk', 'industry_fsm'}
+          leaked = forbidden_dependencies.intersection(core_manifest.get('depends', []))
+          if leaked:
+              raise SystemExit(f'Core leaks optional business dependencies: {sorted(leaked)}')
+
+          forbidden_models = ('crm.lead', 'sale.order', 'account.move', 'project.task', 'helpdesk.ticket')
+          for source in list((core / 'models').rglob('*.py')) + list((core / 'views').rglob('*.xml')):
+              text = source.read_text(encoding='utf-8')
+              for model in forbidden_models:
+                  if model in text:
+                      raise SystemExit(f'Optional model {model} leaked into WATI core: {source}')
+
+          allowed_request_files = {
+              core / 'services' / 'client.py',
+              core / 'services' / 'media.py',
+          }
+          for module in modules:
+              for source in module.rglob('*.py'):
+                  if source in allowed_request_files:
+                      continue
+                  text = source.read_text(encoding='utf-8')
+                  if 'import requests' in text or 'requests.' in text:
+                      raise SystemExit(f'Direct HTTP transport outside WATI service layer: {source}')
+
+          for source in (core / 'models').rglob('*.py'):
+              text = source.read_text(encoding='utf-8')
+              if '_sql_constraints' in text:
+                  raise SystemExit(
+                      f'Legacy _sql_constraints found in {source}; Odoo 19 requires models.Constraint.'
+                  )
+              if re.search(r'^\s*def init\s*\(self\)', text, flags=re.MULTILINE):
+                  raise SystemExit(
+                      f'Model init hook found in {source}; historical data work belongs in migrations.'
+                  )
+              if re.search(r'\b(TODO|FIXME|XXX|HACK|DEBUG ONLY)\b', text, flags=re.IGNORECASE):
+                  raise SystemExit(f'Development marker remains in production model source: {source}')
+
+          print('Static WATI validation passed for:', ', '.join(module.name for module in modules))
+          print('Aligned bundle version:', core_version)
+          PY
+
+      - name: Validate delivery packaging files
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          required = [
+              Path('delivery/README_FIRST.md'),
+              Path('delivery/INSTALLATION.md'),
+              Path('delivery/CONFIGURATION.md'),
+              Path('delivery/UPGRADE.md'),
+              Path('delivery/TROUBLESHOOTING.md'),
+              Path('.github/workflows/wati-release-package.yml'),
+          ]
+          missing = [str(path) for path in required if not path.exists()]
+          if missing:
+              raise SystemExit('Missing delivery packaging files:\n' + '\n'.join(missing))
+          print('Delivery packaging files present.')
+          PY
+
+      - name: Detect unreferenced inbox assets
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          root = Path('custom_addons/wati_connector')
+          inbox = root / 'static/src/inbox'
+          sources = []
+          for path in root.rglob('*'):
+              if path.is_file() and path.suffix in {'.py', '.xml', '.js', '.css', '.scss'}:
+                  try:
+                      sources.append((path, path.read_text(encoding='utf-8')))
+                  except UnicodeDecodeError:
+                      pass
+
+          unused = []
+          for asset in sorted(path for path in inbox.iterdir() if path.is_file()):
+              relative = str(asset.relative_to(root))
+              referenced = any(
+                  other != asset and (relative in text or asset.name in text)
+                  for other, text in sources
+              )
+              if not referenced:
+                  unused.append(relative)
+          if unused:
+              raise SystemExit('Unreferenced inbox assets:\n' + '\n'.join(unused))
+          print('Inbox asset-reference audit passed.')
+          PY

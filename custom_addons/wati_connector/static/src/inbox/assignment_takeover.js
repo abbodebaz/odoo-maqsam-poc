@@ -2,17 +2,16 @@
     "use strict";
 
     const app = document.getElementById("watiInboxApp");
-    const actions = document.querySelector(".wati-chat-actions");
+    const badge = document.getElementById("assignmentBadge");
+    const statusValue = document.getElementById("drawerAssignmentStatus");
+    const assignedUserValue = document.getElementById("drawerAssignedUser");
+    const actionBox = document.getElementById("drawerAssignmentAction");
     const messageInput = document.getElementById("messageInput");
     const sendButton = document.getElementById("sendButton");
     const refreshButton = document.getElementById("refreshButton");
-    if (!app || !actions) return;
+    if (!app || !badge || !statusValue || !assignedUserValue || !actionBox) return;
 
     const csrfToken = app.dataset.csrf || "";
-    const box = document.createElement("div");
-    box.className = "wati-assignment-box";
-    actions.prepend(box);
-
     let lastConversationId = 0;
     let busy = false;
 
@@ -23,7 +22,7 @@
     function setComposerEnabled(enabled, note) {
         if (messageInput) {
             messageInput.disabled = !enabled;
-            messageInput.placeholder = enabled ? "اكتب رسالة..." : (note || "استلم المحادثة أولًا...");
+            messageInput.placeholder = enabled ? "Write a message..." : (note || "Receive the conversation first...");
             messageInput.setAttribute("aria-disabled", enabled ? "false" : "true");
         }
         if (sendButton) {
@@ -32,22 +31,34 @@
         }
     }
 
-    function makeButton(text, disabled = false, variant = "primary") {
+    function setBadge(text, variant = "unassigned", title = "") {
+        badge.textContent = text;
+        badge.className = `wati-assignment-badge is-${variant}`;
+        badge.title = title || text;
+    }
+
+    function makeActionButton(text, onClick, variant = "primary", disabled = false) {
         const button = document.createElement("button");
         button.type = "button";
         button.textContent = text;
         button.disabled = disabled;
-        button.className = `wati-assignment-button ${variant === "takeover" ? "is-takeover" : "is-primary"}${disabled ? " is-disabled" : ""}`;
+        button.className = variant === "takeover"
+            ? "wati-actions-secondary is-takeover"
+            : (variant === "secondary" ? "wati-actions-secondary" : "wati-actions-primary");
+        if (onClick && !disabled) button.addEventListener("click", onClick);
         return button;
     }
 
     function refreshInboxData() {
-        // Reuse the Inbox's own refresh pipeline instead of reloading the page.
-        // A full reload used to race with the toolbar enhancement scripts and
-        // could leave the composer disabled or wider than the chat viewport.
-        if (refreshButton && !refreshButton.disabled) {
-            refreshButton.click();
-        }
+        if (refreshButton && !refreshButton.disabled) refreshButton.click();
+    }
+
+    function renderEmptyState() {
+        setBadge("Choose a conversation", "unassigned");
+        statusValue.textContent = "No conversation selected";
+        assignedUserValue.textContent = "—";
+        actionBox.replaceChildren();
+        setComposerEnabled(false, "Choose a conversation first...");
     }
 
     async function assignMe(force = false, previousUserName = "") {
@@ -56,13 +67,15 @@
 
         if (force) {
             const confirmed = window.confirm(
-                `المحادثة حاليًا عند ${previousUserName || "موظف آخر"}.\n\nهل تريد نقلها إليك؟`
+                `The conversation is currently at ${previousUserName || "Another employee"}.\n\nDo you want it transferred to you?`
             );
             if (!confirmed) return;
         }
 
         busy = true;
-        box.classList.add("is-busy");
+        actionBox.classList.add("is-busy");
+        const currentButton = actionBox.querySelector("button");
+        if (currentButton) currentButton.disabled = true;
         try {
             const body = new URLSearchParams({
                 csrf_token: csrfToken,
@@ -79,28 +92,70 @@
                 body: body.toString(),
             });
             const payload = await response.json().catch(() => ({}));
-            if (!response.ok || !payload.ok) throw new Error(payload.message || "تعذر استلام المحادثة");
+            if (!response.ok || !payload.ok) throw new Error(payload.message || "Could not receive the conversation");
 
-            // Update ownership and composer in-place. No window.location.reload().
             await refreshAssignment(true);
             setComposerEnabled(true);
             refreshInboxData();
             window.setTimeout(refreshInboxData, 500);
             if (messageInput) window.setTimeout(() => messageInput.focus(), 80);
         } catch (error) {
-            window.alert(error.message || "تعذر استلام المحادثة.");
+            window.alert(error.message || "Could not receive the conversation.");
             await refreshAssignment(true);
         } finally {
             busy = false;
-            box.classList.remove("is-busy");
+            actionBox.classList.remove("is-busy");
         }
+    }
+
+    function renderAssignment(data) {
+        actionBox.replaceChildren();
+
+        if (!data.wati_email) {
+            setBadge("Setup required", "warning", "Add WATI Operator Email For the user account");
+            statusValue.textContent = "Mail WATI Not set";
+            assignedUserValue.textContent = data.current_user_name || "—";
+            actionBox.appendChild(makeActionButton("Add mail WATI For the user account", null, "secondary", true));
+            setComposerEnabled(false, "Add WATI Operator Email In the user account...");
+            return;
+        }
+
+        if (data.assigned_to_me) {
+            setBadge("✓ Supported by me", "mine", `The conversation is assigned to ${data.current_user_name || "Your account"}`);
+            statusValue.textContent = "assigned to you";
+            assignedUserValue.textContent = data.current_user_name || "—";
+            setComposerEnabled(true);
+            return;
+        }
+
+        if (data.is_unassigned) {
+            setBadge("Not supported", "unassigned");
+            statusValue.textContent = "Not supported";
+            assignedUserValue.textContent = "—";
+            actionBox.appendChild(makeActionButton("Receive the conversation", () => assignMe(false)));
+            setComposerEnabled(false, "Receive the conversation first...");
+            return;
+        }
+
+        setBadge("Assigned to an employee", "other", `Conversation at ${data.assigned_user_name || "Another employee"}`);
+        statusValue.textContent = "Assigned to another employee";
+        assignedUserValue.textContent = data.assigned_user_name || "—";
+        if (data.can_takeover) {
+            actionBox.appendChild(
+                makeActionButton(
+                    "Transfer the conversation to me",
+                    () => assignMe(true, data.assigned_user_name),
+                    "takeover"
+                )
+            );
+        }
+        setComposerEnabled(false, `Conversation at ${data.assigned_user_name || "Another employee"}`);
     }
 
     async function refreshAssignment(forceRender = false) {
         const id = selectedId();
         if (!id) {
-            box.replaceChildren();
-            setComposerEnabled(false, "اختر محادثة أولًا...");
+            renderEmptyState();
             lastConversationId = 0;
             return;
         }
@@ -122,39 +177,10 @@
                 data.assigned_user_name,
                 data.current_user_name,
             ]);
-            if (forceRender || lastConversationId !== id || box.dataset.state !== signature) {
+            if (forceRender || lastConversationId !== id || badge.dataset.state !== signature) {
                 lastConversationId = id;
-                box.dataset.state = signature;
-                box.replaceChildren();
-
-                if (!data.wati_email) {
-                    box.appendChild(makeButton("⚠ أضف بريد WATI لحسابك", true));
-                    setComposerEnabled(false, "أضف WATI Operator Email في حساب المستخدم...");
-                    return;
-                }
-
-                if (data.assigned_to_me) {
-                    const mine = makeButton(`✓ عندي — ${data.current_user_name}`, true);
-                    mine.title = `المحادثة مسندة إلى ${data.current_user_name}`;
-                    box.appendChild(mine);
-                    setComposerEnabled(true);
-                } else if (data.is_unassigned) {
-                    const button = makeButton("استلام المحادثة");
-                    button.addEventListener("click", () => assignMe(false));
-                    box.appendChild(button);
-                    setComposerEnabled(false, "استلم المحادثة أولًا...");
-                } else {
-                    const owner = makeButton(`عند ${data.assigned_user_name}`, true);
-                    owner.title = `المحادثة مسندة إلى ${data.assigned_user_name}`;
-                    box.appendChild(owner);
-                    if (data.can_takeover) {
-                        const button = makeButton("أخذ المحادثة", false, "takeover");
-                        button.title = `نقل المحادثة من ${data.assigned_user_name} إليك`;
-                        button.addEventListener("click", () => assignMe(true, data.assigned_user_name));
-                        box.appendChild(button);
-                    }
-                    setComposerEnabled(false, `المحادثة عند ${data.assigned_user_name}`);
-                }
+                badge.dataset.state = signature;
+                renderAssignment(data);
             }
         } catch (error) {
             console.error("WATI assignment state error", error);

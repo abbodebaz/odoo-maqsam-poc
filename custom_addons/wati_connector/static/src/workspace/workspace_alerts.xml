@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="wati_connector.WatiWorkspaceAlertKpi"
+       t-inherit="wati_connector.WatiWorkspace"
+       t-inherit-mode="extension">
+        <xpath expr="//section[@class='o_wati_kpi_grid']/div[4]" position="replace">
+            <button
+                type="button"
+                t-att-class="'o_wati_kpi_card o_wati_kpi_card--action ' + (state.data.kpis.webhook_attention ? 'has-attention' : '')"
+                t-on-click="() => this.openAction('wati_connector.action_wati_webhook_attention')"
+                title="Open webhook events that require manual review"
+            >
+                <span class="o_wati_kpi_icon"><i class="fa fa-heartbeat"/></span>
+                <div>
+                    <small>Events to Review</small>
+                    <strong t-esc="state.data.kpis.webhook_attention || 0"/>
+                    <span class="o_wati_kpi_hint">Actionable webhook issues only</span>
+                </div>
+            </button>
+        </xpath>
+    </t>
+</templates>

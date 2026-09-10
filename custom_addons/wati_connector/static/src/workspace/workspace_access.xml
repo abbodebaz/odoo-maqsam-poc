@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="wati_connector.WatiWorkspaceAccessExtension"
+       t-inherit="wati_connector.WatiWorkspace"
+       t-inherit-mode="extension">
+
+        <!-- Never advertise a restricted feature from the hero area. -->
+        <xpath expr="//button[@t-on-click='openAutomation']" position="attributes">
+            <attribute name="t-if">state.data.permissions &amp;&amp; state.data.permissions.automation</attribute>
+        </xpath>
+
+        <!-- KPI cards follow the same access policy as their feature. -->
+        <xpath expr="//section[contains(@class, 'o_wati_kpi_grid')]/*[3]" position="attributes">
+            <attribute name="t-if">state.data.permissions &amp;&amp; state.data.permissions.automation</attribute>
+        </xpath>
+        <xpath expr="//section[contains(@class, 'o_wati_kpi_grid')]/*[4]" position="attributes">
+            <attribute name="t-if">state.data.permissions &amp;&amp; state.data.permissions.monitor</attribute>
+        </xpath>
+    </t>
+</templates>

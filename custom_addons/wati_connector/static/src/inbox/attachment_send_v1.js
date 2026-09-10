@@ -22,8 +22,8 @@
     const attachButton = document.createElement("button");
     attachButton.type = "button";
     attachButton.className = "wati-attach-button";
-    attachButton.title = "إرفاق صورة أو ملف";
-    attachButton.setAttribute("aria-label", "إرفاق ملف");
+    attachButton.title = "Attach a photo or file";
+    attachButton.setAttribute("aria-label", "Attach file");
     attachButton.textContent = "📎";
 
     const preview = document.createElement("div");
@@ -42,7 +42,7 @@
     const removeButton = document.createElement("button");
     removeButton.type = "button";
     removeButton.className = "wati-attachment-remove";
-    removeButton.title = "إزالة المرفق";
+    removeButton.title = "Remove attachment";
     removeButton.textContent = "×";
 
     preview.append(previewIcon, previewInfo, removeButton);
@@ -86,7 +86,7 @@
 
     function validateFile(file) {
         const category = categoryFor(file);
-        if (!category) return "نوع الملف غير مدعوم في WATI.";
+        if (!category) return "The file type is not supported in WATI.";
         const limits = {
             image: 5 * 1024 * 1024,
             video: 16 * 1024 * 1024,
@@ -94,7 +94,7 @@
             document: 100 * 1024 * 1024,
         };
         if (file.size > limits[category]) {
-            return `حجم الملف أكبر من الحد المسموح (${limits[category] / (1024 * 1024)} MB).`;
+            return `The file size is larger than the allowed limit (${limits[category] / (1024 * 1024)} MB).`;
         }
         return "";
     }
@@ -112,9 +112,9 @@
         previewSize.textContent = "";
         input.required = true;
         input.maxLength = 4096;
-        input.placeholder = input.disabled ? input.placeholder : "اكتب رسالة...";
+        input.placeholder = input.disabled ? input.placeholder : "Write a message...";
         if (!keepCaption) input.value = "";
-        if (!sendButton.disabled) sendButton.innerHTML = "إرسال <span>➤</span>";
+        if (!sendButton.disabled) sendButton.innerHTML = "Send <span>➤</span>";
     }
 
     function selectFile(file) {
@@ -127,11 +127,11 @@
         selectedFile = file;
         input.required = false;
         input.maxLength = 1024;
-        if (!input.disabled) input.placeholder = "أضف تعليقًا اختياريًا للمرفق...";
+        if (!input.disabled) input.placeholder = "Add an optional comment to the attachment...";
         previewName.textContent = file.name;
         previewSize.textContent = `${formatBytes(file.size)} · ${categoryFor(file)}`;
         preview.classList.remove("is-hidden");
-        if (!sendButton.disabled) sendButton.innerHTML = "إرسال المرفق <span>➤</span>";
+        if (!sendButton.disabled) sendButton.innerHTML = "Send attachment <span>➤</span>";
         input.focus();
     }
 
@@ -141,20 +141,20 @@
         event.stopImmediatePropagation();
         if (uploading) return;
         if (input.disabled || sendButton.disabled) {
-            showToast("استلم المحادثة أولًا قبل إرسال مرفق.", true);
+            showToast("Receive the chat first before sending an attachment.", true);
             return;
         }
 
         const conversationId = Number(localStorage.getItem("watiInboxSelected") || 0);
         if (!conversationId) {
-            showToast("اختر محادثة أولًا.", true);
+            showToast("Choose a conversation first.", true);
             return;
         }
 
         uploading = true;
         attachButton.disabled = true;
         sendButton.disabled = true;
-        sendButton.textContent = "جاري إرسال الملف...";
+        sendButton.textContent = "File is being sent...";
 
         const body = new FormData();
         body.append("csrf_token", csrfToken);
@@ -171,27 +171,27 @@
                 body,
             });
             const payload = await response.json().catch(() => ({}));
-            if (!response.ok || !payload.ok) throw new Error(payload.message || `فشل إرسال المرفق (${response.status})`);
+            if (!response.ok || !payload.ok) throw new Error(payload.message || `Failed to send attachment (${response.status})`);
 
             clearAttachment();
-            showToast("تم إرسال المرفق إلى WATI ✅");
+            showToast("The attachment has been sent to WATI ✅");
             window.setTimeout(() => refreshButton && refreshButton.click(), 800);
             window.setTimeout(() => refreshButton && refreshButton.click(), 2200);
         } catch (error) {
             console.error("WATI attachment send error", error);
-            showToast(error.message || "تعذر إرسال المرفق.", true);
+            showToast(error.message || "The attachment could not be sent.", true);
         } finally {
             uploading = false;
             sendButton.disabled = input.disabled;
             attachButton.disabled = input.disabled;
-            if (selectedFile) sendButton.innerHTML = "إرسال المرفق <span>➤</span>";
-            else sendButton.innerHTML = "إرسال <span>➤</span>";
+            if (selectedFile) sendButton.innerHTML = "Send attachment <span>➤</span>";
+            else sendButton.innerHTML = "Send <span>➤</span>";
         }
     }
 
     attachButton.addEventListener("click", () => {
         if (input.disabled || sendButton.disabled) {
-            showToast("استلم المحادثة أولًا قبل إرسال مرفق.", true);
+            showToast("Receive the chat first before sending an attachment.", true);
             return;
         }
         fileInput.click();
@@ -210,6 +210,6 @@
     window.setInterval(() => {
         if (uploading) return;
         attachButton.disabled = input.disabled;
-        if (selectedFile && !sendButton.disabled) sendButton.innerHTML = "إرسال المرفق <span>➤</span>";
+        if (selectedFile && !sendButton.disabled) sendButton.innerHTML = "Send attachment <span>➤</span>";
     }, 500);
 })();

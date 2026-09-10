@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Re-declare the menus with the Odoo menuitem loader so its `groups`
+         attribute updates menu visibility exactly like the original menu
+         declaration. Existing WATI roles stay authorized, and system admins
+         can configure/inspect OTP Bridge without a separate WATI role. -->
+    <menuitem id="menu_wati_otp_bridges"
+              name="🔐 OTP Bridge"
+              parent="menu_wati_root"
+              action="action_wati_otp_bridges"
+              groups="wati_connector.group_wati_admin,base.group_system"
+              sequence="32"/>
+
+    <menuitem id="menu_wati_otp_logs"
+              name="Register OTP"
+              parent="menu_wati_root"
+              action="action_wati_otp_logs"
+              groups="wati_connector.group_wati_supervisor,base.group_system"
+              sequence="36"/>
+</odoo>

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_wati_smart_button" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.wati.smart.button</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="wati_connector.res_config_settings_view_form_wati"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@id='wati_smart_button_settings_slot']" position="replace">
+                <block title="button WhatsApp Smart and customer history" name="wati_smart_button_settings">
+                    <div class="wati-settings-note alert alert-info mb16" role="status">
+                        <strong>Control from one place.</strong>
+                        Add button WhatsApp Register the client to the screens of your choice within Odoo Without modifying the original applications.
+                    </div>
+
+                    <div class="row g-3 wati-settings-card-grid">
+                        <div class="col-12 col-xl-6">
+                            <div class="wati-settings-card h-100">
+                                <div class="d-flex align-items-start gap-3 mb-3">
+                                    <div class="wati-settings-card-icon">
+                                        <i class="fa fa-whatsapp" title="WhatsApp"/>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <h4 class="mb-1">Where a button appears WhatsApp</h4>
+                                        <p class="text-muted mb-0">Select the screens where the submit button appears and record WhatsApp.</p>
+                                    </div>
+                                </div>
+
+                                <ul class="wati-settings-list text-muted mb-3">
+                                    <li>Select the desired application and model.</li>
+                                    <li>Select the mobile number field or use smart discovery.</li>
+                                    <li>More than one screen can be activated at the same time.</li>
+                                </ul>
+
+                                <button name="action_wati_manage_smart_buttons"
+                                        type="object"
+                                        string="Manage button places WhatsApp"
+                                        class="btn btn-primary"
+                                        icon="fa-whatsapp"/>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-xl-6">
+                            <div class="wati-settings-card h-100">
+                                <div class="d-flex align-items-start gap-3 mb-3">
+                                    <div class="wati-settings-card-icon">
+                                        <i class="fa fa-history" title="WhatsApp Timeline"/>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <h4 class="mb-1">Customer WhatsApp Timeline</h4>
+                                        <p class="text-muted mb-0">Show date WhatsApp From the same current working screen.</p>
+                                    </div>
+                                </div>
+
+                                <ul class="wati-settings-list text-muted mb-0">
+                                    <li>Displays incoming and outgoing messages and their status.</li>
+                                    <li>Depends on the associated customer or mobile number.</li>
+                                    <li>The customer’s card is keptTimeline Automatically complete.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </block>
+            </xpath>
+        </field>
+    </record>
+</odoo>

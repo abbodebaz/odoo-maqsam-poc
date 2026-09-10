@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="wati_connector.WatiSmartTargetField">
+        <t t-if="props.readonly">
+            <span t-esc="currentValue"/>
+        </t>
+        <t t-elif="metadata.mode === 'select'">
+            <select class="o_input wati_smart_target_select" t-on-change="onValueChange">
+                <option value="" t-att-selected="!currentValue" t-esc="placeholder"/>
+                <option t-foreach="options"
+                        t-as="option"
+                        t-key="option.value"
+                        t-att-value="option.value"
+                        t-att-selected="option.value === currentValue"
+                        t-esc="option.label"/>
+            </select>
+        </t>
+        <t t-elif="metadata.mode === 'suggest'">
+            <input class="o_input wati_smart_target_input"
+                   type="text"
+                   autocomplete="off"
+                   t-att-list="datalistId"
+                   t-att-value="currentValue"
+                   t-att-placeholder="placeholder"
+                   t-on-change="onValueChange"/>
+            <datalist t-att-id="datalistId">
+                <option t-foreach="options"
+                        t-as="option"
+                        t-key="option.record_id || option.value"
+                        t-att-value="option.value"
+                        t-esc="option.label"/>
+            </datalist>
+        </t>
+        <t t-else="">
+            <input class="o_input wati_smart_target_input"
+                   t-att-type="metadata.input_type || 'text'"
+                   autocomplete="off"
+                   t-att-value="currentValue"
+                   t-att-placeholder="placeholder"
+                   t-on-change="onValueChange"/>
+        </t>
+    </t>
+</templates>

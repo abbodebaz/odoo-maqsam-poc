@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_automation_rule_form_universal_event" model="ir.ui.view">
+        <field name="name">wati.automation.rule.form.universal.event</field>
+        <field name="model">wati.automation.rule</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_automation_rule_form_builder"/>
+        <field name="priority">130</field>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('wati_presets_section')]" position="replace"/>
+
+            <xpath expr="//div[hasclass('wati_builder_step')][@invisible=&quot;setup_step != 'trigger'&quot;]/div[hasclass('wati_builder_step_head')]/div/h2" position="replace">
+                <h2>When do you want to start automating?</h2>
+            </xpath>
+            <xpath expr="//div[hasclass('wati_builder_step')][@invisible=&quot;setup_step != 'trigger'&quot;]/div[hasclass('wati_builder_step_head')]/div/p" position="replace">
+                <p>Start with the app you know, choose what you want to monitor within it, and then define the event.</p>
+            </xpath>
+
+            <xpath expr="//div[hasclass('wati_trigger_builder')]" position="replace">
+                <div class="wati_universal_event_builder">
+                    <field name="available_app_menu_ids" invisible="1"/>
+                    <field name="available_model_ids" invisible="1"/>
+                    <field name="smart_target_metadata" invisible="1"/>
+
+                    <div class="wati_universal_event_intro">
+                        <div>
+                            <span class="wati_section_label">Build the event</span>
+                            <h3>Simple selection in the same way as you would use to Odoo</h3>
+                            <p>Applications and record types are automatically discovered from lists that are physically present in an environment Odoo, including custom applications.</p>
+                        </div>
+                        <span class="wati_dynamic_badge">dynamic of Odoo</span>
+                    </div>
+
+                    <div class="wati_event_question">
+                        <span class="wati_event_question_no">1</span>
+                        <div class="wati_event_question_body">
+                            <div class="wati_event_question_title">Select the application</div>
+                            <div class="wati_event_question_help">Select the application as it appears in the applications list Odoo.</div>
+                            <div class="wati_event_field_box wati_event_primary_box">
+                                <field name="app_menu_id"
+                                       nolabel="1"
+                                       domain="[('id', 'in', available_app_menu_ids)]"
+                                       options="{'no_create': True, 'no_open': True}"
+                                       placeholder="Example: CRMSales, projects..."/>
+                            </div>
+                            <div class="wati_event_meta">Technical names such as Server Action Or Automation Rule; This is the list of applications that the user can access.</div>
+                        </div>
+                    </div>
+
+                    <div class="wati_event_connector" invisible="not app_menu_id">
+                        <span>↓</span>
+                    </div>
+
+                    <div class="wati_event_question" invisible="not app_menu_id">
+                        <span class="wati_event_question_no">2</span>
+                        <div class="wati_event_question_body">
+                            <div class="wati_event_question_title">What do you want to monitor within the app?</div>
+                            <div class="wati_event_question_help">We only display record types that are actually associated with lists for this application.</div>
+                            <div class="wati_event_field_box">
+                                <field name="model_id"
+                                       nolabel="1"
+                                       domain="[('id', 'in', available_model_ids)]"
+                                       options="{'no_create': True, 'no_open': True}"
+                                       placeholder="Example: Opportunities, requests, tickets..."/>
+                            </div>
+                            <div class="wati_event_meta">If a customer has a custom application and custom lists, their record types will appear here automatically.</div>
+                        </div>
+                    </div>
+
+                    <div class="wati_event_connector" invisible="not model_id">
+                        <span>↓</span>
+                    </div>
+
+                    <div class="wati_event_question" invisible="not model_id">
+                        <span class="wati_event_question_no">3</span>
+                        <div class="wati_event_question_body">
+                            <div class="wati_event_question_title">When does transmission start?</div>
+                            <div class="wati_event_question_help">Choose the type of event you should make Odoo Turns on automation.</div>
+                            <div class="wati_event_field_box wati_event_type_box">
+                                <field name="event_type" nolabel="1"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wati_event_connector"
+                         invisible="not model_id or event_type != 'field_condition'">
+                        <span>↓</span>
+                    </div>
+
+                    <div class="wati_event_question"
+                         invisible="not model_id or event_type != 'field_condition'">
+                        <span class="wati_event_question_no">4</span>
+                        <div class="wati_event_question_body">
+                            <div class="wati_event_question_title">Which field are we monitoring?</div>
+                            <div class="wati_event_question_help">The saved fields for the record type you chose will appear.</div>
+                            <div class="wati_event_field_box">
+                                <field name="trigger_field_id"
+                                       nolabel="1"
+                                       domain="[('model_id', '=', model_id), ('store', '=', True), ('name', 'not in', ['id', 'create_uid', 'create_date', 'write_uid', 'write_date'])]"
+                                       options="{'no_create': True, 'no_open': True}"
+                                       placeholder="Choose the field that will start the event..."/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wati_event_connector"
+                         invisible="event_type != 'field_condition' or not trigger_field_id">
+                        <span>↓</span>
+                    </div>
+
+                    <div class="wati_event_question"
+                         invisible="event_type != 'field_condition' or not trigger_field_id">
+                        <span class="wati_event_question_no">5</span>
+                        <div class="wati_event_question_body">
+                            <div class="wati_event_question_title">What is the condition and value?</div>
+                            <div class="wati_event_question_help">The value automatically adapts to the field type: A ready list if the values are known, or a direct entry if they are open.</div>
+                            <div class="wati_event_condition_grid">
+                                <div class="wati_event_field_box wati_event_operator_box">
+                                    <field name="condition_operator" nolabel="1"/>
+                                </div>
+                                <div class="wati_event_field_box"
+                                     invisible="condition_operator in ('is_set', 'is_not_set')">
+                                    <field name="target_value"
+                                           nolabel="1"
+                                           widget="wati_smart_target"
+                                           placeholder="Choose or type the desired value"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wati_event_live_summary" invisible="not model_id">
+                        <span class="wati_event_live_icon">⚡</span>
+                        <div>
+                            <strong>This is how the event will work</strong>
+                            <field name="event_summary" nolabel="1" readonly="1"/>
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+
+            <xpath expr="//div[hasclass('wati_builder_hint')]" position="replace">
+                <div class="wati_builder_hint wati_universal_hint">
+                    The application here is the real application shown in Odoo, and what is inside it is extracted from its lists and records automatically; Therefore, we do not need to link the extension to specific application names.
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

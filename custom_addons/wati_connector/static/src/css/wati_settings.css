@@ -1,0 +1,251 @@
+.wati_settings_notebook .o_setting_box,
+.wati_settings_notebook .o_setting_right_pane,
+.wati_settings_notebook .content-group,
+.wati_settings_notebook .min-w-0 {
+    min-width: 0;
+}
+
+.wati_settings_notebook .o_setting_box {
+    align-items: flex-start;
+}
+
+.wati-setting-item .o_setting_right_pane,
+.wati-setting-content {
+    line-height: 1.55;
+}
+
+.wati-setting-content .text-muted,
+.wati-helper-text,
+.wati-settings-note,
+.wati-settings-intro {
+    overflow-wrap: anywhere;
+}
+
+.wati-setting-content input,
+.wati-setting-content .o_input,
+.wati-setting-content .o_field_widget {
+    max-width: 100%;
+}
+
+.wati-settings-note {
+    max-width: 72rem;
+    line-height: 1.6;
+}
+
+.wati-settings-card-grid {
+    width: 100%;
+    max-width: 76rem;
+}
+
+.wati-settings-card {
+    background: var(--o-view-background-color, #fff);
+    border: 1px solid var(--border-color, #dee2e6);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    min-width: 0;
+    overflow: hidden;
+}
+
+.wati-settings-card h4 {
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.wati-settings-card-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 40px;
+    background: rgba(113, 75, 103, 0.08);
+    color: var(--o-brand-primary, #714b67);
+    font-size: 1.1rem;
+}
+
+.wati-settings-list {
+    margin: 0;
+    padding-inline-start: 1.15rem;
+    line-height: 1.75;
+}
+
+.wati-settings-list li + li {
+    margin-top: 0.2rem;
+}
+
+/* User form > WhatsApp / WATI */
+.wati-user-integration {
+    width: 100%;
+}
+
+.wati-user-integration .min-w-0 {
+    min-width: 0;
+    flex: 1 1 auto;
+    max-width: 100%;
+}
+
+.wati-user-integration__intro {
+    width: 100%;
+    max-width: 76rem;
+    padding: 4px 2px;
+}
+
+.wati-user-integration__intro h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.wati-user-integration__intro p {
+    max-width: 56rem;
+    line-height: 1.6;
+}
+
+.wati-user-integration .o_field_widget,
+.wati-user-integration .o_input {
+    max-width: 100%;
+}
+
+.wati-email-field,
+.wati-email-input {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.wati-email-field label {
+    display: block !important;
+    width: auto;
+    float: none !important;
+}
+
+.wati-email-input .o_field_widget,
+.wati-email-input .o_field_char,
+.wati-email-input .o_input {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    float: none !important;
+}
+
+.wati-user-integration .wati-helper-text {
+    line-height: 1.55;
+}
+
+.wati-user-integration .text-muted,
+.wati-user-integration p,
+.wati-user-integration .wati-role-item,
+.wati-user-integration .wati-step,
+.wati-user-integration .wati-security-note {
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+
+.wati-role-list {
+    border-top: 1px solid var(--border-color, #dee2e6);
+}
+
+.wati-role-item {
+    padding: 12px 0;
+    line-height: 1.5;
+}
+
+.wati-role-item + .wati-role-item {
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.wati-role-item__title {
+    font-weight: 700;
+    margin-bottom: 2px;
+    color: var(--o-main-text-color, inherit);
+}
+
+.wati-step-list {
+    width: 100%;
+}
+
+.wati-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 10px;
+    background: rgba(113, 75, 103, 0.045);
+    line-height: 1.55;
+}
+
+.wati-step > div {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.wati-step-number {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 28px;
+    font-weight: 700;
+    background: var(--o-brand-primary, #714b67);
+    color: #fff;
+}
+
+.wati-security-note {
+    border: 1px solid rgba(113, 75, 103, 0.2);
+    border-radius: 12px;
+    padding: 16px 18px;
+    background: rgba(113, 75, 103, 0.05);
+    line-height: 1.6;
+}
+
+.wati-security-note .min-w-0 {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+@media (max-width: 991.98px) {
+    .wati_settings_notebook .o_setting_box {
+        width: 100%;
+    }
+
+    .wati-settings-card {
+        padding: 16px;
+    }
+
+    .wati-user-integration__intro {
+        margin-bottom: 1rem !important;
+    }
+
+    .wati-security-note {
+        padding: 14px 16px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .wati-user-integration {
+        padding-top: 0.75rem !important;
+    }
+
+    .wati-user-integration__intro h3 {
+        font-size: 1.1rem;
+    }
+
+    .wati-settings-card-icon {
+        width: 36px;
+        height: 36px;
+        flex-basis: 36px;
+    }
+
+    .wati-step {
+        padding: 12px;
+    }
+}

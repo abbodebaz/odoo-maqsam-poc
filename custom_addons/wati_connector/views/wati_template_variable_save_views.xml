@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_template_form_variable_save" model="ir.ui.view">
+        <field name="name">wati.template.form.variable.save</field>
+        <field name="model">wati.template</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_template_form_designer"/>
+        <field name="priority">95</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='variable_ids']/list/field[@name='position']" position="attributes">
+                <attribute name="force_save">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='variable_ids']/list/field[@name='name']" position="attributes">
+                <attribute name="force_save">1</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

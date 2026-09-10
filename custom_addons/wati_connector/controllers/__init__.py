@@ -6,3 +6,4 @@ from . import templates
 from . import customer_context
 from . import interactive_buttons
 from . import interactive_list
+from . import mini_inbox

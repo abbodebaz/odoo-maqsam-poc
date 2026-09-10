@@ -21,10 +21,10 @@
         if (type === "image" || type === "sticker") {
             const img = document.createElement("img");
             img.src = item.media_url;
-            img.alt = item.file_name || (type === "sticker" ? "ملصق" : "صورة WhatsApp");
+            img.alt = item.file_name || (type === "sticker" ? "Poster" : "Image WhatsApp");
             img.loading = "lazy";
             img.addEventListener("error", () => {
-                wrap.textContent = "تعذر تحميل الصورة";
+                wrap.textContent = "The image could not be loaded";
                 wrap.classList.add("is-error");
             });
             wrap.appendChild(img);
@@ -56,9 +56,9 @@
             link.rel = "noopener";
             link.className = "wati-media-document";
             const title = document.createElement("strong");
-            title.textContent = item.file_name || "ملف WhatsApp";
+            title.textContent = item.file_name || "File WhatsApp";
             const hint = document.createElement("span");
-            hint.textContent = "فتح الملف";
+            hint.textContent = "Open the file";
             link.append(title, hint);
             wrap.appendChild(link);
             return wrap;
@@ -68,7 +68,7 @@
         link.href = item.media_url;
         link.target = "_blank";
         link.rel = "noopener";
-        link.textContent = item.file_name || "فتح المرفق";
+        link.textContent = item.file_name || "Open the attachment";
         wrap.appendChild(link);
         return wrap;
     }

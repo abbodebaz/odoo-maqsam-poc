@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_automation_rule_form_template_mapper" model="ir.ui.view">
+        <field name="name">wati.automation.rule.form.template.mapper</field>
+        <field name="model">wati.automation.rule</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_automation_rule_form_builder"/>
+        <field name="priority">139</field>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('wati_template_picker_box')]" position="replace">
+                <div class="wati_template_picker_box wati_template_picker_smart">
+                    <div class="wati_template_picker_intro">
+                        <span class="wati_template_step_label">1 · Choose the template</span>
+                        <strong>Which message do you want to send?</strong>
+                        <small>Choose an account-supported template WATI, and we will fetch its text and variables automatically.</small>
+                    </div>
+                    <div class="wati_template_field">
+                        <span class="wati_section_label">Selected template</span>
+                        <field name="template_name" nolabel="1" placeholder="No template has been selected yet" readonly="1"/>
+                    </div>
+                    <div class="wati_template_picker_actions">
+                        <button name="action_pick_template" type="object" string="Choose a template from WATI" icon="fa-whatsapp" class="btn-primary"/>
+                        <button name="action_fetch_template_params" type="object" string="Resync" icon="fa-refresh"
+                                class="btn-secondary" invisible="not template_name"/>
+                    </div>
+                </div>
+            </xpath>
+
+            <xpath expr="//div[hasclass('wati_template_preview')]" position="replace">
+                <div class="wati_template_preview wati_template_preview_smart" invisible="not template_body">
+                    <div class="wati_template_preview_head">
+                        <div>
+                            <span class="wati_template_step_label">Preview the message</span>
+                            <strong><field name="template_name" nolabel="1" readonly="1"/></strong>
+                        </div>
+                        <div class="wati_template_variable_count">
+                            <field name="template_parameter_count" nolabel="1" readonly="1"/>
+                            <span>variables</span>
+                        </div>
+                    </div>
+                    <div class="wati_template_message_bubble">
+                        <field name="template_body" nolabel="1" readonly="1"/>
+                    </div>
+                </div>
+            </xpath>
+
+            <xpath expr="//div[hasclass('wati_mapping_head')]" position="replace">
+                <div class="wati_mapping_head wati_mapping_head_smart">
+                    <div>
+                        <span class="wati_template_step_label">2 · Link data</span>
+                        <h3>What do we put in place of message variables?</h3>
+                        <p>The system tries the explicit binding automatically. Edit only variables that require your choice.</p>
+                    </div>
+                    <div class="wati_mapping_actions" invisible="not template_parameter_count">
+                        <div class="wati_mapping_progress">
+                            <field name="template_mapping_state" widget="badge" readonly="1"
+                                   decoration-success="template_mapping_state == 'ready'"
+                                   decoration-warning="template_mapping_state == 'partial'"/>
+                            <field name="template_mapping_progress" nolabel="1" readonly="1"/>
+                        </div>
+                        <button name="action_auto_map_parameters" type="object" string="Automatically suggest linking" icon="fa-magic"
+                                class="btn-secondary"/>
+                    </div>
+                </div>
+            </xpath>
+
+            <xpath expr="//field[@name='parameter_ids']" position="replace">
+                <div class="wati_no_template_variables" invisible="template_parameter_count != 0 or not template_name">
+                    <span class="wati_no_template_variables_icon">✓</span>
+                    <div>
+                        <strong>This template does not require variable data</strong>
+                        <small>The message is ready as is, and you can go directly to review.</small>
+                    </div>
+                </div>
+
+                <div class="wati_parameter_mapper" invisible="not template_parameter_count">
+                    <field name="parameter_ids" nolabel="1">
+                        <list editable="bottom" create="false" delete="false" string="Message data">
+                            <field name="sequence" column_invisible="True"/>
+                            <field name="template_variable_label" string="Its place in the message" readonly="1"/>
+                            <field name="param_name" column_invisible="True"/>
+                            <field name="source_type" string="Value comes from"/>
+                            <field name="model_id" column_invisible="True"/>
+                            <field name="source_field_id" string="Choose data Odoo"
+                                   options="{'no_create': True, 'no_open': True}"
+                                   invisible="source_type != 'field'"/>
+                            <field name="static_value" string="Value"
+                                   invisible="source_type != 'static'"/>
+                            <field name="source_path" string="Advanced path" optional="hide"
+                                   groups="base.group_system" invisible="source_type != 'field'"/>
+                            <field name="mapping_summary" string="Status" readonly="1"/>
+                        </list>
+                    </field>
+                    <div class="wati_parameter_mapper_hint">
+                        <span>💡</span>
+                        <p><strong>You don’t need to add or delete lines.</strong> This menu comes directly from a template WATI, and any change to the template is automatically synced without duplication.</p>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="wati_connector.WatiWorkspace">
+        <div class="o_wati_workspace" dir="ltr">
+            <div t-if="state.loading" class="o_wati_workspace_loading">
+                <i class="fa fa-circle-o-notch fa-spin"/>
+                <span>Preparing WhatsApp Workspace...</span>
+            </div>
+
+            <t t-else="">
+                <section class="o_wati_workspace_hero">
+                    <div class="o_wati_workspace_hero_copy">
+                        <div class="o_wati_eyebrow">WHATSAPP WORKSPACE</div>
+                        <h1>Welcome to WhatsApp</h1>
+                        <p>Manage customer conversations, automations, logs, and your WATI integration from one place inside Odoo.</p>
+                        <div class="o_wati_hero_actions">
+                            <button class="btn btn-light" t-on-click="openInbox">
+                                <i class="fa fa-comments me-2"/> Open Inbox
+                            </button>
+                            <button class="btn btn-outline-light" t-on-click="openAutomation">
+                                <i class="fa fa-bolt me-2"/> Automation Center
+                            </button>
+                            <button class="btn btn-outline-light" t-on-click="openHelp">
+                                <i class="fa fa-book me-2"/> Help Center
+                            </button>
+                        </div>
+                    </div>
+                    <div class="o_wati_connection_panel">
+                        <div class="o_wati_connection_icon" t-att-class="state.data.connection.ready ? 'is-ready' : 'is-warning'">
+                            <i t-att-class="state.data.connection.ready ? 'fa fa-check-circle' : 'fa fa-exclamation-circle'"/>
+                        </div>
+                        <div>
+                            <div class="o_wati_connection_label">Connection Status</div>
+                            <strong t-if="state.data.connection.ready">WATI and Webhook Ready</strong>
+                            <strong t-else="">Setup Required</strong>
+                            <small t-if="state.data.connection.ready">The core connection is configured and ready.</small>
+                            <small t-else="">Complete the quick-start steps below.</small>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="o_wati_kpi_grid">
+                    <div class="o_wati_kpi_card">
+                        <span class="o_wati_kpi_icon"><i class="fa fa-commenting-o"/></span>
+                        <div><small>Unread Conversations</small><strong t-esc="state.data.kpis.unread_conversations || 0"/></div>
+                    </div>
+                    <div class="o_wati_kpi_card">
+                        <span class="o_wati_kpi_icon"><i class="fa fa-envelope-o"/></span>
+                        <div><small>Messages in Last 24 Hours</small><strong t-esc="state.data.kpis.messages_24h || 0"/></div>
+                    </div>
+                    <div class="o_wati_kpi_card">
+                        <span class="o_wati_kpi_icon"><i class="fa fa-bolt"/></span>
+                        <div><small>Active Automations</small><strong t-esc="state.data.kpis.active_automations || 0"/></div>
+                    </div>
+                    <div class="o_wati_kpi_card" t-att-class="state.data.kpis.webhook_attention ? 'has-attention' : ''">
+                        <span class="o_wati_kpi_icon"><i class="fa fa-heartbeat"/></span>
+                        <div><small>Integration Alerts</small><strong t-esc="state.data.kpis.webhook_attention || 0"/></div>
+                    </div>
+                </section>
+
+                <section class="o_wati_workspace_section">
+                    <div class="o_wati_section_heading">
+                        <div>
+                            <span>Services</span>
+                            <h2>Everything you need for WhatsApp inside Odoo</h2>
+                        </div>
+                        <p>Additional services will appear here automatically as the connector expands.</p>
+                    </div>
+                    <div class="o_wati_feature_grid">
+                        <button
+                            t-foreach="state.data.features"
+                            t-as="feature"
+                            t-key="feature.id"
+                            type="button"
+                            t-att-class="'o_wati_feature_card is-' + feature.tone"
+                            t-on-click="() => this.openFeature(feature)"
+                        >
+                            <span class="o_wati_feature_icon"><i t-att-class="'fa ' + feature.icon"/></span>
+                            <span class="o_wati_feature_copy">
+                                <span class="o_wati_feature_title">
+                                    <strong t-esc="feature.title"/>
+                                    <small t-if="feature.admin">Admin Only</small>
+                                </span>
+                                <span class="o_wati_feature_description" t-esc="feature.description"/>
+                            </span>
+                            <i class="fa fa-arrow-right o_wati_feature_arrow"/>
+                        </button>
+                    </div>
+                </section>
+
+                <section class="o_wati_workspace_section o_wati_onboarding_section">
+                    <div class="o_wati_section_heading">
+                        <div>
+                            <span>Quick Start</span>
+                            <h2 t-if="onboardingPercent === 100">WhatsApp Setup Complete</h2>
+                            <h2 t-else="">Set up the connector step by step</h2>
+                        </div>
+                        <div class="o_wati_progress_text">
+                            <strong><t t-esc="state.data.onboarding_done"/> / <t t-esc="state.data.onboarding_total"/></strong>
+                            <small>Complete</small>
+                        </div>
+                    </div>
+                    <div class="o_wati_progress_track" role="progressbar" t-att-aria-valuenow="onboardingPercent" aria-valuemin="0" aria-valuemax="100">
+                        <div class="o_wati_progress_value" t-att-style="'width: ' + onboardingPercent + '%;'"/>
+                    </div>
+                    <div class="o_wati_onboarding_grid">
+                        <button
+                            t-foreach="state.data.onboarding"
+                            t-as="item"
+                            t-key="item.id"
+                            type="button"
+                            t-att-class="'o_wati_onboarding_item ' + (item.done ? 'is-done' : '')"
+                            t-on-click="() => this.openAction(item.action)"
+                        >
+                            <span class="o_wati_step_state">
+                                <i t-att-class="item.done ? 'fa fa-check' : 'fa fa-circle-o'"/>
+                            </span>
+                            <span>
+                                <strong t-esc="item.title"/>
+                                <small t-esc="item.description"/>
+                            </span>
+                            <i class="fa fa-arrow-right"/>
+                        </button>
+                    </div>
+                </section>
+            </t>
+        </div>
+    </t>
+
+    <t t-name="wati_connector.WatiHelpCenter">
+        <div class="o_wati_help_center" dir="ltr">
+            <div t-if="state.loading" class="o_wati_workspace_loading">
+                <i class="fa fa-circle-o-notch fa-spin"/>
+                <span>Loading Help Center...</span>
+            </div>
+            <t t-else="">
+                <header class="o_wati_help_header">
+                    <div>
+                        <button class="o_wati_back_button" t-on-click="backHome"><i class="fa fa-arrow-left"/> Home</button>
+                        <div class="o_wati_eyebrow">HELP CENTER</div>
+                        <h1>Help Center</h1>
+                        <p>Learn how to use WhatsApp inside Odoo, from the initial setup to automation and troubleshooting.</p>
+                    </div>
+                    <div class="o_wati_help_search">
+                        <i class="fa fa-search"/>
+                        <input t-model="state.query" type="search" placeholder="Search: automation, webhook, messages..."/>
+                    </div>
+                </header>
+
+                <div class="o_wati_help_layout">
+                    <aside class="o_wati_help_sidebar">
+                        <t t-if="state.query">
+                            <div class="o_wati_help_sidebar_title">Search Results</div>
+                            <button
+                                t-foreach="visibleArticles"
+                                t-as="row"
+                                t-key="row.article.id"
+                                type="button"
+                                t-att-class="'o_wati_help_link ' + (state.selectedArticleId === row.article.id ? 'is-active' : '')"
+                                t-on-click="() => this.selectArticle(row.article.id)"
+                            >
+                                <small t-esc="row.section.title"/>
+                                <strong t-esc="row.article.title"/>
+                            </button>
+                            <div t-if="!visibleArticles.length" class="o_wati_help_empty">No matching results found.</div>
+                        </t>
+                        <t t-else="">
+                            <div t-foreach="state.sections" t-as="section" t-key="section.id" class="o_wati_help_group">
+                                <div class="o_wati_help_group_title"><i t-att-class="'fa ' + section.icon"/><span t-esc="section.title"/></div>
+                                <button
+                                    t-foreach="section.articles"
+                                    t-as="article"
+                                    t-key="article.id"
+                                    type="button"
+                                    t-att-class="'o_wati_help_link ' + (state.selectedArticleId === article.id ? 'is-active' : '')"
+                                    t-on-click="() => this.selectArticle(article.id)"
+                                >
+                                    <strong t-esc="article.title"/>
+                                </button>
+                            </div>
+                        </t>
+                    </aside>
+
+                    <main class="o_wati_help_article">
+                        <t t-set="selected" t-value="selectedArticle"/>
+                        <t t-if="selected">
+                            <div class="o_wati_article_category" t-esc="selected.section.title"/>
+                            <h2 t-esc="selected.article.title"/>
+                            <p class="o_wati_article_summary" t-esc="selected.article.summary"/>
+
+                            <div class="o_wati_article_steps" t-if="selected.article.steps &amp;&amp; selected.article.steps.length">
+                                <h3>Steps</h3>
+                                <ol>
+                                    <li t-foreach="selected.article.steps" t-as="step" t-key="step_index">
+                                        <span class="o_wati_step_number" t-esc="step_index + 1"/>
+                                        <span t-esc="step"/>
+                                    </li>
+                                </ol>
+                            </div>
+
+                            <div class="o_wati_article_tips" t-if="selected.article.tips &amp;&amp; selected.article.tips.length">
+                                <div class="o_wati_tip_heading"><i class="fa fa-lightbulb-o"/> Important Notes</div>
+                                <ul>
+                                    <li t-foreach="selected.article.tips" t-as="tip" t-key="tip_index" t-esc="tip"/>
+                                </ul>
+                            </div>
+                        </t>
+                        <div t-else="" class="o_wati_help_empty o_wati_help_empty_article">
+                            Select a topic from the list to view its guide.
+                        </div>
+                    </main>
+                </div>
+            </t>
+        </div>
+    </t>
+</templates>

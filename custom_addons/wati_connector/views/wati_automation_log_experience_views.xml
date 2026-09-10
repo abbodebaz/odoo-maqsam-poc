@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_automation_log_list_experience" model="ir.ui.view">
+        <field name="name">wati.automation.log.list.experience</field>
+        <field name="model">wati.automation.log</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_automation_log_list_guard"/>
+        <field name="priority">210</field>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="replace">
+                <list string="Run Log" create="false" edit="false" delete="false"
+                      default_order="create_date desc"
+                      decoration-success="ui_state in ('delivered', 'read')"
+                      decoration-info="ui_state in ('accepted', 'sent')"
+                      decoration-danger="ui_state == 'failed'"
+                      decoration-muted="ui_state == 'pending'">
+                    <field name="create_date" string="time"/>
+                    <field name="ui_kind" string="Type" widget="badge"
+                           decoration-info="ui_kind == 'test'"
+                           decoration-success="ui_kind == 'live'"/>
+                    <field name="ui_state" string="Status" widget="badge"
+                           decoration-success="ui_state in ('delivered', 'read')"
+                           decoration-info="ui_state == 'sent'"
+                           decoration-warning="ui_state == 'accepted'"
+                           decoration-danger="ui_state == 'failed'"
+                           decoration-muted="ui_state == 'pending'"/>
+                    <field name="rule_id" string="Automation"/>
+                    <field name="res_name" string="Record"/>
+                    <field name="phone" string="Recipient"/>
+                    <field name="template_name" string="Template"/>
+                    <field name="ui_summary" string="Result"/>
+                    <field name="ui_timeline" string="Track" optional="hide"/>
+                    <field name="triggered_by_id" string="Play it" optional="hide"/>
+                    <field name="last_webhook_status" string="Latest update WATI" optional="hide"/>
+                    <field name="status" column_invisible="True"/>
+                    <field name="delivery_status" column_invisible="True"/>
+                    <field name="is_test" column_invisible="True"/>
+                </list>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_wati_automation_log_form_experience" model="ir.ui.view">
+        <field name="name">wati.automation.log.form.experience</field>
+        <field name="model">wati.automation.log</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_automation_log_form_guard"/>
+        <field name="priority">210</field>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="replace">
+                <sheet>
+                    <div class="oe_title">
+                        <span class="text-muted">Run result WhatsApp</span>
+                        <h1>
+                            <field name="ui_state" widget="badge" nolabel="1"
+                                   decoration-success="ui_state in ('delivered', 'read')"
+                                   decoration-info="ui_state == 'sent'"
+                                   decoration-warning="ui_state == 'accepted'"
+                                   decoration-danger="ui_state == 'failed'"
+                                   decoration-muted="ui_state == 'pending'"/>
+                        </h1>
+                        <div class="text-muted">
+                            <field name="ui_summary" nolabel="1" readonly="1"/>
+                        </div>
+                    </div>
+
+                    <group col="2" string="What happened?">
+                        <group>
+                            <field name="ui_kind" string="Operating type" widget="badge" readonly="1"/>
+                            <field name="rule_id" string="Automation" readonly="1"/>
+                            <field name="template_name" string="Template" readonly="1"/>
+                            <field name="create_date" string="Operating time" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="res_name" string="Record" readonly="1"/>
+                            <field name="phone" string="Recipient number" readonly="1"/>
+                            <field name="triggered_by_id" string="Powered by" readonly="1"/>
+                            <field name="ui_timeline" string="Message path" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group string="Delivery follow up">
+                        <div class="alert alert-info" role="status" invisible="ui_state not in ('accepted', 'sent')">
+                            <strong>The application has been successful so far.</strong>
+                            WATI Receive the message, and this page will be automatically updated upon arrival Webhook For delivery or reading.
+                        </div>
+                        <div class="alert alert-success" role="status" invisible="ui_state not in ('delivered', 'read')">
+                            <strong>The operation was completed successfully.</strong>
+                            Message status confirmed by updates WATI.
+                        </div>
+                        <div class="alert alert-danger" role="alert" invisible="not ui_has_error">
+                            <strong>The transmission could not be completed.</strong>
+                            <field name="error_message" nolabel="1" readonly="1"/>
+                        </div>
+                        <group col="4">
+                            <field name="accepted_at" string="Accepted to WATI" readonly="1"/>
+                            <field name="sent_at" string="Sent" readonly="1"/>
+                            <field name="delivered_at" string="Delivered" readonly="1"/>
+                            <field name="read_at" string="Read done" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Technical details" groups="base.group_system">
+                            <group col="2">
+                                <group>
+                                    <field name="status" readonly="1"/>
+                                    <field name="delivery_status" readonly="1"/>
+                                    <field name="last_webhook_status" readonly="1"/>
+                                    <field name="last_webhook_at" readonly="1"/>
+                                </group>
+                                <group>
+                                    <field name="external_message_id" readonly="1"/>
+                                    <field name="broadcast_name" readonly="1"/>
+                                    <field name="model_name" readonly="1"/>
+                                    <field name="res_id" readonly="1"/>
+                                </group>
+                            </group>
+                            <group string="response WATI Raw" invisible="not response_excerpt">
+                                <field name="response_excerpt" nolabel="1" readonly="1"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_wati_automation_log_search_experience" model="ir.ui.view">
+        <field name="name">wati.automation.log.search.experience</field>
+        <field name="model">wati.automation.log</field>
+        <field name="arch" type="xml">
+            <search string="Search your playback history">
+                <field name="rule_id" string="Automation"/>
+                <field name="res_name" string="Record"/>
+                <field name="phone" string="Recipient number"/>
+                <field name="template_name" string="Template"/>
+                <separator/>
+                <filter name="successful" string="Successful" domain="[('status', 'in', ('accepted', 'sent', 'delivered', 'read'))]"/>
+                <filter name="delivered" string="Delivered" domain="[('status', 'in', ('delivered', 'read'))]"/>
+                <filter name="failed" string="I failed" domain="[('status', '=', 'failed')]"/>
+                <filter name="test" string="Experimental" domain="[('is_test', '=', True)]"/>
+                <filter name="live" string="Actual" domain="[('is_test', '=', False)]"/>
+                <separator/>
+                <filter name="group_rule" string="Compilation: Automation" context="{'group_by': 'rule_id'}"/>
+                <filter name="group_status" string="Compilation: Status" context="{'group_by': 'status'}"/>
+                <filter name="group_template" string="Compilation: Template" context="{'group_by': 'template_name'}"/>
+                <filter name="group_day" string="Compilation: Today" context="{'group_by': 'create_date:day'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_wati_automation_logs" model="ir.actions.act_window">
+        <field name="name">Run Log</field>
+        <field name="search_view_id" ref="wati_connector.view_wati_automation_log_search_experience"/>
+    </record>
+</odoo>
