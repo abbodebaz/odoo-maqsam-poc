@@ -10,10 +10,10 @@
         </xpath>
 
         <!-- KPI cards follow the same access policy as their feature. -->
-        <xpath expr="//section[contains(@class, 'o_wati_kpi_grid')]/div[3]" position="attributes">
+        <xpath expr="//section[contains(@class, 'o_wati_kpi_grid')]/*[3]" position="attributes">
             <attribute name="t-if">state.data.permissions &amp;&amp; state.data.permissions.automation</attribute>
         </xpath>
-        <xpath expr="//section[contains(@class, 'o_wati_kpi_grid')]/div[4]" position="attributes">
+        <xpath expr="//button[contains(@class, 'o_wati_kpi_button')]" position="attributes">
             <attribute name="t-if">state.data.permissions &amp;&amp; state.data.permissions.monitor</attribute>
         </xpath>
     </t>
