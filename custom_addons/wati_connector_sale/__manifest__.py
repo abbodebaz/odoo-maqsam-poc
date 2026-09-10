@@ -1,6 +1,6 @@
 {
     "name": "WATI Connector - Sales",
-    "version": "19.0.11.0.2",
+    "version": "19.0.11.0.3",
     "summary": "Sales and quotations integration for the WATI WhatsApp Connector",
     "category": "Productivity",
     "author": "Abdulrhman Bazarah",
