@@ -30,11 +30,14 @@
                                         </div>
                                     </div>
 
-                                    <label for="wati_operator_email" string="WATI Operator Email" class="fw-bold mb-1"/>
-                                    <field name="wati_operator_email"
-                                           nolabel="1"
-                                           placeholder="employee@company.com"
-                                           class="w-100"/>
+                                    <div class="wati-email-field">
+                                        <label for="wati_operator_email" string="WATI Operator Email" class="fw-bold d-block mb-1"/>
+                                        <div class="wati-email-input">
+                                            <field name="wati_operator_email"
+                                                   nolabel="1"
+                                                   placeholder="employee@company.com"/>
+                                        </div>
+                                    </div>
                                     <div class="wati-helper-text text-muted mt-2">
                                         Use the same email registered for this employee in WATI Team Inbox.
                                     </div>
