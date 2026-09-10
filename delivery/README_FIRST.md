@@ -26,4 +26,4 @@ The package does not include credentials, tokens, customer data, database dumps,
 
 Install the core addon first. Install optional integration addons only when the matching Odoo app is installed.
 
-Current delivery version: `19.0.11.0.2`.
+Current delivery version: `19.0.11.0.3`.
