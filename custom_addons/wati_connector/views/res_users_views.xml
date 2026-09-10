@@ -11,7 +11,7 @@
                         <div class="wati-user-integration__intro mb-4">
                             <h3 class="mb-1">WATI access &amp; assignment</h3>
                             <p class="text-muted mb-0">
-                                Link this Odoo user to the matching WATI Team Inbox operator and understand the WhatsApp access levels available to them.
+                                Link this Odoo user to the matching WATI Team Inbox operator and review their WhatsApp access level.
                             </p>
                         </div>
 
@@ -36,7 +36,7 @@
                                            placeholder="employee@company.com"
                                            class="w-100"/>
                                     <div class="wati-helper-text text-muted mt-2">
-                                        Use the same email address registered for this employee in WATI Team Inbox.
+                                        Use the same email registered for this employee in WATI Team Inbox.
                                     </div>
                                 </div>
                             </div>
@@ -50,7 +50,7 @@
                                         <div class="min-w-0">
                                             <h4 class="mb-1">WhatsApp roles</h4>
                                             <p class="text-muted mb-0">
-                                                WATI roles control WhatsApp responsibilities without granting additional Odoo administration rights.
+                                                WATI roles control WhatsApp responsibilities without granting extra Odoo administration rights.
                                             </p>
                                         </div>
                                     </div>
@@ -58,16 +58,16 @@
                                     <div class="wati-role-list">
                                         <div class="wati-role-item">
                                             <div class="wati-role-item__title">WATI User / Agent</div>
-                                            <div class="text-muted">Handles day-to-day customer conversations and replies.</div>
+                                            <div class="text-muted">Handles daily customer conversations and replies.</div>
                                         </div>
                                         <div class="wati-role-item">
                                             <div class="wati-role-item__title">WATI Supervisor</div>
-                                            <div class="text-muted">Supervises agents and can transfer conversations between team members.</div>
+                                            <div class="text-muted">Supervises agents and transfers conversations between team members.</div>
                                         </div>
                                         <div class="wati-role-item">
                                             <div class="wati-role-item__title">WATI Administrator</div>
                                             <div class="text-muted">
-                                                Manages WhatsApp-specific permissions and features such as Automation Center, Operation Log, and Webhook Monitoring.
+                                                Manages WhatsApp permissions, Automation Center, Operation Log, and Webhook Monitoring.
                                             </div>
                                         </div>
                                     </div>
@@ -82,35 +82,41 @@
                                 </span>
                                 <div class="min-w-0">
                                     <h4 class="mb-1">How conversation assignment works</h4>
-                                    <p class="text-muted mb-0">A simple flow keeps ownership clear and prevents multiple agents from replying at the same time.</p>
+                                    <p class="text-muted mb-0">
+                                        Ownership stays clear so two agents do not reply to the same conversation at once.
+                                    </p>
                                 </div>
                             </div>
 
-                            <div class="row g-3">
-                                <div class="col-12 col-lg-4">
-                                    <div class="wati-step h-100">
-                                        <span class="wati-step-number">1</span>
-                                        <div>
-                                            <div class="fw-bold mb-1">Conversation arrives</div>
-                                            <div class="text-muted">An unassigned conversation can be taken by an available WATI Agent.</div>
+                            <div class="d-flex flex-column gap-2 wati-step-list">
+                                <div class="wati-step">
+                                    <span class="wati-step-number">1</span>
+                                    <div>
+                                        <div class="fw-bold mb-1">Conversation arrives</div>
+                                        <div class="text-muted">
+                                            Any available WATI Agent can take an unassigned conversation.
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-12 col-lg-4">
-                                    <div class="wati-step h-100">
-                                        <span class="wati-step-number">2</span>
-                                        <div>
-                                            <div class="fw-bold mb-1">Agent takes ownership</div>
-                                            <div class="text-muted">Once assigned, other agents cannot reply unless the conversation is transferred.</div>
+
+                                <div class="wati-step">
+                                    <span class="wati-step-number">2</span>
+                                    <div>
+                                        <div class="fw-bold mb-1">Agent takes ownership</div>
+                                        <div class="text-muted">
+                                            After assignment, only the assigned agent can reply unless the conversation is transferred.
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-12 col-lg-4">
-                                    <div class="wati-step h-100">
-                                        <span class="wati-step-number">3</span>
-                                        <div>
-                                            <div class="fw-bold mb-1">Transfer when needed</div>
-                                            <div class="text-muted">A WATI Supervisor or Administrator can transfer the conversation, and the transfer is recorded in the assignment log.</div>
+
+                                <div class="wati-step">
+                                    <span class="wati-step-number">3</span>
+                                    <div>
+                                        <div class="fw-bold mb-1">Transfer when needed</div>
+                                        <div class="text-muted">
+                                            A WATI Supervisor or Administrator can transfer the conversation.
+                                            <br/>
+                                            The transfer is recorded in the assignment log.
                                         </div>
                                     </div>
                                 </div>
@@ -125,7 +131,9 @@
                                 <div class="min-w-0">
                                     <div class="fw-bold mb-1">Security note</div>
                                     <div>
-                                        Assigning <strong>WATI Administrator</strong> does not make the user an Odoo Administrator. It only grants access to the WhatsApp features and permissions enabled for your company.
+                                        <strong>WATI Administrator</strong> does not make the user an Odoo Administrator.
+                                        <br/>
+                                        It only grants access to the WhatsApp features and permissions enabled for your company.
                                     </div>
                                 </div>
                             </div>
