@@ -107,10 +107,10 @@
     line-height: 1.45;
 }
 
-.o_wati_template_kind_radio .form-check:nth-child(1) .form-check-label::after { content: "رسالة مرنة للاستخدام العام"; }
-.o_wati_template_kind_radio .form-check:nth-child(2) .form-check-label::after { content: "قالب مرتبط بمنتجات الكتالوج"; }
-.o_wati_template_kind_radio .form-check:nth-child(3) .form-check-label::after { content: "مجموعة بطاقات قابلة للتمرير"; }
-.o_wati_template_kind_radio .form-check:nth-child(4) .form-check-label::after { content: "عرض تسويقي بمدة محددة"; }
+.o_wati_template_kind_radio .form-check:nth-child(1) .form-check-label::after { content: "Flexible message for general use"; }
+.o_wati_template_kind_radio .form-check:nth-child(2) .form-check-label::after { content: "Template linked to catalog products"; }
+.o_wati_template_kind_radio .form-check:nth-child(3) .form-check-label::after { content: "Scrollable collection of cards"; }
+.o_wati_template_kind_radio .form-check:nth-child(4) .form-check-label::after { content: "Limited-time marketing offer"; }
 
 .o_wati_template_header_radio .form-check:nth-child(1) .form-check-label::before,
 .o_wati_template_button_radio .form-check:nth-child(1) .form-check-label::before { content: "\f05e"; }
