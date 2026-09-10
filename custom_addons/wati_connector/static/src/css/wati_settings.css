@@ -33,6 +33,7 @@
 }
 
 .wati-settings-card-grid {
+    width: 100%;
     max-width: 76rem;
 }
 
@@ -72,6 +73,88 @@
     margin-top: 0.2rem;
 }
 
+/* User form > WhatsApp / WATI */
+.wati-user-integration {
+    width: 100%;
+}
+
+.wati-user-integration__intro {
+    width: 100%;
+    max-width: 76rem;
+    padding: 4px 2px;
+}
+
+.wati-user-integration__intro h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.wati-user-integration__intro p {
+    max-width: 56rem;
+    line-height: 1.6;
+}
+
+.wati-user-integration .o_field_widget,
+.wati-user-integration .o_input {
+    width: 100%;
+    max-width: 100%;
+}
+
+.wati-user-integration .wati-helper-text {
+    line-height: 1.55;
+}
+
+.wati-role-list {
+    border-top: 1px solid var(--border-color, #dee2e6);
+}
+
+.wati-role-item {
+    padding: 12px 0;
+    line-height: 1.5;
+}
+
+.wati-role-item + .wati-role-item {
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.wati-role-item__title {
+    font-weight: 700;
+    margin-bottom: 2px;
+    color: var(--o-main-text-color, inherit);
+}
+
+.wati-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+    border-radius: 10px;
+    background: rgba(113, 75, 103, 0.045);
+    line-height: 1.5;
+}
+
+.wati-step-number {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 28px;
+    font-weight: 700;
+    background: var(--o-brand-primary, #714b67);
+    color: #fff;
+}
+
+.wati-security-note {
+    border: 1px solid rgba(113, 75, 103, 0.2);
+    border-radius: 12px;
+    padding: 16px 18px;
+    background: rgba(113, 75, 103, 0.05);
+    line-height: 1.55;
+}
+
 @media (max-width: 991.98px) {
     .wati_settings_notebook .o_setting_box {
         width: 100%;
@@ -79,5 +162,33 @@
 
     .wati-settings-card {
         padding: 16px;
+    }
+
+    .wati-user-integration__intro {
+        margin-bottom: 1rem !important;
+    }
+
+    .wati-security-note {
+        padding: 14px 16px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .wati-user-integration {
+        padding-top: 0.75rem !important;
+    }
+
+    .wati-user-integration__intro h3 {
+        font-size: 1.1rem;
+    }
+
+    .wati-settings-card-icon {
+        width: 36px;
+        height: 36px;
+        flex-basis: 36px;
+    }
+
+    .wati-step {
+        padding: 12px;
     }
 }
