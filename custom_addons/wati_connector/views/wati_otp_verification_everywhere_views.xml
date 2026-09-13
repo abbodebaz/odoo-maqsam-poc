@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_otp_flow_form_verification_everywhere" model="ir.ui.view">
+        <field name="name">wati.otp.flow.form.verification.everywhere</field>
+        <field name="model">wati.otp.flow</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_otp_flow_form_workflow"/>
+        <field name="priority">360</field>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('wati_otp_post_actions_card')]" position="before">
+                <div class="wati_otp_card wati_otp_universal_entry_card wati_otp_verification_everywhere_card">
+                    <div class="wati_otp_card_title_row">
+                        <div>
+                            <h3>Verification everywhere</h3>
+                            <p class="text-muted mb-0">Let the correct OTP be verified from Odoo, Portal, a PWA, a website, or a trusted backend API.</p>
+                        </div>
+                        <span class="badge rounded-pill text-bg-light">PWA ready</span>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-lg-6">
+                            <div class="wati_otp_subcard wati_otp_entry_section h-100">
+                                <div class="wati_otp_entry_section_title">
+                                    <div>
+                                        <h4 class="mb-1">Odoo &amp; Portal</h4>
+                                        <p class="text-muted mb-0">For employees and signed-in Odoo users.</p>
+                                    </div>
+                                    <span class="badge rounded-pill text-bg-success">Secure session</span>
+                                </div>
+
+                                <div class="wati_otp_entry_option">
+                                    <div class="wati_otp_entry_option_head">
+                                        <div class="wati_otp_entry_identity">
+                                            <span class="wati_otp_entry_icon"><i class="fa fa-desktop" title="Odoo Backoffice"/></span>
+                                            <div>
+                                                <strong>Odoo Backoffice</strong>
+                                                <p>Employees verify OTP directly from the Odoo record or transaction.</p>
+                                            </div>
+                                        </div>
+                                        <span class="badge rounded-pill text-bg-success">Always on</span>
+                                    </div>
+                                    <div class="wati_otp_entry_use"><strong>Use it for:</strong> customer service, supervisors, operations teams, and normal Odoo screens.</div>
+                                    <div class="wati_otp_entry_details">
+                                        <span class="wati_otp_entry_details_label">How to use</span>
+                                        <p>Open the source record and use <strong>Verify OTP</strong>, or verify from OTP Transactions.</p>
+                                    </div>
+                                </div>
+
+                                <div class="wati_otp_entry_option">
+                                    <div class="wati_otp_entry_option_head">
+                                        <div class="wati_otp_entry_identity">
+                                            <span class="wati_otp_entry_icon"><i class="fa fa-user" title="Portal"/></span>
+                                            <div>
+                                                <strong>Portal verification</strong>
+                                                <p>Verify from a signed-in Odoo Portal or employee web session.</p>
+                                            </div>
+                                        </div>
+                                        <div class="wati_otp_entry_switch">
+                                            <span class="badge rounded-pill text-bg-light" invisible="portal_verification_enabled">Disabled</span>
+                                            <span class="badge rounded-pill text-bg-success" invisible="not portal_verification_enabled">Enabled</span>
+                                            <field name="portal_verification_enabled" widget="boolean_toggle" nolabel="1"/>
+                                        </div>
+                                    </div>
+                                    <div class="wati_otp_entry_use"><strong>Use it for:</strong> technician portals, driver portals, customer portals, and authenticated PWA sessions.</div>
+                                    <div class="wati_otp_entry_details" invisible="not portal_verification_enabled">
+                                        <span class="wati_otp_entry_details_label">How to use</span>
+                                        <p>POST the OTP as <code>otp_code</code>. Odoo checks that the signed-in user can access the source record.</p>
+                                        <field name="portal_verify_url_pattern" readonly="1" nolabel="1"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6">
+                            <div class="wati_otp_subcard wati_otp_entry_section h-100">
+                                <div class="wati_otp_entry_section_title">
+                                    <div>
+                                        <h4 class="mb-1">Web, PWA &amp; API</h4>
+                                        <p class="text-muted mb-0">For browser apps, public verification pages, and trusted backends.</p>
+                                    </div>
+                                    <span class="badge rounded-pill text-bg-light">No native app needed</span>
+                                </div>
+
+                                <div class="wati_otp_entry_option">
+                                    <div class="wati_otp_entry_option_head">
+                                        <div class="wati_otp_entry_identity">
+                                            <span class="wati_otp_entry_icon"><i class="fa fa-window-maximize" title="PWA and Web App"/></span>
+                                            <div>
+                                                <strong>PWA / Web App</strong>
+                                                <p>A PWA verifies the OTP with a transaction-scoped token instead of storing the flow secret in the browser.</p>
+                                            </div>
+                                        </div>
+                                        <div class="wati_otp_entry_switch">
+                                            <span class="badge rounded-pill text-bg-light" invisible="pwa_verification_enabled">Disabled</span>
+                                            <span class="badge rounded-pill text-bg-success" invisible="not pwa_verification_enabled">Enabled</span>
+                                            <field name="pwa_verification_enabled" widget="boolean_toggle" nolabel="1"/>
+                                        </div>
+                                    </div>
+                                    <div class="wati_otp_entry_use"><strong>Use it for:</strong> the company's PWA, technician web apps, driver screens, and browser-based internal tools.</div>
+                                    <div class="wati_otp_entry_details" invisible="not pwa_verification_enabled">
+                                        <span class="wati_otp_entry_details_label">How to use</span>
+                                        <p>Use the <strong>verification_token</strong> returned with the OTP transaction. POST JSON like <code>{"otp_code":"123456"}</code>. Status and resend use the same token.</p>
+                                        <field name="pwa_verify_url_pattern" readonly="1" nolabel="1"/>
+                                        <field name="pwa_status_url_pattern" readonly="1" nolabel="1" class="mt-2"/>
+                                    </div>
+                                </div>
+
+                                <div class="wati_otp_entry_option">
+                                    <div class="wati_otp_entry_option_head">
+                                        <div class="wati_otp_entry_identity">
+                                            <span class="wati_otp_entry_icon"><i class="fa fa-globe" title="Website verification"/></span>
+                                            <div>
+                                                <strong>Website verification page</strong>
+                                                <p>A responsive ready-made page where the user can enter the OTP without opening Odoo.</p>
+                                            </div>
+                                        </div>
+                                        <div class="wati_otp_entry_switch">
+                                            <span class="badge rounded-pill text-bg-light" invisible="website_verification_enabled">Disabled</span>
+                                            <span class="badge rounded-pill text-bg-success" invisible="not website_verification_enabled">Enabled</span>
+                                            <field name="website_verification_enabled" widget="boolean_toggle" nolabel="1"/>
+                                        </div>
+                                    </div>
+                                    <div class="wati_otp_entry_use"><strong>Use it for:</strong> public service pages, confirmation links, embedded web flows, and quick demos.</div>
+                                    <div class="wati_otp_entry_details" invisible="not website_verification_enabled">
+                                        <span class="wati_otp_entry_details_label">How to use</span>
+                                        <p>Open the transaction-specific verification URL. The page supports verify and resend and never displays the OTP itself.</p>
+                                        <field name="website_verify_url_pattern" readonly="1" nolabel="1"/>
+                                    </div>
+                                </div>
+
+                                <div class="wati_otp_entry_option">
+                                    <div class="wati_otp_entry_option_head">
+                                        <div class="wati_otp_entry_identity">
+                                            <span class="wati_otp_entry_icon"><i class="fa fa-code" title="REST API"/></span>
+                                            <div>
+                                                <strong>REST API verification</strong>
+                                                <p>A trusted backend verifies OTP for a record using the flow integration secret.</p>
+                                            </div>
+                                        </div>
+                                        <div class="wati_otp_entry_switch">
+                                            <span class="badge rounded-pill text-bg-light" invisible="api_verification_enabled">Disabled</span>
+                                            <span class="badge rounded-pill text-bg-success" invisible="not api_verification_enabled">Enabled</span>
+                                            <field name="api_verification_enabled" widget="boolean_toggle" nolabel="1"/>
+                                        </div>
+                                    </div>
+                                    <div class="wati_otp_entry_use"><strong>Use it for:</strong> external backends, middleware, ERP integrations, and server-to-server PWA backends.</div>
+                                    <div class="wati_otp_entry_details" invisible="not api_verification_enabled">
+                                        <span class="wati_otp_entry_details_label">How to use</span>
+                                        <p>POST <code>record_id</code> + <code>otp_code</code> and send the integration secret in <code>X-WATI-OTP-Secret</code>. Separate status and resend endpoints are available.</p>
+                                        <field name="api_verify_url" readonly="1" nolabel="1"/>
+                                        <field name="api_status_url" readonly="1" nolabel="1" class="mt-2"/>
+                                        <field name="api_resend_url" readonly="1" nolabel="1" class="mt-2"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wati_otp_info mt-3">
+                        <i class="fa fa-shield" title="Verification security"/>
+                        <div>
+                            <strong>One OTP engine, different verification surfaces</strong>
+                            <span>PWA and website verification use a high-entropy transaction token. Portal uses the signed-in Odoo session. REST API uses the flow integration secret. All channels run the same attempt limits, expiry rules, post-verification actions, and audit trail.</span>
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_wati_otp_transaction_list_verification_everywhere" model="ir.ui.view">
+        <field name="name">wati.otp.transaction.list.verification.everywhere</field>
+        <field name="model">wati.otp.transaction</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_otp_transaction_list_internal_audit"/>
+        <field name="priority">360</field>
+        <field name="arch" type="xml">
+            <field name="source" position="after">
+                <field name="verification_source" optional="show"/>
+                <field name="verification_actor" optional="hide"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_wati_otp_transaction_form_verification_everywhere" model="ir.ui.view">
+        <field name="name">wati.otp.transaction.form.verification.everywhere</field>
+        <field name="model">wati.otp.transaction</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_otp_transaction_form_internal_audit"/>
+        <field name="priority">360</field>
+        <field name="arch" type="xml">
+            <field name="verified_by_id" position="after">
+                <field name="verification_source" readonly="1"/>
+                <field name="verification_actor" readonly="1"/>
+            </field>
+            <field name="attempt_count" position="after">
+                <field name="attempts_remaining" readonly="1"/>
+            </field>
+        </field>
+    </record>
+</odoo>

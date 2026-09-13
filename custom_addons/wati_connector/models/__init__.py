@@ -57,6 +57,7 @@ from . import wati_otp_workflow_actions
 from . import wati_otp_completion_values
 from . import wati_otp_internal_audit
 from . import wati_otp_universal_triggers
+from . import wati_otp_verification_everywhere
 from . import wati_smart_button
 from . import wati_smart_button_compat
 from . import wati_smart_button_admin_visibility

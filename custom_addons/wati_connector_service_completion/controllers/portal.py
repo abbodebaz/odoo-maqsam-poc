@@ -175,7 +175,9 @@ class ServiceCompletionPortal(CustomerPortal):
             return request.redirect(f"/my/service-completions/{task.id}")
 
         ok, message = transaction.sudo().with_context(
-            wati_verified_by_user_id=request.env.user.id
+            wati_verified_by_user_id=request.env.user.id,
+            wati_verification_source="portal",
+            wati_verification_actor=request.env.user.display_name,
         ).verify_code(code)
         self._set_flash(message, "success" if ok else "danger")
         return request.redirect(f"/my/service-completions/{task.id}")
