@@ -30,15 +30,15 @@
                         <field name="template_name" nolabel="1" placeholder="No template selected" readonly="1"/>
                         <div class="wati_template_meta" invisible="not template_name">
                             <span class="wati_template_meta_item" invisible="not template_status">
-                                <i class="fa fa-check-circle"/>
+                                <i class="fa fa-check-circle" title="Template status"/>
                                 <field name="template_status" nolabel="1" readonly="1"/>
                             </span>
                             <span class="wati_template_meta_item" invisible="not template_language">
-                                <i class="fa fa-language"/>
+                                <i class="fa fa-language" title="Template language"/>
                                 <field name="template_language" nolabel="1" readonly="1"/>
                             </span>
                             <span class="wati_template_meta_item" invisible="not template_channel_number">
-                                <i class="fa fa-phone"/>
+                                <i class="fa fa-phone" title="WATI channel"/>
                                 <field name="template_channel_number" nolabel="1" readonly="1"/>
                             </span>
                         </div>
@@ -55,7 +55,7 @@
             <xpath expr="//div[hasclass('wati_template_preview')]" position="replace">
                 <div class="wati_template_preview wati_template_preview_smart">
                     <div class="wati_template_preview_empty" invisible="template_body">
-                        <span class="wati_preview_icon"><i class="fa fa-whatsapp"/></span>
+                        <span class="wati_preview_icon"><i class="fa fa-whatsapp" title="WhatsApp preview"/></span>
                         <strong>WhatsApp preview</strong>
                         <small>Select a template to preview the message here.</small>
                     </div>
@@ -63,7 +63,7 @@
                     <div class="wati_template_preview_content" invisible="not template_body">
                         <div class="wati_template_preview_head">
                             <div class="wati_preview_identity">
-                                <span class="wati_preview_icon wati_preview_icon_small"><i class="fa fa-whatsapp"/></span>
+                                <span class="wati_preview_icon wati_preview_icon_small"><i class="fa fa-whatsapp" title="WhatsApp preview"/></span>
                                 <div>
                                     <span class="wati_template_step_label">WhatsApp preview</span>
                                     <strong><field name="template_name" nolabel="1" readonly="1"/></strong>
@@ -131,7 +131,7 @@
                         </list>
                     </field>
                     <div class="wati_parameter_mapper_hint">
-                        <i class="fa fa-info-circle"/>
+                        <i class="fa fa-info-circle" title="Variable mapping help"/>
                         <p>Variables come directly from WATI. Choose where each value should come from in Odoo.</p>
                     </div>
                 </div>
