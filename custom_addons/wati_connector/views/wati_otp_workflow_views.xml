@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_otp_flow_form_workflow" model="ir.ui.view">
+        <field name="name">wati.otp.flow.form.workflow</field>
+        <field name="model">wati.otp.flow</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_otp_flow_form"/>
+        <field name="priority">280</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='trigger_method']/ancestor::div[contains(@class, 'wati_otp_card')][1]" position="after">
+                <div class="wati_otp_card wati_otp_manual_button_card" invisible="trigger_method != 'manual'">
+                    <div class="wati_otp_card_title_row">
+                        <div>
+                            <h3>OTP button</h3>
+                            <p class="text-muted mb-0">Choose exactly where employees should start this OTP flow.</p>
+                        </div>
+                        <span class="badge rounded-pill text-bg-light">Manual trigger</span>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="manual_button_placement" widget="radio" options="{'horizontal': True}"/>
+                            <field name="manual_button_label" placeholder="Send OTP"/>
+                        </group>
+                        <group>
+                            <field name="manual_view_id"
+                                   options="{'no_create': True}"
+                                   invisible="manual_button_placement == 'actions'"/>
+                            <field name="generated_manual_view_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <div class="wati_otp_subcard">
+                        <strong>Show button only when <span class="text-muted fw-normal">(optional)</span></strong>
+                        <p class="text-muted">Example: show Send OTP only when Stage equals Resolved.</p>
+                        <group>
+                            <group>
+                                <field name="manual_condition_field_id" options="{'no_create': True}"/>
+                            </group>
+                            <group invisible="not manual_condition_field_id">
+                                <field name="manual_condition_operator"/>
+                                <field name="manual_condition_value"
+                                       invisible="manual_condition_operator != 'equals'"
+                                       placeholder="Example: Resolved"/>
+                            </group>
+                        </group>
+                    </div>
+                    <div class="wati_otp_info mt-3">
+                        <i class="fa fa-magic" title="Automatic setup"/>
+                        <div>
+                            <strong>Installed automatically</strong>
+                            <span>When the flow is activated, OTP Bridge creates and maintains this button in the selected Odoo form.</span>
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+
+            <xpath expr="//div[contains(@class, 'wati_otp_info')][.//strong[normalize-space()='Manual service action']]" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='completion_mode']/ancestor::div[contains(@class, 'wati_otp_card')][1]" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='completion_mode']/ancestor::div[contains(@class, 'wati_otp_card')][1]" position="after">
+                <div class="wati_otp_card wati_otp_post_actions_card">
+                    <div class="wati_otp_card_title_row">
+                        <div>
+                            <h3>After successful verification</h3>
+                            <p class="text-muted mb-0">Add one or more actions. Odoo runs them from top to bottom after the OTP is correct.</p>
+                        </div>
+                        <span class="badge rounded-pill text-bg-light">Multiple actions</span>
+                    </div>
+                    <div class="wati_otp_action_examples">
+                        <span><i class="fa fa-exchange" title="Update"/> Update a field</span>
+                        <span><i class="fa fa-whatsapp" title="WhatsApp"/> Send a WhatsApp template</span>
+                        <span><i class="fa fa-bolt" title="Server action"/> Run a server action</span>
+                    </div>
+                    <field name="post_action_ids" nolabel="1" mode="list,form" context="{'default_flow_id': id}">
+                        <list string="After verification actions">
+                            <field name="sequence" widget="handle"/>
+                            <field name="active" widget="boolean_toggle"/>
+                            <field name="name" string="Action"/>
+                            <field name="action_type"/>
+                        </list>
+                    </field>
+                    <div class="wati_otp_info mt-3">
+                        <i class="fa fa-info-circle" title="Execution behavior"/>
+                        <div>
+                            <strong>The OTP remains verified even if a follow-up action fails.</strong>
+                            <span>OTP Bridge records the follow-up result so the verification itself is never lost.</span>
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_wati_otp_post_action_list" model="ir.ui.view">
+        <field name="name">wati.otp.post.action.list</field>
+        <field name="model">wati.otp.post.action</field>
+        <field name="arch" type="xml">
+            <list string="After verification actions">
+                <field name="sequence" widget="handle"/>
+                <field name="active" widget="boolean_toggle"/>
+                <field name="name"/>
+                <field name="action_type"/>
+                <field name="field_id" optional="hide"/>
+                <field name="template_id" optional="hide"/>
+                <field name="server_action_id" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_wati_otp_post_action_form" model="ir.ui.view">
+        <field name="name">wati.otp.post.action.form</field>
+        <field name="model">wati.otp.post.action</field>
+        <field name="arch" type="xml">
+            <form string="After verification action">
+                <sheet>
+                    <field name="flow_id" invisible="1"/>
+                    <field name="model_id" invisible="1"/>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1" nolabel="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="active"/>
+                            <field name="sequence"/>
+                        </group>
+                        <group>
+                            <field name="action_type" widget="radio"/>
+                        </group>
+                    </group>
+
+                    <div class="wati_otp_card" invisible="action_type != 'update_field'">
+                        <h3>Update the Odoo record</h3>
+                        <p class="text-muted">Example: Stage → Closed.</p>
+                        <group>
+                            <field name="field_id" options="{'no_create': True}"/>
+                            <field name="value" placeholder="New value"/>
+                        </group>
+                    </div>
+
+                    <div class="wati_otp_card" invisible="action_type != 'send_whatsapp'">
+                        <h3>Send a WhatsApp message</h3>
+                        <p class="text-muted">The message is sent to the same customer number used by this OTP flow.</p>
+                        <group>
+                            <field name="template_id" options="{'no_create': True}"/>
+                            <field name="channel_number" placeholder="Optional — use a specific WATI number"/>
+                        </group>
+                        <div invisible="not template_id">
+                            <h4>Template variables</h4>
+                            <field name="binding_ids" nolabel="1">
+                                <list editable="bottom" create="false" delete="false">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="variable_name" readonly="1"/>
+                                    <field name="source_type"/>
+                                    <field name="field_path" invisible="source_type != 'record'" placeholder="Example: partner_id.name"/>
+                                    <field name="static_value" invisible="source_type != 'static'"/>
+                                </list>
+                            </field>
+                        </div>
+                    </div>
+
+                    <div class="wati_otp_card" invisible="action_type != 'server_action'">
+                        <h3>Run an Odoo server action</h3>
+                        <p class="text-muted">Use this for advanced workflows that already exist in Odoo.</p>
+                        <group>
+                            <field name="server_action_id" options="{'no_create': True}"/>
+                        </group>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_wati_otp_transaction_list_workflow" model="ir.ui.view">
+        <field name="name">wati.otp.transaction.list.workflow</field>
+        <field name="model">wati.otp.transaction</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_otp_transaction_list"/>
+        <field name="priority">280</field>
+        <field name="arch" type="xml">
+            <field name="attempt_count" position="after">
+                <field name="post_actions_state" widget="badge" optional="show"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_wati_otp_transaction_form_workflow" model="ir.ui.view">
+        <field name="name">wati.otp.transaction.form.workflow</field>
+        <field name="model">wati.otp.transaction</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_otp_transaction_form"/>
+        <field name="priority">280</field>
+        <field name="arch" type="xml">
+            <field name="attempt_count" position="after">
+                <field name="post_actions_state" widget="badge"/>
+                <field name="post_actions_error" invisible="not post_actions_error"/>
+            </field>
+        </field>
+    </record>
+</odoo>
