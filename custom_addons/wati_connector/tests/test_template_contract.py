@@ -1,4 +1,5 @@
 import json
+from unittest.mock import patch
 
 from odoo.tests.common import TransactionCase
 
@@ -100,3 +101,39 @@ class TestWatiTemplateContract(TransactionCase):
         line = self.rule.parameter_ids
         self.assertEqual(line.param_name, "1")
         self.assertEqual(line.api_param_name, "name")
+
+    def test_template_picker_works_without_preconfigured_channel(self):
+        self.env["ir.config_parameter"].sudo().set_param(
+            "wati_connector.channel_number", ""
+        )
+        self.rule.with_context(wati_guard_internal=True).write(
+            {
+                "channel_number": False,
+                "template_channel_number": False,
+            }
+        )
+        templates = [
+            {
+                "elementName": "customer_update",
+                "status": "APPROVED",
+                "channelNumber": "966500000000",
+                "body": "Hello",
+                "language": "en",
+            }
+        ]
+
+        with patch.object(
+            type(self.rule),
+            "_fetch_wati_templates_guarded",
+            autospec=True,
+            return_value=templates,
+        ):
+            action = self.rule.action_pick_template()
+
+        self.assertEqual(action["res_model"], "wati.automation.template.choice")
+        choice = self.env["wati.automation.template.choice"].search(
+            [("rule_id", "=", self.rule.id)]
+        )
+        self.assertEqual(len(choice), 1)
+        self.assertEqual(choice.name, "customer_update")
+        self.assertEqual(choice.channel_number, "966500000000")
