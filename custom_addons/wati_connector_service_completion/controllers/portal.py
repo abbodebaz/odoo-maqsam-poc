@@ -46,8 +46,15 @@ class ServiceCompletionPortal(CustomerPortal):
             flow_error = str(exc)
 
         transaction = task._latest_otp_transaction()
-        waiting_transaction = task._latest_otp_transaction(states=["sent"])
-        can_send = bool(flow and task.state != "completed")
+        waiting_transaction = (
+            transaction if transaction and transaction.state == "sent" else False
+        )
+        verified_transaction = (
+            transaction if transaction and transaction.state == "verified" else False
+        )
+        can_send = bool(
+            flow and task.state != "completed" and not verified_transaction
+        )
         if can_send and flow.manual_condition_field_id:
             try:
                 can_send = flow._manual_condition_matches(task.sudo())
@@ -61,6 +68,7 @@ class ServiceCompletionPortal(CustomerPortal):
             "flow_error": flow_error,
             "otp_transaction": transaction,
             "waiting_transaction": waiting_transaction,
+            "verified_transaction": verified_transaction,
             "can_send_otp": can_send,
             "flash": self._pop_flash(),
         }

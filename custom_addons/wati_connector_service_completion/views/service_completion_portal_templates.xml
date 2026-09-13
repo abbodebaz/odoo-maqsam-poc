@@ -121,7 +121,7 @@
                                 <h2 class="h4 mb-2">Confirm task completion</h2>
                                 <p class="text-muted mb-0">Send a WhatsApp OTP to the customer and enter the 6-digit confirmation code to complete this service.</p>
                             </div>
-                            <span t-if="task.state == 'completed'" class="badge text-bg-success align-self-start px-3 py-2">OTP verified</span>
+                            <span t-if="verified_transaction" class="badge text-bg-success align-self-start px-3 py-2">OTP verified</span>
                             <span t-elif="waiting_transaction" class="badge text-bg-info align-self-start px-3 py-2">OTP sent</span>
                         </div>
 
@@ -130,8 +130,17 @@
                             No active Manual OTP Flow is configured for this record type yet. Create it in WhatsApp &gt; OTP Bridge.
                         </div>
 
-                        <div t-if="task.state == 'completed'" class="alert alert-success mb-0">
-                            Customer verification succeeded and this service is completed.
+                        <div t-if="verified_transaction">
+                            <div t-if="task.state == 'completed' or verified_transaction.post_actions_state == 'success'" class="alert alert-success mb-0">
+                                Customer verification succeeded and this service is completed.
+                            </div>
+                            <div t-elif="verified_transaction.post_actions_state in ('failed', 'partial')" class="alert alert-warning mb-0">
+                                <strong>OTP verified successfully.</strong>
+                                A follow-up action needs attention, so the OTP will not be requested again. An administrator can review the OTP transaction details.
+                            </div>
+                            <div t-else="" class="alert alert-success mb-0">
+                                Customer verification succeeded.
+                            </div>
                         </div>
 
                         <div t-elif="waiting_transaction">
