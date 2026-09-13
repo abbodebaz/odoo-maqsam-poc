@@ -189,6 +189,7 @@
             <field name="verified_by_id" position="after">
                 <field name="verification_source" readonly="1"/>
                 <field name="verification_actor" readonly="1"/>
+                <field name="public_verification_url" string="Website verification page" widget="url" readonly="1" invisible="not public_verification_url"/>
             </field>
             <field name="attempt_count" position="after">
                 <field name="attempts_remaining" readonly="1"/>
