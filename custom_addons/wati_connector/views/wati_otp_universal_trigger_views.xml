@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_otp_flow_form_universal_triggers" model="ir.ui.view">
+        <field name="name">wati.otp.flow.form.universal.triggers</field>
+        <field name="model">wati.otp.flow</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_otp_flow_form_workflow"/>
+        <field name="priority">340</field>
+        <field name="arch" type="xml">
+            <xpath expr="//div[contains(@class, 'wati_otp_manual_button_card')]" position="after">
+                <div class="wati_otp_card wati_otp_universal_entry_card">
+                    <div class="wati_otp_card_title_row">
+                        <div>
+                            <h3>Universal entry points</h3>
+                            <p class="text-muted mb-0">The same OTP Flow can be started from Odoo, a portal, custom code, an API, a webhook, or a website form.</p>
+                        </div>
+                        <span class="badge rounded-pill text-bg-light">Any module</span>
+                    </div>
+
+                    <div class="row g-3 mt-1">
+                        <div class="col-lg-6">
+                            <div class="wati_otp_subcard h-100">
+                                <h4 class="mb-2">Inside Odoo</h4>
+                                <div class="mb-3">
+                                    <strong>Reusable server action</strong>
+                                    <i class="fa fa-question-circle text-muted ms-1" title="OTP Bridge creates a reusable Odoo Server Action for this flow. Custom modules, buttons, and other Odoo workflows can run it without reimplementing OTP logic."/>
+                                    <field name="universal_server_action_id" readonly="1" nolabel="1"/>
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Automated Action hook</strong>
+                                    <i class="fa fa-question-circle text-muted ms-1" title="Paste this one-line hook inside an Odoo Automated Action when you need OTP from a custom automation condition that OTP Bridge does not natively expose."/>
+                                    <field name="automation_hook_example" readonly="1" nolabel="1"/>
+                                </div>
+                                <div>
+                                    <strong>Python hook</strong>
+                                    <i class="fa fa-question-circle text-muted ms-1" title="Custom Odoo modules can call this method directly. The OTP generation, WATI send, audit, verification, and post-actions still stay inside OTP Bridge."/>
+                                    <field name="python_hook_example" readonly="1" nolabel="1"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6">
+                            <div class="wati_otp_subcard h-100">
+                                <h4 class="mb-2">Portal &amp; external systems</h4>
+                                <div class="mb-3">
+                                    <field name="portal_entry_enabled" widget="boolean_toggle"/>
+                                    <i class="fa fa-question-circle text-muted ms-1" title="Allows authenticated portal/internal users who can read the source record to request OTP through the generic portal endpoint."/>
+                                    <field name="portal_request_url_pattern" readonly="1" nolabel="1" invisible="not portal_entry_enabled"/>
+                                </div>
+                                <div class="mb-3">
+                                    <field name="api_enabled" widget="boolean_toggle"/>
+                                    <i class="fa fa-question-circle text-muted ms-1" title="Allows an external system or custom app to request an OTP over HTTP. Requests must include this flow's integration secret."/>
+                                    <field name="api_request_url" readonly="1" nolabel="1" invisible="not api_enabled"/>
+                                </div>
+                                <div class="mb-3">
+                                    <field name="webhook_enabled" widget="boolean_toggle"/>
+                                    <i class="fa fa-question-circle text-muted ms-1" title="Use this when another system sends an event/webhook and you want that event to create the OTP for an Odoo record."/>
+                                    <field name="webhook_request_url" readonly="1" nolabel="1" invisible="not webhook_enabled"/>
+                                </div>
+                                <div>
+                                    <field name="website_form_enabled" widget="boolean_toggle"/>
+                                    <i class="fa fa-question-circle text-muted ms-1" title="Allows a protected website or external form submit to request OTP using the same OTP Flow."/>
+                                    <field name="website_form_request_url" readonly="1" nolabel="1" invisible="not website_form_enabled"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wati_otp_info mt-3" groups="base.group_system">
+                        <i class="fa fa-key" title="Integration security"/>
+                        <div class="w-100">
+                            <strong>External entry-point security</strong>
+                            <span>API, webhook, and website/form requests require the flow integration secret. Portal requests use the signed-in user's Odoo access.</span>
+                            <div class="d-flex gap-2 align-items-center mt-2">
+                                <field name="integration_secret" readonly="1" nolabel="1" password="True" class="flex-grow-1"/>
+                                <button name="action_regenerate_integration_secret" type="object" string="Regenerate secret" class="btn btn-secondary" icon="fa-refresh"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end mt-3">
+                        <button name="action_prepare_entry_points" type="object" string="Prepare entry points" class="btn btn-secondary" icon="fa-plug"/>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>
