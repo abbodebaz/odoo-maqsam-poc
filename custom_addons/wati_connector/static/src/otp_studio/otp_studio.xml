@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="wati_connector.WatiOtpStudio">
+        <div class="o_wati_otp_studio" dir="ltr">
+            <div class="o_wati_otp_hero">
+                <div>
+                    <div class="o_wati_otp_eyebrow">WHATSAPP OTP SERVICES</div>
+                    <h1>OTP Bridge</h1>
+                    <p>Create secure OTP flows for any Odoo service, send them through WATI, and verify completion from the same business record.</p>
+                </div>
+                <div class="o_wati_otp_hero_actions">
+                    <button class="btn btn-light o_wati_otp_transactions_btn" t-on-click="openTransactions">
+                        <i class="fa fa-list-alt me-2"/> Transactions
+                    </button>
+                    <button class="btn btn-primary o_wati_otp_create_btn" t-on-click="createFlow">
+                        <i class="fa fa-plus me-2"/> Create OTP Flow
+                    </button>
+                </div>
+            </div>
+
+            <div class="o_wati_otp_kpis">
+                <div class="o_wati_otp_kpi">
+                    <div class="o_wati_otp_kpi_icon is-active"><i class="fa fa-bolt"/></div>
+                    <div><span>Active Flows</span><strong t-esc="state.kpis.active"/></div>
+                </div>
+                <div class="o_wati_otp_kpi">
+                    <div class="o_wati_otp_kpi_icon is-waiting"><i class="fa fa-clock-o"/></div>
+                    <div><span>Waiting Verification</span><strong t-esc="state.kpis.waiting"/></div>
+                </div>
+                <div class="o_wati_otp_kpi">
+                    <div class="o_wati_otp_kpi_icon is-verified"><i class="fa fa-check"/></div>
+                    <div><span>Verified Today</span><strong t-esc="state.kpis.verifiedToday"/></div>
+                </div>
+                <div class="o_wati_otp_kpi">
+                    <div class="o_wati_otp_kpi_icon is-failed"><i class="fa fa-exclamation"/></div>
+                    <div><span>Expired / Failed</span><strong t-esc="state.kpis.failed"/></div>
+                </div>
+            </div>
+
+            <div class="o_wati_otp_toolbar">
+                <div class="o_wati_otp_filters">
+                    <button t-att-class="'o_wati_otp_filter ' + (state.filter === 'all' ? 'is-active' : '')" t-on-click="() => this.setFilter('all')">All</button>
+                    <button t-att-class="'o_wati_otp_filter ' + (state.filter === 'active' ? 'is-active' : '')" t-on-click="() => this.setFilter('active')">Active</button>
+                    <button t-att-class="'o_wati_otp_filter ' + (state.filter === 'attention' ? 'is-active' : '')" t-on-click="() => this.setFilter('attention')">Needs Setup</button>
+                    <button t-att-class="'o_wati_otp_filter ' + (state.filter === 'inactive' ? 'is-active' : '')" t-on-click="() => this.setFilter('inactive')">Inactive</button>
+                </div>
+                <div class="o_wati_otp_search">
+                    <i class="fa fa-search"/>
+                    <input type="search" placeholder="Search by service, record type, or template..." t-model="state.query"/>
+                </div>
+            </div>
+
+            <div t-if="state.loading" class="o_wati_otp_loading">
+                <i class="fa fa-circle-o-notch fa-spin"/> Loading OTP Bridge...
+            </div>
+
+            <div t-else="" class="o_wati_otp_grid">
+                <t t-if="filteredFlows.length">
+                    <t t-foreach="filteredFlows" t-as="flow" t-key="flow.id">
+                        <article class="o_wati_otp_flow_card" t-on-click="() => this.openFlow(flow.id)">
+                            <div class="o_wati_otp_flow_top">
+                                <div class="o_wati_otp_flow_icon"><i class="fa fa-shield"/></div>
+                                <div class="o_wati_otp_flow_identity">
+                                    <div class="o_wati_otp_flow_title_row">
+                                        <h3 t-esc="flow.name"/>
+                                        <span t-att-class="'o_wati_otp_flow_state ' + (flow.active ? 'is-active' : 'is-inactive')">
+                                            <i t-att-class="flow.active ? 'fa fa-circle' : 'fa fa-pause-circle'"/>
+                                            <t t-esc="flow.active ? 'Active' : 'Inactive'"/>
+                                        </span>
+                                    </div>
+                                    <span class="o_wati_otp_model" t-esc="modelLabel(flow)"/>
+                                </div>
+                            </div>
+
+                            <div class="o_wati_otp_flow_summary">
+                                <div><span>Trigger</span><strong t-esc="triggerLabel(flow)"/></div>
+                                <div><span>Template</span><strong t-esc="templateLabel(flow)"/></div>
+                                <div><span>Validity</span><strong><t t-esc="flow.validity_minutes"/> min</strong></div>
+                                <div>
+                                    <span>Setup</span>
+                                    <strong t-att-class="flow.mapping_state === 'ready' ? 'is-ready' : 'is-attention'" t-esc="readinessLabel(flow)"/>
+                                </div>
+                            </div>
+
+                            <div class="o_wati_otp_flow_health">
+                                <div><span>Waiting</span><strong t-esc="flow.waiting_count || 0"/></div>
+                                <div><span class="is-success">Verified</span><strong t-esc="flow.verified_count || 0"/></div>
+                                <div><span class="is-failure">Failed</span><strong t-esc="flow.failed_count || 0"/></div>
+                            </div>
+
+                            <div class="o_wati_otp_flow_footer">
+                                <span>Open OTP Flow</span><i class="fa fa-arrow-right"/>
+                            </div>
+                        </article>
+                    </t>
+                </t>
+                <div t-else="" class="o_wati_otp_empty">
+                    <div class="o_wati_otp_empty_icon"><i class="fa fa-shield"/></div>
+                    <h3>No OTP flows found</h3>
+                    <p>Create a service flow or change the current filter.</p>
+                    <button class="btn btn-primary" t-on-click="createFlow">Create OTP Flow</button>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>
