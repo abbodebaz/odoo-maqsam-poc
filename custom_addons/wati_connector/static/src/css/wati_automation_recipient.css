@@ -122,6 +122,27 @@
     width: 100%;
 }
 
+.wati_recipient_select_head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.wati_detected_badge {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: #eef8f1;
+    color: #16814b;
+    font-size: .7rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
 .wati_recipient_select_wrap .o_field_widget,
 .wati_recipient_select_wrap .o_input,
 .wati_smart_recipient_select {
@@ -129,7 +150,31 @@
 }
 
 .wati_recipient_select_wrap .o_field_widget {
-    margin-top: 10px;
+    margin-top: 2px;
+}
+
+.wati_smart_recipient_select {
+    min-height: 46px !important;
+    padding: 0 42px 0 13px !important;
+    border: 1px solid #d7dce3 !important;
+    border-radius: 12px !important;
+    background-color: #fff !important;
+    color: #273142 !important;
+    box-shadow: none !important;
+    appearance: auto !important;
+    cursor: pointer;
+}
+
+.wati_smart_recipient_select:focus {
+    border-color: rgba(113, 75, 135, .65) !important;
+    box-shadow: 0 0 0 3px rgba(113, 75, 135, .08) !important;
+}
+
+.wati_recipient_rank_note {
+    display: block;
+    margin-top: 7px;
+    color: #8a94a1;
+    font-size: .74rem;
 }
 
 .wati_smart_recipient_empty {
@@ -282,5 +327,10 @@
 
     .wati_recipient_choices .o_radio_item {
         min-height: 68px;
+    }
+
+    .wati_recipient_select_head {
+        flex-direction: column;
+        gap: 8px;
     }
 }
