@@ -1,0 +1,70 @@
+.wati_otp_manual_button_card,
+.wati_otp_post_actions_card {
+    overflow: hidden;
+}
+
+.wati_otp_card_title_row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.wati_otp_card_title_row h3 {
+    margin-bottom: 4px;
+}
+
+.wati_otp_subcard {
+    margin-top: 14px;
+    padding: 16px 18px;
+    border: 1px solid #e7e2ec;
+    border-radius: 14px;
+    background: #fbf9fc;
+}
+
+.wati_otp_subcard > p {
+    margin: 4px 0 12px;
+}
+
+.wati_otp_action_examples {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 2px 0 16px;
+}
+
+.wati_otp_action_examples > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 10px;
+    border: 1px solid #e4ddeb;
+    border-radius: 999px;
+    background: #faf7fc;
+    color: #5f5669;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.wati_otp_action_examples .fa {
+    color: #7c5aa5;
+}
+
+.wati_otp_manual_button_card .o_field_radio,
+.wati_otp_post_actions_card,
+.wati_otp_post_actions_card .o_field_x2many {
+    direction: ltr;
+    text-align: left;
+}
+
+@media (max-width: 768px) {
+    .wati_otp_card_title_row {
+        flex-direction: column;
+    }
+
+    .wati_otp_action_examples {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
