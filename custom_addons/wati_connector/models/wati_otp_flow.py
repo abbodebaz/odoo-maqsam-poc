@@ -83,7 +83,6 @@ class WatiOtpFlow(models.Model):
         copy=False,
     )
 
-    # Step 1: source and trigger
     app_menu_id = fields.Many2one("ir.ui.menu", string="Application", ondelete="set null")
     available_app_menu_ids = fields.Many2many(
         "ir.ui.menu", compute="_compute_available_app_menu_ids", string="Available applications"
@@ -125,7 +124,6 @@ class WatiOtpFlow(models.Model):
     )
     trigger_value = fields.Char(string="Condition value")
 
-    # Step 2: recipient
     recipient_mode = fields.Selection(
         [
             ("auto", "Automatic — Recommended"),
@@ -145,7 +143,6 @@ class WatiOtpFlow(models.Model):
         string="Recipient preview", compute="_compute_recipient_state"
     )
 
-    # Step 3: WATI template and variables
     template_id = fields.Many2one(
         "wati.template",
         string="WATI template",
@@ -160,7 +157,6 @@ class WatiOtpFlow(models.Model):
         "wati.otp.variable.binding", "flow_id", string="Template variables", copy=True
     )
 
-    # Step 4: verification and completion
     code_length = fields.Integer(string="OTP length", default=6)
     validity_minutes = fields.Integer(string="Validity period (minutes)", default=10)
     max_attempts = fields.Integer(string="Maximum attempts", default=5)
@@ -190,7 +186,6 @@ class WatiOtpFlow(models.Model):
         domain="[('model_id', '=', model_id)]",
     )
 
-    # Internal actions
     base_automation_id = fields.Many2one(
         "base.automation", readonly=True, copy=False, ondelete="set null"
     )
@@ -198,6 +193,9 @@ class WatiOtpFlow(models.Model):
         "ir.actions.server", readonly=True, copy=False, ondelete="set null"
     )
     manual_action_id = fields.Many2one(
+        "ir.actions.server", readonly=True, copy=False, ondelete="set null"
+    )
+    verify_action_id = fields.Many2one(
         "ir.actions.server", readonly=True, copy=False, ondelete="set null"
     )
 
@@ -229,17 +227,27 @@ class WatiOtpFlow(models.Model):
 
     def write(self, vals):
         result = super().write(vals)
-        if not self.env.context.get("wati_otp_flow_internal") and set(vals) & {
-            "name", "active", "model_id", "trigger_method", "trigger_field_id",
-            "trigger_operator", "trigger_value",
-        }:
+        watched = {
+            "name",
+            "active",
+            "model_id",
+            "trigger_method",
+            "trigger_field_id",
+            "trigger_operator",
+            "trigger_value",
+        }
+        if not self.env.context.get("wati_otp_flow_internal") and set(vals) & watched:
             for flow in self:
                 flow._sync_trigger_actions()
         return result
 
     def unlink(self):
         automations = self.mapped("base_automation_id").sudo().exists()
-        actions = (self.mapped("trigger_server_action_id") | self.mapped("manual_action_id")).sudo().exists()
+        actions = (
+            self.mapped("trigger_server_action_id")
+            | self.mapped("manual_action_id")
+            | self.mapped("verify_action_id")
+        ).sudo().exists()
         result = super().unlink()
         if automations:
             automations.unlink()
@@ -255,19 +263,22 @@ class WatiOtpFlow(models.Model):
                 raise ValidationError(
                     _("Integration key must start with a lowercase letter and contain only lowercase letters, numbers, and underscores.")
                 )
-            if self.search_count([("id", "!=", flow.id), ("technical_key", "=", key)], limit=1):
+            duplicate = self.search_count(
+                [("id", "!=", flow.id), ("technical_key", "=", key)], limit=1
+            )
+            if duplicate:
                 raise ValidationError(_("This OTP integration key is already in use."))
 
     @api.constrains("code_length", "validity_minutes", "max_attempts", "resend_cooldown_seconds")
     def _check_security_settings(self):
         for flow in self:
-            if flow.code_length < 4 or flow.code_length > 8:
+            if not 4 <= flow.code_length <= 8:
                 raise ValidationError(_("OTP length must be between 4 and 8 digits."))
-            if flow.validity_minutes < 1 or flow.validity_minutes > 1440:
+            if not 1 <= flow.validity_minutes <= 1440:
                 raise ValidationError(_("OTP validity must be between 1 minute and 24 hours."))
-            if flow.max_attempts < 1 or flow.max_attempts > 20:
+            if not 1 <= flow.max_attempts <= 20:
                 raise ValidationError(_("Maximum OTP attempts must be between 1 and 20."))
-            if flow.resend_cooldown_seconds < 0 or flow.resend_cooldown_seconds > 3600:
+            if not 0 <= flow.resend_cooldown_seconds <= 3600:
                 raise ValidationError(_("Resend cooldown must be between 0 and 3600 seconds."))
 
     @api.depends_context("uid")
@@ -294,11 +305,15 @@ class WatiOtpFlow(models.Model):
             for action in menus.mapped("action"):
                 if action and action._name == "ir.actions.act_window" and action.res_model in self.env:
                     model_names.add(action.res_model)
-            candidates = IrModel.search([
-                ("model", "in", sorted(model_names)),
-                ("transient", "=", False),
-                ("abstract", "=", False),
-            ]) if model_names else IrModel.browse()
+            if not model_names:
+                continue
+            candidates = IrModel.search(
+                [
+                    ("model", "in", sorted(model_names)),
+                    ("transient", "=", False),
+                    ("abstract", "=", False),
+                ]
+            )
             flow.available_model_ids = candidates.filtered(
                 lambda model: Access.check(model.model, "read", False)
             )
@@ -353,7 +368,9 @@ class WatiOtpFlow(models.Model):
         def add(path, label, depth, score):
             if path and path not in seen and len(options) < limit:
                 seen.add(path)
-                options.append({"value": path, "label": label, "depth": depth, "score": score})
+                options.append(
+                    {"value": path, "label": label, "depth": depth, "score": score}
+                )
 
         def walk(current_model, prefix="", label_prefix="", depth=0, visited=None):
             if current_model not in self.env or len(options) >= limit:
@@ -363,7 +380,9 @@ class WatiOtpFlow(models.Model):
                 return
             visited.add(current_model)
             Model = self.env[current_model]
-            phone_fields = [f for f in Model._fields.values() if self._is_phone_like_field(f)]
+            phone_fields = [
+                field for field in Model._fields.values() if self._is_phone_like_field(field)
+            ]
             phone_fields.sort(key=self._phone_field_score)
             for field in phone_fields:
                 label = getattr(field, "string", False) or field.name
@@ -373,10 +392,11 @@ class WatiOtpFlow(models.Model):
             if depth >= max_depth:
                 return
             relations = [
-                f for f in Model._fields.values()
-                if getattr(f, "type", "") == "many2one"
-                and getattr(f, "comodel_name", False)
-                and f.name not in ("create_uid", "write_uid")
+                field
+                for field in Model._fields.values()
+                if getattr(field, "type", "") == "many2one"
+                and getattr(field, "comodel_name", False)
+                and field.name not in ("create_uid", "write_uid")
             ]
             relations.sort(key=self._relation_score)
             for field in relations:
@@ -389,20 +409,25 @@ class WatiOtpFlow(models.Model):
                 walk(relation, next_prefix, next_label, depth + 1, visited)
 
         walk(model_name)
-        return sorted(options, key=lambda item: (item["score"], item["label"].casefold()))[:limit]
+        return sorted(
+            options, key=lambda item: (item["score"], item["label"].casefold())
+        )[:limit]
+
+    def _visible_recipient_options(self):
+        self.ensure_one()
+        options = self._recipient_path_options() if self.model_id else []
+        mode = self.recipient_mode or "auto"
+        if mode == "direct":
+            return [item for item in options if item["depth"] == 0]
+        if mode == "related":
+            return [item for item in options if item["depth"] > 0]
+        return options
 
     @api.depends("model_id", "recipient_mode", "recipient_path")
     def _compute_recipient_state(self):
         for flow in self:
-            options = flow._recipient_path_options() if flow.model_id else []
+            visible = flow._visible_recipient_options()
             mode = flow.recipient_mode or "auto"
-            visible = (
-                [item for item in options if item["depth"] == 0]
-                if mode == "direct"
-                else [item for item in options if item["depth"] > 0]
-                if mode == "related"
-                else options
-            )
             flow.smart_recipient_metadata = {
                 "mode": "select" if visible else "empty",
                 "placeholder": (
@@ -413,43 +438,54 @@ class WatiOtpFlow(models.Model):
                 "options": [
                     {
                         "value": item["value"],
-                        "label": item["label"] + (" — Recommended" if index == 0 and len(visible) > 1 else ""),
+                        "label": item["label"]
+                        + (" — Recommended" if index == 0 and len(visible) > 1 else ""),
                     }
                     for index, item in enumerate(visible)
                 ],
             }
-            selected = next((item for item in options if item["value"] == (flow.recipient_path or "")), None)
+            selected = next(
+                (
+                    item
+                    for item in flow._recipient_path_options()
+                    if item["value"] == (flow.recipient_path or "")
+                ),
+                None,
+            )
             if mode == "auto":
                 flow.recipient_summary = _("Automatic")
-                flow.recipient_preview_note = _("Odoo will use the best available phone number at send time.")
+                flow.recipient_preview_note = _(
+                    "Odoo will use the best available phone number at send time."
+                )
             elif selected:
                 flow.recipient_summary = selected["label"]
-                flow.recipient_preview_note = _("WhatsApp will be sent using this phone field.")
+                flow.recipient_preview_note = _(
+                    "WhatsApp will be sent using this phone field."
+                )
             else:
                 flow.recipient_summary = _("Choose a phone field")
-                flow.recipient_preview_note = _("Select one of the phone fields detected from Odoo.")
+                flow.recipient_preview_note = _(
+                    "Select one of the phone fields detected from Odoo."
+                )
 
     @api.onchange("recipient_mode")
     def _onchange_recipient_mode(self):
         for flow in self:
             flow.recipient_path = False
-            options = flow._recipient_path_options() if flow.model_id else []
-            mode = flow.recipient_mode or "auto"
-            visible = (
-                [item for item in options if item["depth"] == 0]
-                if mode == "direct"
-                else [item for item in options if item["depth"] > 0]
-                if mode == "related"
-                else options
-            )
-            if mode != "auto" and len(visible) == 1:
+            visible = flow._visible_recipient_options()
+            if flow.recipient_mode != "auto" and len(visible) == 1:
                 flow.recipient_path = visible[0]["value"]
 
     @api.onchange("template_id")
     def _onchange_template(self):
+        Binding = self.env["wati.otp.variable.binding"]
         for flow in self:
             commands = [(5, 0, 0)]
-            variables = flow.template_id.variable_ids.sorted("position") if flow.template_id else self.env["wati.template.variable"]
+            variables = (
+                flow.template_id.variable_ids.sorted("position")
+                if flow.template_id
+                else Binding.browse()
+            )
             otp_index = None
             for index, variable in enumerate(variables):
                 name = _clean(variable.name).casefold()
@@ -458,18 +494,35 @@ class WatiOtpFlow(models.Model):
             if variables and otp_index is None:
                 otp_index = 0
             for index, variable in enumerate(variables):
-                commands.append((0, 0, {
-                    "sequence": variable.position or index + 1,
-                    "variable_name": variable.name,
-                    "source_type": "otp" if index == otp_index else "record",
-                }))
+                commands.append(
+                    (
+                        0,
+                        0,
+                        {
+                            "sequence": variable.position or index + 1,
+                            "variable_name": variable.name,
+                            "source_type": "otp" if index == otp_index else "record",
+                        },
+                    )
+                )
             flow.binding_ids = commands
 
     @api.depends(
-        "active", "model_id", "trigger_method", "trigger_field_id", "recipient_mode",
-        "recipient_path", "template_id", "template_id.status", "binding_ids.source_type",
-        "binding_ids.variable_name", "validity_minutes", "max_attempts", "completion_mode",
-        "completion_field_id", "completion_server_action_id",
+        "active",
+        "model_id",
+        "trigger_method",
+        "trigger_field_id",
+        "recipient_mode",
+        "recipient_path",
+        "template_id",
+        "template_id.status",
+        "binding_ids.source_type",
+        "binding_ids.variable_name",
+        "validity_minutes",
+        "max_attempts",
+        "completion_mode",
+        "completion_field_id",
+        "completion_server_action_id",
     )
     def _compute_readiness(self):
         for flow in self:
@@ -478,13 +531,17 @@ class WatiOtpFlow(models.Model):
                 missing.append("record type")
             if flow.trigger_method == "field" and not flow.trigger_field_id:
                 missing.append("trigger field")
-            if flow.recipient_mode in ("direct", "related") and not _clean(flow.recipient_path):
+            if flow.recipient_mode in ("direct", "related") and not _clean(
+                flow.recipient_path
+            ):
                 missing.append("recipient phone field")
             if not flow.template_id:
                 missing.append("WATI template")
             elif flow.template_id.status != "approved":
                 missing.append("approved template")
-            if flow.template_id and not flow.binding_ids.filtered(lambda line: line.source_type == "otp"):
+            if flow.template_id and not flow.binding_ids.filtered(
+                lambda line: line.source_type == "otp"
+            ):
                 missing.append("OTP template variable")
             if flow.completion_mode == "field" and not flow.completion_field_id:
                 missing.append("completion field")
@@ -503,8 +560,12 @@ class WatiOtpFlow(models.Model):
             domain = [("flow_id", "=", flow.id)]
             flow.transaction_count = Transaction.search_count(domain)
             flow.waiting_count = Transaction.search_count(domain + [("state", "=", "sent")])
-            flow.verified_count = Transaction.search_count(domain + [("state", "=", "verified")])
-            flow.failed_count = Transaction.search_count(domain + [("state", "in", ["failed", "expired", "locked"])])
+            flow.verified_count = Transaction.search_count(
+                domain + [("state", "=", "verified")]
+            )
+            flow.failed_count = Transaction.search_count(
+                domain + [("state", "in", ["failed", "expired", "locked"])]
+            )
 
     def _validate_step(self, step=None):
         self.ensure_one()
@@ -515,22 +576,39 @@ class WatiOtpFlow(models.Model):
             if self.trigger_method == "field" and not self.trigger_field_id:
                 raise UserError(_("Choose the field that should trigger the OTP."))
         elif step == "recipient":
-            if self.recipient_mode in ("direct", "related") and not _clean(self.recipient_path):
-                raise UserError(_("Choose which detected phone field should receive the OTP."))
+            if self.recipient_mode in ("direct", "related") and not _clean(
+                self.recipient_path
+            ):
+                raise UserError(
+                    _("Choose which detected phone field should receive the OTP.")
+                )
         elif step == "message":
             if not self.template_id or self.template_id.status != "approved":
                 raise UserError(_("Choose an approved WATI template."))
             variables = set(self.template_id.variable_ids.mapped("name"))
             mapped = set(self.binding_ids.mapped("variable_name"))
             if variables != mapped:
-                raise UserError(_("Template variables changed. Re-select the template to refresh variable mapping."))
+                raise UserError(
+                    _(
+                        "Template variables changed. Re-select the template to refresh variable mapping."
+                    )
+                )
             if not self.binding_ids.filtered(lambda line: line.source_type == "otp"):
                 raise UserError(_("Map one template variable to OTP Code."))
+            duplicate_otp = len(
+                self.binding_ids.filtered(lambda line: line.source_type == "otp")
+            )
+            if duplicate_otp != 1:
+                raise UserError(_("Exactly one template variable must use OTP Code."))
         elif step == "verification":
             if self.completion_mode == "field" and not self.completion_field_id:
-                raise UserError(_("Choose the field to update after successful verification."))
+                raise UserError(
+                    _("Choose the field to update after successful verification.")
+                )
             if self.completion_mode == "action" and not self.completion_server_action_id:
-                raise UserError(_("Choose the server action to run after successful verification."))
+                raise UserError(
+                    _("Choose the server action to run after successful verification.")
+                )
         return True
 
     def action_next_step(self):
@@ -571,12 +649,18 @@ class WatiOtpFlow(models.Model):
     def _sync_trigger_actions(self):
         self.ensure_one()
         automation = self.base_automation_id.sudo().exists()
-        automation_action = self.trigger_server_action_id.sudo().exists()
+        trigger_action = self.trigger_server_action_id.sudo().exists()
         manual_action = self.manual_action_id.sudo().exists()
+        verify_action = self.verify_action_id.sudo().exists()
 
-        can_field = bool(self.active and self.model_id and self.trigger_method == "field" and self.trigger_field_id)
+        can_field = bool(
+            self.active
+            and self.model_id
+            and self.trigger_method == "field"
+            and self.trigger_field_id
+        )
         if can_field:
-            auto_vals = {
+            automation_vals = {
                 "name": f"WATI OTP Flow · {self.name}",
                 "model_id": self.model_id.id,
                 "trigger": "on_create_or_write",
@@ -584,33 +668,38 @@ class WatiOtpFlow(models.Model):
                 "active": True,
             }
             if automation:
-                automation.write(auto_vals)
+                automation.write(automation_vals)
             else:
-                automation = self.env["base.automation"].sudo().create(auto_vals)
-                self.with_context(wati_otp_flow_internal=True).write({"base_automation_id": automation.id})
-            code = (
-                "if record:\n"
-                f"    env['wati.otp.flow'].sudo().browse({self.id})._execute_field_trigger(record)"
-            )
-            action_vals = {
+                automation = self.env["base.automation"].sudo().create(automation_vals)
+                self.with_context(wati_otp_flow_internal=True).write(
+                    {"base_automation_id": automation.id}
+                )
+            trigger_vals = {
                 "name": f"WATI OTP Flow · {self.name}",
                 "model_id": self.model_id.id,
                 "state": "code",
-                "code": code,
+                "code": (
+                    "if record:\n"
+                    f"    env['wati.otp.flow'].sudo().browse({self.id})._execute_field_trigger(record)"
+                ),
                 "usage": "base_automation",
                 "base_automation_id": automation.id,
             }
-            if automation_action:
-                automation_action.write(action_vals)
+            if trigger_action:
+                trigger_action.write(trigger_vals)
             else:
-                automation_action = self.env["ir.actions.server"].sudo().create(action_vals)
-                self.with_context(wati_otp_flow_internal=True).write({"trigger_server_action_id": automation_action.id})
+                trigger_action = self.env["ir.actions.server"].sudo().create(trigger_vals)
+                self.with_context(wati_otp_flow_internal=True).write(
+                    {"trigger_server_action_id": trigger_action.id}
+                )
         elif automation and automation.active:
             automation.write({"active": False})
 
-        can_manual = bool(self.active and self.model_id and self.trigger_method == "manual")
+        can_manual = bool(
+            self.active and self.model_id and self.trigger_method == "manual"
+        )
         if can_manual:
-            action_vals = {
+            manual_vals = {
                 "name": f"Send OTP · {self.name}",
                 "model_id": self.model_id.id,
                 "binding_model_id": self.model_id.id,
@@ -622,12 +711,37 @@ class WatiOtpFlow(models.Model):
                 ),
             }
             if manual_action:
-                manual_action.write(action_vals)
+                manual_action.write(manual_vals)
             else:
-                manual_action = self.env["ir.actions.server"].sudo().create(action_vals)
-                self.with_context(wati_otp_flow_internal=True).write({"manual_action_id": manual_action.id})
+                manual_action = self.env["ir.actions.server"].sudo().create(manual_vals)
+                self.with_context(wati_otp_flow_internal=True).write(
+                    {"manual_action_id": manual_action.id}
+                )
         elif manual_action and manual_action.binding_model_id:
             manual_action.write({"binding_model_id": False})
+
+        can_verify = bool(self.active and self.model_id)
+        if can_verify:
+            verify_vals = {
+                "name": f"Verify OTP · {self.name}",
+                "model_id": self.model_id.id,
+                "binding_model_id": self.model_id.id,
+                "binding_type": "action",
+                "state": "code",
+                "code": (
+                    "if records:\n"
+                    f"    action = env['wati.otp.flow'].sudo().browse({self.id}).action_verify_for_records(records)"
+                ),
+            }
+            if verify_action:
+                verify_action.write(verify_vals)
+            else:
+                verify_action = self.env["ir.actions.server"].sudo().create(verify_vals)
+                self.with_context(wati_otp_flow_internal=True).write(
+                    {"verify_action_id": verify_action.id}
+                )
+        elif verify_action and verify_action.binding_model_id:
+            verify_action.write({"binding_model_id": False})
 
     def _match_trigger(self, record):
         self.ensure_one()
@@ -644,7 +758,11 @@ class WatiOtpFlow(models.Model):
 
     def _execute_field_trigger(self, record):
         self.ensure_one()
-        if not self.active or self.trigger_method != "field" or record._name != self.model_name:
+        if (
+            not self.active
+            or self.trigger_method != "field"
+            or record._name != self.model_name
+        ):
             return False
         if not self._match_trigger(record):
             return False
@@ -652,9 +770,10 @@ class WatiOtpFlow(models.Model):
 
     @api.model
     def request_by_key(self, flow_key, record):
-        flow = self.sudo().search([
-            ("technical_key", "=", _clean(flow_key)), ("active", "=", True)
-        ], limit=1)
+        flow = self.sudo().search(
+            [("technical_key", "=", _clean(flow_key)), ("active", "=", True)],
+            limit=1,
+        )
         if not flow:
             raise UserError(_("No active OTP Flow was found for this integration key."))
         if not record or (flow.model_id and record._name != flow.model_name):
@@ -663,24 +782,55 @@ class WatiOtpFlow(models.Model):
 
     def action_request_for_records(self, records):
         self.ensure_one()
-        if not records:
-            return False
-        sent = 0
+        transactions = self.env["wati.otp.transaction"]
         for record in records:
             if record._name != self.model_name:
                 continue
-            if self.request_otp(record, source="manual"):
-                sent += 1
+            transaction = self.request_otp(record, source="manual")
+            if transaction and transaction.state == "sent":
+                transactions |= transaction
+        if len(transactions) == 1:
+            return transactions.action_open_verify()
         return {
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
                 "title": _("OTP sent"),
-                "message": _("Created and sent OTP for %s record(s).") % sent,
-                "type": "success" if sent else "warning",
+                "message": _("Created and sent OTP for %s record(s).") % len(transactions),
+                "type": "success" if transactions else "warning",
                 "sticky": False,
             },
         }
+
+    def action_verify_for_records(self, records):
+        self.ensure_one()
+        if not records:
+            return False
+        Transaction = self.env["wati.otp.transaction"].sudo()
+        ids = []
+        for record in records:
+            if record._name != self.model_name:
+                continue
+            transaction = Transaction.search(
+                [
+                    ("flow_id", "=", self.id),
+                    ("model_name", "=", record._name),
+                    ("res_id", "=", record.id),
+                    ("state", "=", "sent"),
+                ],
+                order="create_date desc, id desc",
+                limit=1,
+            )
+            if transaction:
+                ids.append(transaction.id)
+        transactions = Transaction.browse(ids).exists()
+        if not transactions:
+            raise UserError(_("There is no OTP waiting for verification on this record."))
+        if len(transactions) == 1:
+            return transactions.action_open_verify()
+        action = self.env.ref("wati_connector.action_wati_otp_transactions").read()[0]
+        action["domain"] = [("id", "in", transactions.ids)]
+        return action
 
     def _resolve_path(self, record, path):
         current = record
@@ -696,11 +846,10 @@ class WatiOtpFlow(models.Model):
 
     def _record_phone(self, record):
         self.ensure_one()
-        options = self._recipient_path_options()
         if self.recipient_mode in ("direct", "related"):
             paths = [self.recipient_path] if self.recipient_path else []
         else:
-            paths = [item["value"] for item in options]
+            paths = [item["value"] for item in self._recipient_path_options()]
         for path in paths:
             value = self._resolve_path(record, path)
             if value:
@@ -720,10 +869,17 @@ class WatiOtpFlow(models.Model):
         self.ensure_one()
         params = []
         for binding in self.binding_ids.sorted("sequence"):
-            value = self._binding_value(binding, record, code)
             if binding.source_type == "record" and not _clean(binding.field_path):
-                raise UserError(_("Choose an Odoo field for template variable %s.") % binding.variable_name)
-            params.append({"name": binding.variable_name, "value": _clean(value)})
+                raise UserError(
+                    _("Choose an Odoo field for template variable %s.")
+                    % binding.variable_name
+                )
+            params.append(
+                {
+                    "name": binding.variable_name,
+                    "value": _clean(self._binding_value(binding, record, code)),
+                }
+            )
         return params
 
     def request_otp(self, record, source="manual", resend_of=None):
@@ -739,44 +895,47 @@ class WatiOtpFlow(models.Model):
             raise UserError(_("No valid WhatsApp number was found for this record."))
 
         Transaction = self.env["wati.otp.transaction"].sudo()
-        previous = Transaction.search([
-            ("flow_id", "=", self.id),
-            ("model_name", "=", record._name),
-            ("res_id", "=", record.id),
-            ("state", "in", ["draft", "sent"]),
-        ])
-        if previous:
-            previous.write({"state": "cancelled", "cancelled_at": fields.Datetime.now()})
-
+        previous = Transaction.search(
+            [
+                ("flow_id", "=", self.id),
+                ("model_name", "=", record._name),
+                ("res_id", "=", record.id),
+                ("state", "in", ["draft", "sent"]),
+            ]
+        )
         code = _generate_code(self.code_length)
-        salt, digest = _hash_code(code)
+        salt_hex, digest = _hash_code(code)
         now = fields.Datetime.now()
-        transaction = Transaction.create({
-            "flow_id": self.id,
-            "state": "draft",
-            "model_name": record._name,
-            "res_id": record.id,
-            "res_name": record.display_name or "",
-            "phone_masked": _mask_phone(phone),
-            "code_salt": salt,
-            "code_hash": digest,
-            "expires_at": now + timedelta(minutes=self.validity_minutes),
-            "max_attempts": self.max_attempts,
-            "source": source,
-            "template_name": self.template_id.name,
-            "resend_of_id": resend_of.id if resend_of else False,
-            "requested_by_id": self.env.user.id,
-        })
-        transaction._send_generated_code(code, phone)
+        transaction = Transaction.create(
+            {
+                "flow_id": self.id,
+                "state": "draft",
+                "model_name": record._name,
+                "res_id": record.id,
+                "res_name": record.display_name or "",
+                "phone_masked": _mask_phone(phone),
+                "code_salt": salt_hex,
+                "code_hash": digest,
+                "expires_at": now + timedelta(minutes=self.validity_minutes),
+                "max_attempts": self.max_attempts,
+                "source": source,
+                "template_name": self.template_id.name,
+                "resend_of_id": resend_of.id if resend_of else False,
+                "requested_by_id": self.env.user.id,
+            }
+        )
+        if transaction._send_generated_code(code, phone) and previous:
+            previous.filtered(lambda tx: tx.id != transaction.id).write(
+                {"state": "cancelled", "cancelled_at": fields.Datetime.now()}
+            )
         return transaction
 
     def _coerce_completion_value(self, field_record, value):
-        ttype = field_record.ttype
-        if ttype == "boolean":
+        if field_record.ttype == "boolean":
             return _clean(value).casefold() in {"1", "true", "yes", "on"}
-        if ttype == "integer":
+        if field_record.ttype == "integer":
             return int(value or 0)
-        if ttype == "float":
+        if field_record.ttype == "float":
             return float(value or 0.0)
         return value or False
 
@@ -788,8 +947,12 @@ class WatiOtpFlow(models.Model):
         if self.completion_mode == "field":
             field = self.completion_field_id
             if not field or field.name not in record._fields:
-                raise UserError(_("The completion field is no longer available on this record."))
-            record.write({field.name: self._coerce_completion_value(field, self.completion_value)})
+                raise UserError(
+                    _("The completion field is no longer available on this record.")
+                )
+            record.write(
+                {field.name: self._coerce_completion_value(field, self.completion_value)}
+            )
         elif self.completion_mode == "action":
             action = self.completion_server_action_id.sudo().exists()
             if not action:
@@ -814,16 +977,22 @@ class WatiOtpVariableBinding(models.Model):
     _description = "OTP Template Variable Binding"
     _order = "sequence, id"
 
-    flow_id = fields.Many2one("wati.otp.flow", required=True, ondelete="cascade", index=True)
+    flow_id = fields.Many2one(
+        "wati.otp.flow", required=True, ondelete="cascade", index=True
+    )
     sequence = fields.Integer(default=10)
-    variable_name = fields.Char(string="Template variable", required=True, readonly=True)
+    variable_name = fields.Char(
+        string="Template variable", required=True, readonly=True
+    )
     source_type = fields.Selection(
         [("otp", "OTP Code"), ("record", "Odoo field"), ("static", "Fixed value")],
         default="record",
         required=True,
         string="Value source",
     )
-    field_path = fields.Char(string="Odoo field path", help="Example: partner_id.name")
+    field_path = fields.Char(
+        string="Odoo field path", help="Example: partner_id.name"
+    )
     static_value = fields.Char(string="Fixed value")
 
 
@@ -832,7 +1001,9 @@ class WatiOtpTransaction(models.Model):
     _description = "Managed OTP Transaction"
     _order = "create_date desc, id desc"
 
-    flow_id = fields.Many2one("wati.otp.flow", required=True, ondelete="cascade", index=True)
+    flow_id = fields.Many2one(
+        "wati.otp.flow", required=True, ondelete="cascade", index=True
+    )
     state = fields.Selection(
         [
             ("draft", "Preparing"),
@@ -853,7 +1024,12 @@ class WatiOtpTransaction(models.Model):
     phone_masked = fields.Char(string="WhatsApp number", readonly=True)
     template_name = fields.Char(string="Template", readonly=True)
     source = fields.Selection(
-        [("manual", "Manual"), ("field", "Field trigger"), ("hook", "Integration hook"), ("resend", "Resend")],
+        [
+            ("manual", "Manual"),
+            ("field", "Field trigger"),
+            ("hook", "Integration hook"),
+            ("resend", "Resend"),
+        ],
         default="manual",
         required=True,
         index=True,
@@ -862,13 +1038,21 @@ class WatiOtpTransaction(models.Model):
     code_hash = fields.Char(readonly=True, groups="base.group_system")
     expires_at = fields.Datetime(string="Expires at", required=True, index=True)
     attempt_count = fields.Integer(string="Attempts", default=0, readonly=True)
-    max_attempts = fields.Integer(string="Maximum attempts", default=5, readonly=True)
+    max_attempts = fields.Integer(
+        string="Maximum attempts", default=5, readonly=True
+    )
     sent_at = fields.Datetime(string="Sent at", readonly=True)
     verified_at = fields.Datetime(string="Verified at", readonly=True)
-    verified_by_id = fields.Many2one("res.users", string="Verified by", readonly=True)
+    verified_by_id = fields.Many2one(
+        "res.users", string="Verified by", readonly=True
+    )
     cancelled_at = fields.Datetime(string="Cancelled at", readonly=True)
-    requested_by_id = fields.Many2one("res.users", string="Requested by", readonly=True)
-    resend_of_id = fields.Many2one("wati.otp.transaction", string="Resend of", readonly=True, ondelete="set null")
+    requested_by_id = fields.Many2one(
+        "res.users", string="Requested by", readonly=True
+    )
+    resend_of_id = fields.Many2one(
+        "wati.otp.transaction", string="Resend of", readonly=True, ondelete="set null"
+    )
     error_message = fields.Text(string="Error", readonly=True)
     provider_excerpt = fields.Text(string="WATI response", readonly=True)
 
@@ -903,43 +1087,65 @@ class WatiOtpTransaction(models.Model):
         idem = WatiIdempotency(self.env)
         scope = f"wati:otpflow:{flow.id}"
         key = idem.digest(flow.technical_key, self.id, phone)
-        if not idem.acquire_durable(scope, key, ttl_seconds=max(60, flow.validity_minutes * 60)):
-            self.write({"state": "failed", "error_message": "Duplicate provider send was prevented."})
+        if not idem.acquire_durable(
+            scope, key, ttl_seconds=max(60, flow.validity_minutes * 60)
+        ):
+            self.write(
+                {
+                    "state": "failed",
+                    "error_message": "Duplicate provider send was prevented.",
+                }
+            )
             return False
         try:
             response = client.send_template_messages(body)
         except WatiConfigurationError as exc:
             idem.release_durable(scope, key)
-            self.write({"state": "failed", "error_message": "WATI API settings are incomplete."})
-            _logger.warning("WATI_OTP_FLOW_CONFIG_ERROR flow=%s error=%s", flow.id, exc)
+            self.write(
+                {"state": "failed", "error_message": "WATI API settings are incomplete."}
+            )
+            _logger.warning(
+                "WATI_OTP_FLOW_CONFIG_ERROR flow=%s error=%s", flow.id, exc
+            )
             return False
         except WatiRequestError as exc:
             detail = _clean(exc.response_text or str(exc))[:1000]
             if code:
                 detail = detail.replace(code, "[OTP REDACTED]")
-            self.write({
-                "state": "failed",
-                "error_message": (
-                    f"WATI rejected the OTP message ({exc.status_code})."
-                    if exc.status_code else "Unable to reach WATI while sending OTP."
-                ),
-                "provider_excerpt": detail,
-            })
+            self.write(
+                {
+                    "state": "failed",
+                    "error_message": (
+                        f"WATI rejected the OTP message ({exc.status_code})."
+                        if exc.status_code
+                        else "Unable to reach WATI while sending OTP."
+                    ),
+                    "provider_excerpt": detail,
+                }
+            )
             return False
         except Exception:
-            _logger.exception("Unexpected managed OTP send failure flow=%s transaction=%s", flow.id, self.id)
-            self.write({"state": "failed", "error_message": "Unexpected error while sending OTP."})
+            _logger.exception(
+                "Unexpected managed OTP send failure flow=%s transaction=%s",
+                flow.id,
+                self.id,
+            )
+            self.write(
+                {"state": "failed", "error_message": "Unexpected error while sending OTP."}
+            )
             return False
 
         excerpt = _clean(response.text or response.reason)[:1000]
         if code:
             excerpt = excerpt.replace(code, "[OTP REDACTED]")
-        self.write({
-            "state": "sent",
-            "sent_at": fields.Datetime.now(),
-            "provider_excerpt": excerpt,
-            "error_message": False,
-        })
+        self.write(
+            {
+                "state": "sent",
+                "sent_at": fields.Datetime.now(),
+                "provider_excerpt": excerpt,
+                "error_message": False,
+            }
+        )
         return True
 
     def verify_code(self, code):
@@ -952,8 +1158,11 @@ class WatiOtpTransaction(models.Model):
 
         attempts = self.attempt_count + 1
         salt = bytes.fromhex(self.code_salt or "")
-        _, digest = _hash_code(code, salt=salt)
-        valid = bool(self.code_hash and hmac.compare_digest(digest, self.code_hash))
+        unused_salt_hex, digest = _hash_code(code, salt=salt)
+        del unused_salt_hex
+        valid = bool(
+            self.code_hash and hmac.compare_digest(digest, self.code_hash)
+        )
         if not valid:
             values = {"attempt_count": attempts}
             if attempts >= self.max_attempts:
@@ -961,15 +1170,19 @@ class WatiOtpTransaction(models.Model):
             self.write(values)
             if values.get("state") == "locked":
                 return False, _("Too many incorrect attempts. Send a new OTP.")
-            return False, _("Incorrect OTP. %s attempt(s) remaining.") % (self.max_attempts - attempts)
+            return False, _("Incorrect OTP. %s attempt(s) remaining.") % (
+                self.max_attempts - attempts
+            )
 
         self.flow_id._apply_completion(self)
-        self.write({
-            "state": "verified",
-            "attempt_count": attempts,
-            "verified_at": fields.Datetime.now(),
-            "verified_by_id": self.env.user.id,
-        })
+        self.write(
+            {
+                "state": "verified",
+                "attempt_count": attempts,
+                "verified_at": fields.Datetime.now(),
+                "verified_by_id": self.env.user.id,
+            }
+        )
         return True, _("OTP verified successfully.")
 
     def action_open_verify(self):
@@ -990,25 +1203,30 @@ class WatiOtpTransaction(models.Model):
             raise UserError(_("Resend is disabled for this OTP Flow."))
         if self.sent_at and flow.resend_cooldown_seconds:
             ready_at = self.sent_at + timedelta(seconds=flow.resend_cooldown_seconds)
-            if fields.Datetime.now() < ready_at:
-                remaining = int((ready_at - fields.Datetime.now()).total_seconds()) + 1
-                raise UserError(_("Please wait %s second(s) before resending.") % remaining)
+            now = fields.Datetime.now()
+            if now < ready_at:
+                remaining = int((ready_at - now).total_seconds()) + 1
+                raise UserError(
+                    _("Please wait %s second(s) before resending.") % remaining
+                )
         record = self._get_record()
         if not record:
             raise UserError(_("The source record no longer exists."))
-        return flow.request_otp(record, source="resend", resend_of=self).action_open_verify()
+        transaction = flow.request_otp(record, source="resend", resend_of=self)
+        return transaction.action_open_verify()
 
     def action_cancel(self):
-        self.filtered(lambda tx: tx.state in ("draft", "sent")).write({
-            "state": "cancelled", "cancelled_at": fields.Datetime.now()
-        })
+        self.filtered(lambda tx: tx.state in ("draft", "sent")).write(
+            {"state": "cancelled", "cancelled_at": fields.Datetime.now()}
+        )
         return True
 
     @api.model
     def _cron_expire_transactions(self):
-        expired = self.sudo().search([
-            ("state", "=", "sent"), ("expires_at", "<", fields.Datetime.now())
-        ], limit=1000)
+        expired = self.sudo().search(
+            [("state", "=", "sent"), ("expires_at", "<", fields.Datetime.now())],
+            limit=1000,
+        )
         if expired:
             expired.write({"state": "expired"})
         return len(expired)
@@ -1018,8 +1236,10 @@ class WatiOtpVerifyWizard(models.TransientModel):
     _name = "wati.otp.verify.wizard"
     _description = "Verify Managed OTP"
 
-    transaction_id = fields.Many2one("wati.otp.transaction", required=True, readonly=True)
-    code = fields.Char(string="6-digit OTP", required=True)
+    transaction_id = fields.Many2one(
+        "wati.otp.transaction", required=True, readonly=True
+    )
+    code = fields.Char(string="OTP code", required=True)
 
     def action_verify(self):
         self.ensure_one()
@@ -1027,14 +1247,12 @@ class WatiOtpVerifyWizard(models.TransientModel):
         if not code.isdigit():
             raise UserError(_("Enter the numeric OTP sent to the customer."))
         ok, message = self.transaction_id.verify_code(code)
-        return {
-            "type": "ir.actions.client",
-            "tag": "display_notification",
-            "params": {
-                "title": _("OTP verified") if ok else _("OTP not verified"),
-                "message": message,
-                "type": "success" if ok else "warning",
-                "sticky": not ok,
-                "next": {"type": "ir.actions.act_window_close"} if ok else False,
-            },
+        params = {
+            "title": _("OTP verified") if ok else _("OTP not verified"),
+            "message": message,
+            "type": "success" if ok else "warning",
+            "sticky": not ok,
         }
+        if ok:
+            params["next"] = {"type": "ir.actions.act_window_close"}
+        return {"type": "ir.actions.client", "tag": "display_notification", "params": params}
