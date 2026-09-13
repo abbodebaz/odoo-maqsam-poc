@@ -9,7 +9,7 @@
             <xpath expr="//div[hasclass('wati_otp_security_note')]" position="replace">
                 <div class="wati_otp_security_note">
                     <i class="fa fa-lock" title="Internal audit"/>
-                    Internal audit mode: the exact OTP is retained for authorized WATI administrators, while salted cryptographic verification is still used to validate the customer code.
+                    Internal audit mode: the exact OTP is retained for internal employees, while salted cryptographic verification is still used to validate the customer code.
                 </div>
             </xpath>
         </field>
@@ -25,7 +25,7 @@
                 <field name="sent_at" optional="show"/>
             </field>
             <field name="state" position="after">
-                <field name="audit_otp_code" string="OTP Code" optional="show" groups="wati_connector.group_wati_admin"/>
+                <field name="audit_otp_code" string="OTP Code" optional="show" groups="base.group_user"/>
             </field>
             <field name="flow_id" position="after">
                 <field name="application_name" optional="show"/>
@@ -36,7 +36,7 @@
                 <field name="trigger_snapshot" optional="hide"/>
             </field>
             <field name="phone_masked" position="after">
-                <field name="recipient_phone" optional="hide" groups="wati_connector.group_wati_admin"/>
+                <field name="recipient_phone" optional="show" groups="base.group_user"/>
             </field>
             <field name="verified_by_id" position="after">
                 <field name="requested_by_id" optional="show"/>
@@ -56,8 +56,21 @@
 
             <xpath expr="//sheet/div[hasclass('alert-info')]" position="replace">
                 <div class="alert alert-info" role="alert">
-                    <strong>Internal audit:</strong> Authorized WATI administrators can see the exact OTP and full recipient number for traceability. The transaction also keeps its source application, record type, trigger, template, requester, and verifier.
+                    <strong>Internal audit:</strong> Internal Odoo users can see the exact OTP and full recipient number for traceability. The transaction also keeps its source application, record type, trigger, template, requester, and verifier.
                 </div>
+            </xpath>
+
+            <xpath expr="//sheet/div[hasclass('alert-info')]" position="after">
+                <group string="OTP evidence" groups="base.group_user">
+                    <group>
+                        <field name="audit_otp_code" string="OTP Code" readonly="1"/>
+                        <field name="recipient_phone" string="Recipient number" readonly="1"/>
+                    </group>
+                    <group>
+                        <field name="template_name" readonly="1"/>
+                        <field name="source" readonly="1"/>
+                    </group>
+                </group>
             </xpath>
 
             <field name="flow_id" position="after">
@@ -70,10 +83,6 @@
             <field name="res_id" position="after">
                 <field name="trigger_snapshot" readonly="1"/>
                 <field name="recipient_source_snapshot" readonly="1"/>
-            </field>
-            <field name="phone_masked" position="after">
-                <field name="recipient_phone" readonly="1" groups="wati_connector.group_wati_admin"/>
-                <field name="audit_otp_code" readonly="1" groups="wati_connector.group_wati_admin"/>
             </field>
         </field>
     </record>
