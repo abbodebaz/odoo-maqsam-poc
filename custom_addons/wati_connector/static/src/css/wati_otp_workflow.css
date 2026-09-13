@@ -1,5 +1,6 @@
 .wati_otp_manual_button_card,
-.wati_otp_post_actions_card {
+.wati_otp_post_actions_card,
+.wati_otp_universal_entry_card {
     overflow: hidden;
 }
 
@@ -53,18 +54,176 @@
 
 .wati_otp_manual_button_card .o_field_radio,
 .wati_otp_post_actions_card,
-.wati_otp_post_actions_card .o_field_x2many {
+.wati_otp_post_actions_card .o_field_x2many,
+.wati_otp_universal_entry_card {
     direction: ltr;
     text-align: left;
 }
 
+.wati_otp_entry_section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 0;
+    padding: 18px;
+    background: #fcfbfd;
+}
+
+.wati_otp_entry_section_title {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 13px;
+    border-bottom: 1px solid #e9e4ee;
+}
+
+.wati_otp_entry_section_title h4 {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.wati_otp_entry_section_title p {
+    font-size: 13px;
+}
+
+.wati_otp_entry_option {
+    margin-bottom: 2px;
+    padding: 14px;
+    border: 1px solid #e8e3ed;
+    border-radius: 12px;
+    background: #fff;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.wati_otp_entry_option:hover {
+    border-color: #d6cbe0;
+    box-shadow: 0 3px 12px rgba(71, 49, 91, 0.06);
+}
+
+.wati_otp_entry_option_head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.wati_otp_entry_identity {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    min-width: 0;
+}
+
+.wati_otp_entry_identity strong {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 14px;
+}
+
+.wati_otp_entry_identity p {
+    margin: 0;
+    color: #746c7c;
+    font-size: 12.5px;
+    line-height: 1.45;
+}
+
+.wati_otp_entry_icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 34px;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: #f2edf7;
+    color: #76529b;
+}
+
+.wati_otp_entry_switch {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    flex: 0 0 auto;
+}
+
+.wati_otp_entry_switch .o_field_widget {
+    margin: 0;
+}
+
+.wati_otp_entry_use {
+    margin: 10px 0 0 44px;
+    color: #5e5666;
+    font-size: 12.5px;
+    line-height: 1.45;
+}
+
+.wati_otp_entry_details {
+    margin: 11px 0 0 44px;
+    padding: 11px 12px;
+    border-radius: 10px;
+    background: #f8f5fa;
+}
+
+.wati_otp_entry_details_label {
+    display: inline-block;
+    margin-bottom: 4px;
+    color: #6f4d93;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.wati_otp_entry_details p {
+    margin: 0 0 7px;
+    color: #6d6575;
+    font-size: 12.5px;
+    line-height: 1.45;
+}
+
+.wati_otp_entry_details .o_field_widget,
+.wati_otp_entry_details input {
+    width: 100%;
+    direction: ltr;
+    text-align: left;
+}
+
+.wati_otp_entry_details .o_field_widget {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size: 12px;
+}
+
+.wati_otp_universal_entry_card .badge {
+    white-space: nowrap;
+}
+
+@media (max-width: 992px) {
+    .wati_otp_entry_section {
+        height: auto !important;
+    }
+}
+
 @media (max-width: 768px) {
-    .wati_otp_card_title_row {
+    .wati_otp_card_title_row,
+    .wati_otp_entry_section_title,
+    .wati_otp_entry_option_head {
         flex-direction: column;
     }
 
     .wati_otp_action_examples {
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .wati_otp_entry_switch {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .wati_otp_entry_use,
+    .wati_otp_entry_details {
+        margin-left: 0;
     }
 }
