@@ -17,11 +17,11 @@ class WatiAutomationRecipient(models.Model):
 
     recipient_mode = fields.Selection(
         [
-            ("auto", "Customer number automatically — Recommended"),
-            ("direct", "Number of register"),
-            ("related", "Number of a linked record"),
+            ("auto", "Automatic — Recommended"),
+            ("direct", "Phone from this record"),
+            ("related", "Phone from a related record"),
         ],
-        string="How to choose the recipient",
+        string="Recipient source",
         default="auto",
         copy=True,
     )
@@ -152,9 +152,9 @@ class WatiAutomationRecipient(models.Model):
             rule.smart_recipient_metadata = {
                 "mode": "select" if visible else "empty",
                 "placeholder": (
-                    "Select the Phone field from the record"
+                    "Select a phone field from this record"
                     if mode == "direct"
-                    else "Select the number from a linked record"
+                    else "Select a phone field from a related record"
                 ),
                 "options": [
                     {"value": item["value"], "label": item["label"]}
