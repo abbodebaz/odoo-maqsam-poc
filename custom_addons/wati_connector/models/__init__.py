@@ -29,6 +29,7 @@ from . import wati_automation_template_invariant
 from . import wati_automation_template_integrity
 from . import wati_automation_review
 from . import wati_automation_template_contract
+from . import wati_automation_template_picker
 from . import wati_webhook_monitor
 from . import wati_webhook_monitor_backfill
 from . import wati_workspace
