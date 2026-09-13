@@ -21,7 +21,9 @@
 
                     <div class="wati_recipient_mode_box">
                         <span class="wati_section_label">Recipient source</span>
-                        <field name="recipient_mode" widget="radio" options="{'horizontal': True}" nolabel="1"/>
+                        <div class="wati_recipient_choices">
+                            <field name="recipient_mode" widget="radio" options="{'horizontal': True}" nolabel="1"/>
+                        </div>
                         <div class="wati_recipient_mode_help">
                             <div invisible="recipient_mode != 'auto'">
                                 <strong>Automatic</strong>
@@ -71,8 +73,13 @@
 
                     <div class="wati_policy_box wati_recipient_dedup">
                         <div class="wati_policy_title">Duplicate protection</div>
-                        <field name="once_per_record" string="Send this automation only once per record"/>
-                        <p>Recommended for most automations. Turn it off only when the same record should be allowed to trigger and send again later.</p>
+                        <div class="wati_dedup_control">
+                            <field name="once_per_record" nolabel="1"/>
+                            <div class="wati_dedup_copy">
+                                <strong>Send only once per record</strong>
+                                <p>Keep this on to prevent the same automation from sending duplicate WhatsApp messages to the same record. Turn it off only if that record should be allowed to trigger again later.</p>
+                            </div>
+                        </div>
                     </div>
 
                     <details class="wati_recipient_advanced" groups="base.group_system">
@@ -96,8 +103,8 @@
                     </details>
 
                     <div class="wati_builder_nav">
-                        <button name="action_previous_step" type="object" string="Previous" icon="fa-arrow-right" class="btn-secondary"/>
-                        <button name="action_next_step" type="object" string="Next: The message" icon="fa-arrow-left" class="btn-primary wati_builder_next"/>
+                        <button name="action_previous_step" type="object" string="Previous: Trigger" icon="fa-arrow-left" class="btn-secondary"/>
+                        <button name="action_next_step" type="object" string="Next: Message" icon="fa-arrow-right" class="btn-primary wati_builder_next"/>
                     </div>
                 </div>
             </xpath>
