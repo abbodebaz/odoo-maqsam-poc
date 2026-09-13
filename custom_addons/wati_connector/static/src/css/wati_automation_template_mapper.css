@@ -166,6 +166,105 @@
     font-weight: 750;
 }
 
+.wati_template_validation_strip {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px 14px;
+    align-items: center;
+    padding: 11px 12px;
+    border: 1px solid #e4e7ec;
+    border-radius: 13px;
+    background: #fafbfc;
+}
+
+.wati_validation_main,
+.wati_validation_actions {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+}
+
+.wati_validation_main strong,
+.wati_validation_main small {
+    display: block;
+}
+
+.wati_validation_main strong {
+    color: #344054;
+    font-size: .82rem;
+}
+
+.wati_validation_main small {
+    margin-top: 2px;
+    color: #8a93a0;
+    font-size: .72rem;
+}
+
+.wati_validation_icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    flex: 0 0 30px;
+    border-radius: 9px;
+    color: #714b87;
+    background: #f1edf4;
+}
+
+.wati_validation_actions {
+    justify-content: flex-end;
+}
+
+.wati_validation_actions .btn {
+    min-height: 32px;
+    border-radius: 9px !important;
+    font-size: .76rem;
+}
+
+.wati_template_validation_strip > .o_field_widget:last-child {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: #b42318;
+    font-size: .75rem;
+}
+
+.wati_contract_notice {
+    padding: 11px 13px;
+    border: 1px solid #f3d5a5;
+    border-radius: 13px;
+    background: #fffbeb;
+    color: #704b13;
+}
+
+.wati_contract_notice_head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.wati_contract_notice strong,
+.wati_contract_notice small {
+    display: block;
+}
+
+.wati_contract_notice strong {
+    font-size: .82rem;
+}
+
+.wati_contract_notice small {
+    margin-top: 2px;
+    color: #8a641f;
+    font-size: .72rem;
+}
+
+.wati_contract_notice > .o_field_widget {
+    margin-top: 7px;
+    font-size: .75rem;
+}
+
 .wati_template_preview_smart {
     margin: 0 !important;
     padding: 0 !important;
@@ -485,11 +584,18 @@
     }
 
     .wati_template_preview_head,
-    .wati_mapping_head_smart {
+    .wati_mapping_head_smart,
+    .wati_template_validation_strip,
+    .wati_contract_notice_head {
         align-items: stretch !important;
         flex-direction: column;
     }
 
+    .wati_template_validation_strip {
+        display: flex;
+    }
+
+    .wati_validation_actions,
     .wati_mapping_actions {
         justify-content: flex-start;
     }
