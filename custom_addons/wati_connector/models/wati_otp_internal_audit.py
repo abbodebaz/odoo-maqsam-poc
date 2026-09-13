@@ -49,14 +49,14 @@ class WatiOtpTransactionInternalAudit(models.Model):
         string="OTP Code",
         readonly=True,
         copy=False,
-        groups="wati_connector.group_wati_admin",
+        groups="base.group_user",
         help="Exact OTP retained for Bayt Alebaa internal audit and support traceability.",
     )
     recipient_phone = fields.Char(
         string="Recipient number",
         readonly=True,
         copy=False,
-        groups="wati_connector.group_wati_admin",
+        groups="base.group_user",
     )
     application_name = fields.Char(string="Application", readonly=True, copy=False)
     record_type_name = fields.Char(string="Record type", readonly=True, copy=False)
