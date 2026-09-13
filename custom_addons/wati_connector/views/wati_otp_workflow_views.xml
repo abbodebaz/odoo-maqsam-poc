@@ -6,6 +6,145 @@
         <field name="inherit_id" ref="wati_connector.view_wati_otp_flow_form"/>
         <field name="priority">280</field>
         <field name="arch" type="xml">
+            <!-- Contextual help for the core OTP builder choices. -->
+            <field name="app_menu_id" position="before">
+                <div class="d-flex align-items-center gap-1 mb-1">
+                    <strong>Application</strong>
+                    <i class="fa fa-question-circle text-muted" title="Choose the Odoo application that contains the service or record you want to protect with OTP."/>
+                </div>
+            </field>
+            <field name="app_menu_id" position="attributes">
+                <attribute name="nolabel">1</attribute>
+            </field>
+
+            <field name="model_id" position="before">
+                <div class="d-flex align-items-center gap-1 mb-1 mt-2">
+                    <strong>Record type</strong>
+                    <i class="fa fa-question-circle text-muted" title="Choose the exact Odoo record type the OTP flow will work with, for example Task, Lead, Ticket, or Service Completion Task."/>
+                </div>
+            </field>
+            <field name="model_id" position="attributes">
+                <attribute name="nolabel">1</attribute>
+            </field>
+
+            <field name="trigger_method" position="before">
+                <div class="d-flex align-items-center gap-1 mb-1">
+                    <strong>Trigger method</strong>
+                    <i class="fa fa-question-circle text-muted" title="Manual action: an employee starts OTP from a button. When a field changes: Odoo sends OTP automatically when a field matches a condition. Integration hook: a custom module or button calls OTP Bridge programmatically."/>
+                </div>
+            </field>
+            <field name="trigger_method" position="attributes">
+                <attribute name="nolabel">1</attribute>
+            </field>
+
+            <field name="trigger_field_id" position="before">
+                <div class="d-flex align-items-center gap-1 mb-1">
+                    <strong>Trigger field</strong>
+                    <i class="fa fa-question-circle text-muted" title="The field Odoo watches to decide when the OTP should be sent, for example Stage, Status, or Approval state."/>
+                </div>
+            </field>
+            <field name="trigger_field_id" position="attributes">
+                <attribute name="nolabel">1</attribute>
+            </field>
+
+            <field name="trigger_operator" position="before">
+                <div class="d-flex align-items-center gap-1 mb-1">
+                    <strong>Trigger condition</strong>
+                    <i class="fa fa-question-circle text-muted" title="Choose how the trigger field should be evaluated: Equals checks a specific value, Has a value checks that it is not empty, and Is true checks a boolean field."/>
+                </div>
+            </field>
+            <field name="trigger_operator" position="attributes">
+                <attribute name="nolabel">1</attribute>
+            </field>
+
+            <field name="trigger_value" position="before">
+                <div class="d-flex align-items-center gap-1 mb-1 mt-2" invisible="trigger_operator != 'equals'">
+                    <strong>Condition value</strong>
+                    <i class="fa fa-question-circle text-muted" title="Enter the visible value that should trigger OTP, for example Resolved, Approved, or Ready for Confirmation."/>
+                </div>
+            </field>
+            <field name="trigger_value" position="attributes">
+                <attribute name="nolabel">1</attribute>
+            </field>
+
+            <field name="recipient_mode" position="before">
+                <div class="d-flex align-items-center gap-1 mb-2">
+                    <strong>Recipient source</strong>
+                    <i class="fa fa-question-circle text-muted" title="Automatic lets OTP Bridge find the best customer number. Phone from this record uses a phone field directly on the record. Phone from a related record follows a relation such as Task → Customer → Mobile."/>
+                </div>
+            </field>
+
+            <field name="template_id" position="before">
+                <div class="d-flex align-items-center gap-1 mb-1">
+                    <strong>WATI template</strong>
+                    <i class="fa fa-question-circle text-muted" title="Choose the approved WhatsApp template used to send this OTP. One template variable must be mapped to OTP Code."/>
+                </div>
+            </field>
+            <field name="template_id" position="attributes">
+                <attribute name="nolabel">1</attribute>
+            </field>
+
+            <field name="channel_number" position="before">
+                <div class="d-flex align-items-center gap-1 mb-1">
+                    <strong>WATI channel number</strong>
+                    <i class="fa fa-question-circle text-muted" title="Optional. Use this only when this OTP flow must send from a specific WATI WhatsApp number. Leave it blank to use the normal/default channel."/>
+                </div>
+            </field>
+            <field name="channel_number" position="attributes">
+                <attribute name="nolabel">1</attribute>
+            </field>
+
+            <field name="code_length" position="before">
+                <div class="d-flex align-items-center gap-1 mb-1">
+                    <strong>OTP length</strong>
+                    <i class="fa fa-question-circle text-muted" title="Number of digits generated for the OTP. Six digits is recommended for normal service confirmation."/>
+                </div>
+            </field>
+            <field name="code_length" position="attributes">
+                <attribute name="nolabel">1</attribute>
+            </field>
+
+            <field name="validity_minutes" position="before">
+                <div class="d-flex align-items-center gap-1 mb-1 mt-2">
+                    <strong>Validity period</strong>
+                    <i class="fa fa-question-circle text-muted" title="How long the OTP remains valid after it is sent. After this time the customer must request a new code."/>
+                </div>
+            </field>
+            <field name="validity_minutes" position="attributes">
+                <attribute name="nolabel">1</attribute>
+            </field>
+
+            <field name="max_attempts" position="before">
+                <div class="d-flex align-items-center gap-1 mb-1">
+                    <strong>Maximum attempts</strong>
+                    <i class="fa fa-question-circle text-muted" title="How many incorrect verification attempts are allowed before the OTP transaction is locked."/>
+                </div>
+            </field>
+            <field name="max_attempts" position="attributes">
+                <attribute name="nolabel">1</attribute>
+            </field>
+
+            <field name="allow_resend" position="before">
+                <div class="d-flex align-items-center gap-1 mb-1 mt-2">
+                    <strong>Allow resend</strong>
+                    <i class="fa fa-question-circle text-muted" title="Allow employees or the portal to send a replacement OTP if the customer did not receive the first code. The previous active code is invalidated."/>
+                </div>
+            </field>
+            <field name="allow_resend" position="attributes">
+                <attribute name="nolabel">1</attribute>
+            </field>
+
+            <field name="resend_cooldown_seconds" position="before">
+                <div class="d-flex align-items-center gap-1 mb-1 mt-2" invisible="not allow_resend">
+                    <strong>Resend cooldown</strong>
+                    <i class="fa fa-question-circle text-muted" title="Minimum time users must wait before requesting another OTP. This prevents accidental repeated messages."/>
+                </div>
+            </field>
+            <field name="resend_cooldown_seconds" position="attributes">
+                <attribute name="nolabel">1</attribute>
+            </field>
+
+            <!-- Manual button builder. -->
             <xpath expr="//field[@name='trigger_method']/ancestor::div[contains(@class, 'wati_otp_card')][1]" position="after">
                 <div class="wati_otp_card wati_otp_manual_button_card" invisible="trigger_method != 'manual'">
                     <div class="wati_otp_card_title_row">
@@ -17,26 +156,54 @@
                     </div>
                     <group>
                         <group>
-                            <field name="manual_button_placement" widget="radio" options="{'horizontal': True}"/>
-                            <field name="manual_button_label" placeholder="Send OTP"/>
+                            <div class="d-flex align-items-center gap-1 mb-1">
+                                <strong>Button location</strong>
+                                <i class="fa fa-question-circle text-muted" title="Form header: a visible button at the top of the record. Smart button area: a compact button in the record's statistics/button box. Actions menu: an item inside Odoo's Actions menu."/>
+                            </div>
+                            <field name="manual_button_placement" widget="radio" options="{'horizontal': True}" nolabel="1"/>
+                            <div class="d-flex align-items-center gap-1 mb-1 mt-2">
+                                <strong>Button label</strong>
+                                <i class="fa fa-question-circle text-muted" title="The text employees will see on the OTP button, for example Send OTP, Confirm customer, or Close with OTP."/>
+                            </div>
+                            <field name="manual_button_label" placeholder="Send OTP" nolabel="1"/>
                         </group>
                         <group>
+                            <div class="d-flex align-items-center gap-1 mb-1" invisible="manual_button_placement == 'actions'">
+                                <strong>Form screen</strong>
+                                <i class="fa fa-question-circle text-muted" title="Choose the original Odoo form where the OTP button should be installed. OTP Bridge generated/inherited views are technical views and should not be selected."/>
+                            </div>
                             <field name="manual_view_id"
+                                   nolabel="1"
                                    options="{'no_create': True}"
+                                   domain="[('model', '=', model_name), ('type', '=', 'form'), ('mode', '=', 'primary'), ('active', '=', True)]"
                                    invisible="manual_button_placement == 'actions'"/>
                             <field name="generated_manual_view_id" invisible="1"/>
                         </group>
                     </group>
                     <div class="wati_otp_subcard">
                         <strong>Show button only when <span class="text-muted fw-normal">(optional)</span></strong>
+                        <i class="fa fa-question-circle text-muted ms-1" title="Use this when the OTP button should appear only at a specific stage or status. Leave it empty to show the button on every record."/>
                         <p class="text-muted">Example: show Send OTP only when Stage equals Resolved.</p>
                         <group>
                             <group>
-                                <field name="manual_condition_field_id" options="{'no_create': True}"/>
+                                <div class="d-flex align-items-center gap-1 mb-1">
+                                    <strong>Visibility field</strong>
+                                    <i class="fa fa-question-circle text-muted" title="Choose the field that controls whether the OTP button is visible, for example Status or Stage."/>
+                                </div>
+                                <field name="manual_condition_field_id" options="{'no_create': True}" nolabel="1"/>
                             </group>
                             <group invisible="not manual_condition_field_id">
-                                <field name="manual_condition_operator"/>
+                                <div class="d-flex align-items-center gap-1 mb-1">
+                                    <strong>Button condition</strong>
+                                    <i class="fa fa-question-circle text-muted" title="Equals shows the button only when the field matches a specific value. Has a value shows it whenever the field is not empty."/>
+                                </div>
+                                <field name="manual_condition_operator" nolabel="1"/>
+                                <div class="d-flex align-items-center gap-1 mb-1 mt-2" invisible="manual_condition_operator != 'equals'">
+                                    <strong>Condition value</strong>
+                                    <i class="fa fa-question-circle text-muted" title="Enter the visible value users see in Odoo, for example Ready for Confirmation, Resolved, or Approved."/>
+                                </div>
                                 <field name="manual_condition_value"
+                                       nolabel="1"
                                        invisible="manual_condition_operator != 'equals'"
                                        placeholder="Example: Resolved"/>
                             </group>
@@ -64,7 +231,7 @@
                 <div class="wati_otp_card wati_otp_post_actions_card">
                     <div class="wati_otp_card_title_row">
                         <div>
-                            <h3>After successful verification</h3>
+                            <h3>After successful verification <i class="fa fa-question-circle text-muted" title="These actions run only after the customer enters the correct OTP. Add more than one action and Odoo will execute them from top to bottom."/></h3>
                             <p class="text-muted mb-0">Add one or more actions. Odoo runs them from top to bottom after the OTP is correct.</p>
                         </div>
                         <span class="badge rounded-pill text-bg-light">Multiple actions</span>
@@ -127,7 +294,11 @@
                             <field name="sequence"/>
                         </group>
                         <group>
-                            <field name="action_type" widget="radio"/>
+                            <div class="d-flex align-items-center gap-1 mb-1">
+                                <strong>Action</strong>
+                                <i class="fa fa-question-circle text-muted" title="Update an Odoo field changes data on the source record. Send a WhatsApp template sends a follow-up message. Run an Odoo server action executes an existing advanced Odoo workflow."/>
+                            </div>
+                            <field name="action_type" widget="radio" nolabel="1"/>
                         </group>
                     </group>
 
@@ -135,8 +306,10 @@
                         <h3>Update the Odoo record</h3>
                         <p class="text-muted">Example: Stage → Closed.</p>
                         <group>
-                            <field name="field_id" options="{'no_create': True}"/>
-                            <field name="value" placeholder="New value"/>
+                            <div class="d-flex align-items-center gap-1 mb-1"><strong>Field to update</strong><i class="fa fa-question-circle text-muted" title="Choose the field that should change after verification, for example Status or Stage."/></div>
+                            <field name="field_id" options="{'no_create': True}" nolabel="1"/>
+                            <div class="d-flex align-items-center gap-1 mb-1 mt-2"><strong>New value</strong><i class="fa fa-question-circle text-muted" title="Enter the visible value you want Odoo to set, for example Completed, Closed, or Approved."/></div>
+                            <field name="value" placeholder="New value" nolabel="1"/>
                         </group>
                     </div>
 
@@ -144,11 +317,13 @@
                         <h3>Send a WhatsApp message</h3>
                         <p class="text-muted">The message is sent to the same customer number used by this OTP flow.</p>
                         <group>
-                            <field name="template_id" options="{'no_create': True}"/>
-                            <field name="channel_number" placeholder="Optional — use a specific WATI number"/>
+                            <div class="d-flex align-items-center gap-1 mb-1"><strong>WhatsApp template</strong><i class="fa fa-question-circle text-muted" title="Choose the approved WATI template that should be sent after successful OTP verification."/></div>
+                            <field name="template_id" options="{'no_create': True}" nolabel="1"/>
+                            <div class="d-flex align-items-center gap-1 mb-1 mt-2"><strong>WATI channel</strong><i class="fa fa-question-circle text-muted" title="Optional. Use a specific WATI sending number for this follow-up message, or leave blank for the normal channel."/></div>
+                            <field name="channel_number" placeholder="Optional — use a specific WATI number" nolabel="1"/>
                         </group>
                         <div invisible="not template_id">
-                            <h4>Template variables</h4>
+                            <h4>Template variables <i class="fa fa-question-circle text-muted" title="Map each WhatsApp template variable to a value from the Odoo record or to a fixed value."/></h4>
                             <field name="binding_ids" nolabel="1">
                                 <list editable="bottom" create="false" delete="false">
                                     <field name="sequence" widget="handle"/>
@@ -165,7 +340,8 @@
                         <h3>Run an Odoo server action</h3>
                         <p class="text-muted">Use this for advanced workflows that already exist in Odoo.</p>
                         <group>
-                            <field name="server_action_id" options="{'no_create': True}"/>
+                            <div class="d-flex align-items-center gap-1 mb-1"><strong>Server action</strong><i class="fa fa-question-circle text-muted" title="Choose an existing Odoo Server Action for advanced logic such as creating records, calling custom code, or running a larger workflow."/></div>
+                            <field name="server_action_id" options="{'no_create': True}" nolabel="1"/>
                         </group>
                     </div>
                 </sheet>
