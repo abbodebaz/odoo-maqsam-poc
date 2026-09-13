@@ -2,7 +2,7 @@ import hmac
 import secrets
 from datetime import timedelta
 
-from odoo import _, api, fields, models
+from odoo import SUPERUSER_ID, _, api, fields, models
 from odoo.exceptions import UserError
 
 
@@ -225,7 +225,8 @@ class WatiOtpTransactionVerificationEverywhere(models.Model):
         actor = self.env.context.get("wati_verification_actor")
         verified_by_user_id = self.env.context.get("wati_verified_by_user_id")
         if not actor:
-            actor = self.env.user.display_name or self.env.user.name or source
+            user = self.env.user
+            actor = (user.display_name or user.name) if user and user.id else source
         self.sudo().write(
             {
                 "verification_source": source,
@@ -233,9 +234,22 @@ class WatiOtpTransactionVerificationEverywhere(models.Model):
             }
         )
 
-        ok, message = super().verify_code(code)
+        execution_record = self
+        if source in ("pwa", "website", "api") and not verified_by_user_id:
+            # Public/external HTTP routes do not have a normal Odoo user. Run the
+            # Odoo-side completion workflow as the system user so tracked models,
+            # mail.thread hooks, server actions and post-actions always have a valid
+            # execution user. The audit channel/actor above still records the real
+            # verification surface and we clear the technical verifier below.
+            execution_record = self.sudo().with_user(SUPERUSER_ID).with_context(
+                self.env.context
+            )
+
+        ok, message = super(
+            WatiOtpTransactionVerificationEverywhere, execution_record
+        ).verify_code(code)
         if ok and source in ("pwa", "website", "api") and not verified_by_user_id:
-            # Avoid presenting the technical Odoo Public User as the human verifier.
+            # Do not present the system/public user as the human verifier.
             self.sudo().write({"verified_by_id": False})
         return ok, message
 
