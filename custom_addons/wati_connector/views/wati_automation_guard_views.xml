@@ -9,7 +9,7 @@
             <xpath expr="//div[hasclass('wati_template_picker_box')]" position="after">
                 <div class="wati_template_validation_strip" role="status" invisible="not template_name">
                     <div class="wati_validation_main">
-                        <span class="wati_validation_icon"><i class="fa fa-shield"/></span>
+                        <span class="wati_validation_icon"><i class="fa fa-shield" title="WATI template verification"/></span>
                         <div>
                             <strong>WATI template check</strong>
                             <small invisible="template_validation_state == 'valid'">Verify the selected template before activation.</small>
