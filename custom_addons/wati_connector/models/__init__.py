@@ -53,6 +53,7 @@ from . import wati_otp_bridge
 from . import wati_otp_flow
 from . import wati_otp_flow_defaults
 from . import wati_otp_binding_guard
+from . import wati_otp_flow_relational
 from . import wati_smart_button
 from . import wati_smart_button_compat
 from . import wati_smart_button_admin_visibility
