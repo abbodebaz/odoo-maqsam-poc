@@ -7,11 +7,12 @@
         <field name="priority">165</field>
         <field name="arch" type="xml">
             <xpath expr="//div[hasclass('wati_mapping_head_smart')]" position="after">
-                <div class="alert alert-light border mt-2 mb-3" role="status" invisible="not template_name">
-                    <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                <div class="wati_contract_notice" role="status"
+                     invisible="not template_name or template_contract_state == 'valid'">
+                    <div class="wati_contract_notice_head">
                         <div>
-                            <strong>Match the template with WATI</strong>
-                            <div class="text-muted small">We check the name of each variable that will actually be sent to WATIAnd not just its form within the message.</div>
+                            <strong>Variable validation needs attention</strong>
+                            <small>WATI variable names must match before this automation can be activated.</small>
                         </div>
                         <field name="template_contract_state" widget="badge" readonly="1"
                                decoration-success="template_contract_state == 'valid'"
@@ -24,7 +25,7 @@
             </xpath>
 
             <xpath expr="//field[@name='parameter_ids']/list/field[@name='template_variable_label']" position="after">
-                <field name="api_param_name" string="Name WATI API" optional="hide" readonly="1" groups="base.group_system"/>
+                <field name="api_param_name" string="WATI API name" optional="hide" readonly="1" groups="base.group_system"/>
                 <field name="placeholder_token" column_invisible="True"/>
             </xpath>
 
