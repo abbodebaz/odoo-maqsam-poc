@@ -33,14 +33,12 @@ class WatiServiceCompletionTask(models.Model):
     )
     customer_mobile = fields.Char(
         string="Customer mobile",
-        related="customer_id.mobile",
-        store=True,
+        compute="_compute_customer_phones",
         readonly=True,
     )
     customer_phone = fields.Char(
         string="Customer phone",
-        related="customer_id.phone",
-        store=True,
+        compute="_compute_customer_phones",
         readonly=True,
     )
     state = fields.Selection(
@@ -73,6 +71,19 @@ class WatiServiceCompletionTask(models.Model):
         max_height=1920,
     )
     notes = fields.Html(string="Notes")
+
+    @api.depends("customer_id")
+    def _compute_customer_phones(self):
+        for task in self:
+            partner = task.customer_id
+            if not partner:
+                task.customer_mobile = False
+                task.customer_phone = False
+                continue
+            mobile = partner["mobile"] if "mobile" in partner._fields else False
+            phone = partner["phone"] if "phone" in partner._fields else False
+            task.customer_mobile = mobile or phone or False
+            task.customer_phone = phone or mobile or False
 
     @api.model_create_multi
     def create(self, vals_list):
