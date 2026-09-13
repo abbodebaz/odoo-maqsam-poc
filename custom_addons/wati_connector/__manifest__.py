@@ -25,6 +25,7 @@
         "views/wati_otp_flow_views.xml",
         "views/wati_otp_workflow_views.xml",
         "views/wati_otp_internal_audit_views.xml",
+        "views/wati_otp_universal_trigger_views.xml",
         "views/wati_otp_studio_views.xml",
         "data/wati_otp_flow_cron.xml",
         "data/wati_otp_menu_visibility.xml",
