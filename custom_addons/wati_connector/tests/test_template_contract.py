@@ -41,7 +41,7 @@ class TestWatiTemplateContract(TransactionCase):
             }
         )
         self.assertEqual(contract["state"], "invalid")
-        self.assertIn("تم منع التفعيل", contract["message"])
+        self.assertIn("Activation is prevented", contract["message"])
 
     def test_contract_keeps_visible_token_separate_from_api_name(self):
         contract = _build_template_contract(
