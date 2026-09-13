@@ -6,29 +6,59 @@
     margin-bottom: 14px;
 }
 
-.wati_recipient_mode_box .o_field_radio {
-    display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
+.wati_recipient_choices {
     width: 100%;
 }
 
-.wati_recipient_mode_box .o_radio_item {
-    min-height: 72px;
+.wati_recipient_choices .o_field_radio {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+    width: 100% !important;
+    align-items: stretch !important;
+}
+
+/* Odoo may insert one internal wrapper around radio options. Flatten it so
+   the three choices remain real grid cards instead of stacking vertically. */
+.wati_recipient_choices .o_field_radio > div:not(.o_radio_item) {
+    display: contents !important;
+}
+
+.wati_recipient_choices .o_radio_item {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 88px;
+    margin: 0 !important;
     display: flex !important;
     align-items: center;
     gap: 10px;
-    padding: 13px 14px;
-    border: 1px solid #e1e5ea;
-    border-radius: 14px;
-    background: #fff;
+    padding: 14px 16px !important;
+    border: 1px solid #e1e5ea !important;
+    border-radius: 15px !important;
+    background: #fff !important;
     cursor: pointer;
+    box-sizing: border-box;
+    transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
 }
 
-.wati_recipient_mode_box .o_radio_item:has(input:checked) {
-    border-color: rgba(113, 75, 135, .45);
-    background: #f8f4fa;
-    box-shadow: 0 5px 16px rgba(113, 75, 135, .08);
+.wati_recipient_choices .o_radio_item:hover {
+    transform: translateY(-1px);
+    border-color: rgba(113, 75, 135, .28) !important;
+    box-shadow: 0 6px 16px rgba(17, 24, 39, .05);
+}
+
+.wati_recipient_choices .o_radio_item:has(input:checked) {
+    border-color: rgba(113, 75, 135, .55) !important;
+    background: #f8f4fa !important;
+    box-shadow: 0 6px 18px rgba(113, 75, 135, .10);
+}
+
+.wati_recipient_choices .o_radio_item label {
+    margin: 0 !important;
+    color: #273142;
+    font-weight: 800;
+    line-height: 1.35;
+    cursor: pointer;
 }
 
 .wati_recipient_mode_help {
@@ -140,14 +170,45 @@
 }
 
 .wati_policy_title {
-    margin-bottom: 6px;
+    margin-bottom: 10px;
     color: #253041;
     font-weight: 900;
 }
 
-.wati_recipient_dedup p {
-    margin-top: 6px;
-    max-width: 760px;
+.wati_recipient_dedup {
+    padding: 16px 18px;
+}
+
+.wati_dedup_control {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.wati_dedup_control .o_field_widget {
+    flex: 0 0 auto;
+    margin-top: 2px;
+}
+
+.wati_dedup_copy {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.wati_dedup_copy strong {
+    display: block;
+    margin-bottom: 4px;
+    color: #344054;
+    font-size: .9rem;
+    font-weight: 800;
+}
+
+.wati_dedup_copy p {
+    margin: 0;
+    max-width: 780px;
+    color: #7f8996;
+    font-size: .79rem;
+    line-height: 1.5;
 }
 
 .wati_recipient_advanced {
@@ -214,8 +275,12 @@
 }
 
 @media (max-width: 900px) {
-    .wati_recipient_mode_box .o_field_radio,
+    .wati_recipient_choices .o_field_radio,
     .wati_recipient_advanced_body {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr !important;
+    }
+
+    .wati_recipient_choices .o_radio_item {
+        min-height: 68px;
     }
 }
