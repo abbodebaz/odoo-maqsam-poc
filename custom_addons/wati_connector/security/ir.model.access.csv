@@ -24,6 +24,15 @@ access_wati_otp_bridge_admin,wati.otp.bridge admin,model_wati_otp_bridge,wati_co
 access_wati_otp_log_supervisor,wati.otp.log supervisor,model_wati_otp_log,wati_connector.group_wati_supervisor,1,0,0,0
 access_wati_otp_log_admin,wati.otp.log admin,model_wati_otp_log,wati_connector.group_wati_admin,1,0,0,0
 access_wati_otp_test_wizard_admin,wati.otp.test.wizard admin,model_wati_otp_test_wizard,wati_connector.group_wati_admin,1,1,1,1
+access_wati_otp_flow_agent,wati.otp.flow agent,model_wati_otp_flow,wati_connector.group_wati_agent,1,0,0,0
+access_wati_otp_flow_admin,wati.otp.flow admin,model_wati_otp_flow,wati_connector.group_wati_admin,1,1,1,1
+access_wati_otp_variable_binding_agent,wati.otp.variable.binding agent,model_wati_otp_variable_binding,wati_connector.group_wati_agent,1,0,0,0
+access_wati_otp_variable_binding_admin,wati.otp.variable.binding admin,model_wati_otp_variable_binding,wati_connector.group_wati_admin,1,1,1,1
+access_wati_otp_transaction_agent,wati.otp.transaction agent,model_wati_otp_transaction,wati_connector.group_wati_agent,1,1,0,0
+access_wati_otp_transaction_supervisor,wati.otp.transaction supervisor,model_wati_otp_transaction,wati_connector.group_wati_supervisor,1,1,0,0
+access_wati_otp_transaction_admin,wati.otp.transaction admin,model_wati_otp_transaction,wati_connector.group_wati_admin,1,1,1,0
+access_wati_otp_verify_wizard_agent,wati.otp.verify.wizard agent,model_wati_otp_verify_wizard,wati_connector.group_wati_agent,1,1,1,1
+access_wati_otp_verify_wizard_admin,wati.otp.verify.wizard admin,model_wati_otp_verify_wizard,wati_connector.group_wati_admin,1,1,1,1
 access_wati_smart_button_location_agent,wati.smart.button.location agent,model_wati_smart_button_location,wati_connector.group_wati_agent,1,0,0,0
 access_wati_smart_button_location_admin,wati.smart.button.location admin,model_wati_smart_button_location,wati_connector.group_wati_admin,1,1,1,1
 access_wati_universal_compose_wizard_agent,wati.universal.compose.wizard agent,model_wati_universal_compose_wizard,wati_connector.group_wati_agent,1,1,1,1
@@ -48,6 +57,10 @@ access_wati_workspace_gateway_system,wati.workspace.gateway system,model_wati_wo
 access_wati_otp_bridge_system,wati.otp.bridge system,model_wati_otp_bridge,base.group_system,1,1,1,1
 access_wati_otp_log_system,wati.otp.log system,model_wati_otp_log,base.group_system,1,1,1,1
 access_wati_otp_test_wizard_system,wati.otp.test.wizard system,model_wati_otp_test_wizard,base.group_system,1,1,1,1
+access_wati_otp_flow_system,wati.otp.flow system,model_wati_otp_flow,base.group_system,1,1,1,1
+access_wati_otp_variable_binding_system,wati.otp.variable.binding system,model_wati_otp_variable_binding,base.group_system,1,1,1,1
+access_wati_otp_transaction_system,wati.otp.transaction system,model_wati_otp_transaction,base.group_system,1,1,1,1
+access_wati_otp_verify_wizard_system,wati.otp.verify.wizard system,model_wati_otp_verify_wizard,base.group_system,1,1,1,1
 access_wati_smart_button_location_system,wati.smart.button.location system,model_wati_smart_button_location,base.group_system,1,1,1,1
 access_wati_universal_compose_wizard_system,wati.universal.compose.wizard system,model_wati_universal_compose_wizard,base.group_system,1,1,1,1
 access_wati_universal_compose_parameter_system,wati.universal.compose.parameter system,model_wati_universal_compose_parameter,base.group_system,1,1,1,1
