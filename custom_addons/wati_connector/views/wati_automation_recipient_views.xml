@@ -51,14 +51,20 @@
                     <div class="wati_recipient_context" invisible="recipient_mode == 'auto'">
                         <div class="wati_recipient_context_icon">↳</div>
                         <div class="wati_recipient_select_wrap">
-                            <strong invisible="recipient_mode != 'direct'">Select the phone field to use</strong>
-                            <strong invisible="recipient_mode != 'related'">Select the linked phone field to use</strong>
-                            <p invisible="recipient_mode != 'direct'">Pick the exact phone or mobile field from this record.</p>
-                            <p invisible="recipient_mode != 'related'">Pick the relationship path that ends with the customer's phone or mobile field.</p>
+                            <div class="wati_recipient_select_head">
+                                <div>
+                                    <strong invisible="recipient_mode != 'direct'">Choose from detected phone fields</strong>
+                                    <strong invisible="recipient_mode != 'related'">Choose from detected linked phone fields</strong>
+                                    <p invisible="recipient_mode != 'direct'">Odoo scanned this record for phone and mobile fields. Select one below — no typing required.</p>
+                                    <p invisible="recipient_mode != 'related'">Odoo scanned linked records for phone and mobile fields. Select the relationship you want to use — no typing required.</p>
+                                </div>
+                                <span class="wati_detected_badge">Detected automatically</span>
+                            </div>
                             <field name="recipient_path"
                                    widget="wati_smart_recipient"
                                    nolabel="1"
-                                   placeholder="Choose the recipient phone field"/>
+                                   placeholder="Select a detected phone field"/>
+                            <small class="wati_recipient_rank_note">Best matches are listed first.</small>
                         </div>
                     </div>
 
