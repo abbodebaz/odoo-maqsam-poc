@@ -7,33 +7,33 @@
         <field name="priority">140</field>
         <field name="arch" type="xml">
             <xpath expr="//div[hasclass('wati_template_picker_box')]" position="after">
-                <div class="alert alert-light border mt-3" role="status" invisible="not template_name">
-                    <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                <div class="wati_template_validation_strip" role="status" invisible="not template_name">
+                    <div class="wati_validation_main">
+                        <span class="wati_validation_icon"><i class="fa fa-shield"/></span>
                         <div>
-                            <strong>Check template</strong>
-                            <field name="template_validation_state" widget="badge" readonly="1"
-                                   decoration-success="template_validation_state == 'valid'"
-                                   decoration-warning="template_validation_state == 'unverified'"
-                                   decoration-danger="template_validation_state == 'invalid'"/>
+                            <strong>WATI template check</strong>
+                            <small invisible="template_validation_state == 'valid'">Verify the selected template before activation.</small>
+                            <small invisible="template_validation_state != 'valid'">Verified against live WATI data.</small>
                         </div>
+                    </div>
+                    <div class="wati_validation_actions">
+                        <field name="template_validation_state" widget="badge" readonly="1"
+                               decoration-success="template_validation_state == 'valid'"
+                               decoration-warning="template_validation_state == 'unverified'"
+                               decoration-danger="template_validation_state == 'invalid'"/>
                         <button name="action_validate_template" type="object"
-                                string="Checked Live Who WATI" icon="fa-shield"
+                                string="Verify" icon="fa-refresh"
                                 class="btn-secondary"/>
                     </div>
                     <field name="template_validation_message" nolabel="1" readonly="1"
-                           invisible="not template_validation_message"/>
-                    <div class="d-flex gap-3 flex-wrap mt-2" invisible="template_validation_state != 'valid'">
-                        <span><strong>Status:</strong> <field name="template_status" nolabel="1" readonly="1"/></span>
-                        <span><strong>Language:</strong> <field name="template_language" nolabel="1" readonly="1"/></span>
-                        <span><strong>Channel:</strong> <field name="template_channel_number" nolabel="1" readonly="1"/></span>
-                    </div>
+                           invisible="not template_validation_message or template_validation_state == 'valid'"/>
                 </div>
             </xpath>
 
             <xpath expr="//div[hasclass('wati_readiness_card')]" position="inside">
                 <div class="mt-3 pt-3 border-top" invisible="not template_name">
                     <div class="d-flex align-items-center gap-2 flex-wrap">
-                        <strong>Checked WATI Real:</strong>
+                        <strong>WATI verification:</strong>
                         <field name="template_validation_state" widget="badge" readonly="1"
                                decoration-success="template_validation_state == 'valid'"
                                decoration-warning="template_validation_state == 'unverified'"
@@ -81,13 +81,13 @@
                 <attribute name="decoration-danger">status == 'failed'</attribute>
             </xpath>
             <xpath expr="//field[@name='status']" position="after">
-                <field name="delivery_status" string="case WATI" optional="show"/>
-                <field name="accepted_at" string="He accepted" optional="hide"/>
+                <field name="delivery_status" string="WATI status" optional="show"/>
+                <field name="accepted_at" string="Accepted" optional="hide"/>
                 <field name="sent_at" string="Sent" optional="hide"/>
                 <field name="delivered_at" string="Delivered" optional="hide"/>
-                <field name="read_at" string="Read done" optional="hide"/>
-                <field name="failed_at" string="Failure time" optional="hide"/>
-                <field name="last_webhook_at" string="Another Webhook" optional="hide"/>
+                <field name="read_at" string="Read" optional="hide"/>
+                <field name="failed_at" string="Failed at" optional="hide"/>
+                <field name="last_webhook_at" string="Last webhook" optional="hide"/>
                 <field name="last_webhook_status" string="Latest event" optional="hide"/>
                 <field name="external_message_id" string="Message ID" optional="hide"/>
                 <field name="broadcast_name" string="Broadcast" optional="hide"/>
