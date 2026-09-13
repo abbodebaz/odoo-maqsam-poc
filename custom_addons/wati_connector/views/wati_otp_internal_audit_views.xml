@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_otp_flow_form_internal_audit" model="ir.ui.view">
+        <field name="name">wati.otp.flow.form.internal.audit</field>
+        <field name="model">wati.otp.flow</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_otp_flow_form"/>
+        <field name="priority">340</field>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('wati_otp_security_note')]" position="replace">
+                <div class="wati_otp_security_note">
+                    <i class="fa fa-lock" title="Internal audit"/>
+                    Internal audit mode: the exact OTP is retained for authorized WATI administrators, while salted cryptographic verification is still used to validate the customer code.
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_wati_otp_transaction_list_internal_audit" model="ir.ui.view">
+        <field name="name">wati.otp.transaction.list.internal.audit</field>
+        <field name="model">wati.otp.transaction</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_otp_transaction_list"/>
+        <field name="priority">340</field>
+        <field name="arch" type="xml">
+            <field name="create_date" position="after">
+                <field name="sent_at" optional="show"/>
+            </field>
+            <field name="state" position="after">
+                <field name="audit_otp_code" string="OTP Code" optional="show" groups="wati_connector.group_wati_admin"/>
+            </field>
+            <field name="flow_id" position="after">
+                <field name="application_name" optional="show"/>
+                <field name="record_type_name" optional="show"/>
+            </field>
+            <field name="res_name" position="after">
+                <field name="source" optional="show"/>
+                <field name="trigger_snapshot" optional="hide"/>
+            </field>
+            <field name="phone_masked" position="after">
+                <field name="recipient_phone" optional="hide" groups="wati_connector.group_wati_admin"/>
+            </field>
+            <field name="verified_by_id" position="after">
+                <field name="requested_by_id" optional="show"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_wati_otp_transaction_form_internal_audit" model="ir.ui.view">
+        <field name="name">wati.otp.transaction.form.internal.audit</field>
+        <field name="model">wati.otp.transaction</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_otp_transaction_form"/>
+        <field name="priority">340</field>
+        <field name="arch" type="xml">
+            <button name="action_cancel" position="after">
+                <button name="action_open_source_record" type="object" string="Open Source Record" icon="fa-external-link" class="btn-secondary"/>
+            </button>
+
+            <xpath expr="//sheet/div[hasclass('alert-info')]" position="replace">
+                <div class="alert alert-info" role="alert">
+                    <strong>Internal audit:</strong> Authorized WATI administrators can see the exact OTP and full recipient number for traceability. The transaction also keeps its source application, record type, trigger, template, requester, and verifier.
+                </div>
+            </xpath>
+
+            <field name="flow_id" position="after">
+                <field name="flow_name_snapshot" readonly="1"/>
+                <field name="application_name" readonly="1"/>
+            </field>
+            <field name="model_name" position="after">
+                <field name="record_type_name" readonly="1"/>
+            </field>
+            <field name="res_id" position="after">
+                <field name="trigger_snapshot" readonly="1"/>
+                <field name="recipient_source_snapshot" readonly="1"/>
+            </field>
+            <field name="phone_masked" position="after">
+                <field name="recipient_phone" readonly="1" groups="wati_connector.group_wati_admin"/>
+                <field name="audit_otp_code" readonly="1" groups="wati_connector.group_wati_admin"/>
+            </field>
+        </field>
+    </record>
+</odoo>

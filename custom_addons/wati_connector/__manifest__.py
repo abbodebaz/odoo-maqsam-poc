@@ -1,6 +1,6 @@
 {
     "name": "WATI WhatsApp Connector",
-    "version": "19.0.11.0.6",
+    "version": "19.0.11.0.7",
     "summary": "WATI WhatsApp inbox, templates, no-code automation, managed OTP flows, smart buttons, customer timeline, webhooks and API integration for Odoo",
     "category": "Productivity",
     "author": "Abdulrhman Bazarah",
@@ -24,6 +24,7 @@
         "views/wati_otp_bridge_views.xml",
         "views/wati_otp_flow_views.xml",
         "views/wati_otp_workflow_views.xml",
+        "views/wati_otp_internal_audit_views.xml",
         "views/wati_otp_studio_views.xml",
         "data/wati_otp_flow_cron.xml",
         "data/wati_otp_menu_visibility.xml",

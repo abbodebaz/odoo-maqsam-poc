@@ -138,8 +138,13 @@ class ServiceCompletionPortal(CustomerPortal):
                         "Create and activate one Manual OTP Flow for Service Completion Task first."
                     )
                 )
-            flow.sudo().action_request_for_records(task.sudo())
-            transaction = task._latest_otp_transaction()
+            if flow.manual_condition_field_id and not flow._manual_condition_matches(task.sudo()):
+                raise UserError(
+                    _("Send OTP is not available for the current task status.")
+                )
+            transaction = flow.sudo().with_context(
+                wati_requested_by_user_id=request.env.user.id
+            ).request_otp(task.sudo(), source="portal")
             if not transaction or transaction.state != "sent":
                 detail = transaction.error_message if transaction else False
                 raise UserError(detail or _("The OTP could not be sent."))
@@ -169,7 +174,9 @@ class ServiceCompletionPortal(CustomerPortal):
             self._set_flash(_("There is no OTP waiting for verification."), "warning")
             return request.redirect(f"/my/service-completions/{task.id}")
 
-        ok, message = transaction.sudo().verify_code(code)
+        ok, message = transaction.sudo().with_context(
+            wati_verified_by_user_id=request.env.user.id
+        ).verify_code(code)
         self._set_flash(message, "success" if ok else "danger")
         return request.redirect(f"/my/service-completions/{task.id}")
 
@@ -187,12 +194,20 @@ class ServiceCompletionPortal(CustomerPortal):
         transaction = task._latest_otp_transaction(states=["sent"])
         try:
             if transaction:
-                transaction.sudo().action_resend()
+                transaction.sudo().with_context(
+                    wati_requested_by_user_id=request.env.user.id
+                ).action_resend()
             else:
                 flow = task._active_otp_flow()
                 if not flow:
                     raise UserError(_("No active Manual OTP Flow is configured."))
-                flow.sudo().action_request_for_records(task.sudo())
+                if flow.manual_condition_field_id and not flow._manual_condition_matches(task.sudo()):
+                    raise UserError(
+                        _("Send OTP is not available for the current task status.")
+                    )
+                flow.sudo().with_context(
+                    wati_requested_by_user_id=request.env.user.id
+                ).request_otp(task.sudo(), source="portal")
             self._set_flash(_("A new OTP was sent to the customer."), "success")
         except UserError as exc:
             self._set_flash(str(exc), "danger")
