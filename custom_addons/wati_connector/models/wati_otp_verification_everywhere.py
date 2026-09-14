@@ -159,7 +159,7 @@ class WatiOtpTransactionVerificationEverywhere(models.Model):
         readonly=True,
         copy=False,
         index=True,
-        groups="base.group_system",
+        groups="base.group_user",
     )
     verification_source = fields.Selection(
         [
@@ -186,6 +186,15 @@ class WatiOtpTransactionVerificationEverywhere(models.Model):
     public_verification_url = fields.Char(
         string="Verification page", compute="_compute_public_verification_url"
     )
+    pwa_verify_url = fields.Char(
+        string="PWA verify URL", compute="_compute_pwa_urls"
+    )
+    pwa_status_url = fields.Char(
+        string="PWA status URL", compute="_compute_pwa_urls"
+    )
+    pwa_resend_url = fields.Char(
+        string="PWA resend URL", compute="_compute_pwa_urls"
+    )
 
     @api.depends("attempt_count", "max_attempts")
     def _compute_attempts_remaining(self):
@@ -205,6 +214,24 @@ class WatiOtpTransactionVerificationEverywhere(models.Model):
                 if transaction.verification_token
                 and transaction.flow_id.website_verification_enabled
                 else False
+            )
+
+    @api.depends("verification_token", "flow_id.pwa_verification_enabled")
+    def _compute_pwa_urls(self):
+        base_url = (
+            self.env["ir.config_parameter"].sudo().get_param("web.base.url", "") or ""
+        ).rstrip("/")
+        for transaction in self:
+            token = transaction.verification_token
+            enabled = bool(token and transaction.flow_id.pwa_verification_enabled)
+            transaction.pwa_verify_url = (
+                f"{base_url}/wati/otp/v1/pwa/{token}/verify" if enabled else False
+            )
+            transaction.pwa_status_url = (
+                f"{base_url}/wati/otp/v1/pwa/{token}/status" if enabled else False
+            )
+            transaction.pwa_resend_url = (
+                f"{base_url}/wati/otp/v1/pwa/{token}/resend" if enabled else False
             )
 
     def _ensure_verification_token(self):
@@ -236,11 +263,6 @@ class WatiOtpTransactionVerificationEverywhere(models.Model):
 
         execution_record = self
         if source in ("pwa", "website", "api") and not verified_by_user_id:
-            # Public/external HTTP routes do not have a normal Odoo user. Run the
-            # Odoo-side completion workflow as the system user so tracked models,
-            # mail.thread hooks, server actions and post-actions always have a valid
-            # execution user. The audit channel/actor above still records the real
-            # verification surface and we clear the technical verifier below.
             execution_record = self.sudo().with_user(SUPERUSER_ID).with_context(
                 self.env.context
             )
@@ -249,7 +271,6 @@ class WatiOtpTransactionVerificationEverywhere(models.Model):
             WatiOtpTransactionVerificationEverywhere, execution_record
         ).verify_code(code)
         if ok and source in ("pwa", "website", "api") and not verified_by_user_id:
-            # Do not present the system/public user as the human verifier.
             self.sudo().write({"verified_by_id": False})
         return ok, message
 
