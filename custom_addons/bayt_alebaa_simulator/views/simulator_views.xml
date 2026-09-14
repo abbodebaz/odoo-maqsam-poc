@@ -136,43 +136,47 @@
         </field>
     </record>
 
-    <!-- QA-only app roots mirror Bayt Alebaa custom applications so WATI's
-         app-first Automation Builder can exercise the real model contracts. -->
+    <!-- QA-only app roots mirror Bayt Alebaa custom applications so WATI's app-first Automation Builder can exercise the real model contracts. -->
     <record id="action_bayt_alebaa_operation_cases" model="ir.actions.act_window">
         <field name="name">Operation Cases</field>
         <field name="res_model">operations.operation.case</field>
         <field name="view_mode">list,form</field>
     </record>
-
     <record id="action_bayt_alebaa_workflow_instances" model="ir.actions.act_window">
         <field name="name">Workflow Instances</field>
         <field name="res_model">operations.workflow.instance</field>
         <field name="view_mode">list,form</field>
     </record>
-
     <record id="action_bayt_alebaa_decor_measurements" model="ir.actions.act_window">
         <field name="name">Decor Measurement Forms</field>
         <field name="res_model">hcos.task.form.decor.measurement</field>
         <field name="view_mode">list,form</field>
     </record>
-
     <record id="action_bayt_alebaa_installation_forms" model="ir.actions.act_window">
         <field name="name">Installation Forms</field>
         <field name="res_model">hcos.task.form.installation</field>
         <field name="view_mode">list,form</field>
     </record>
-
     <record id="action_bayt_alebaa_appointment_types" model="ir.actions.act_window">
         <field name="name">Appointment Types</field>
         <field name="res_model">appointment.type</field>
         <field name="view_mode">list,form</field>
     </record>
-
     <record id="action_bayt_alebaa_appointment_bookings" model="ir.actions.act_window">
         <field name="name">Appointment Bookings</field>
         <field name="res_model">calendar.event</field>
         <field name="view_mode">list,form</field>
         <field name="domain">[("appointment_type_id", "!=", False)]</field>
+    </record>
+    <record id="action_bayt_alebaa_helpdesk_tickets" model="ir.actions.act_window">
+        <field name="name">Helpdesk Tickets</field>
+        <field name="res_model">helpdesk.ticket</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <record id="action_bayt_alebaa_helpdesk_stages" model="ir.actions.act_window">
+        <field name="name">Helpdesk Stages</field>
+        <field name="res_model">helpdesk.stage</field>
+        <field name="view_mode">list,form</field>
     </record>
 
     <record id="action_bayt_alebaa_simulator" model="ir.actions.act_window">
@@ -180,91 +184,35 @@
         <field name="res_model">bayt.alebaa.simulator</field>
         <field name="view_mode">list,form</field>
     </record>
-
     <record id="action_bayt_alebaa_test_results" model="ir.actions.act_window">
         <field name="name">Simulator Test Matrix</field>
         <field name="res_model">bayt.alebaa.test.result</field>
         <field name="view_mode">list,form</field>
     </record>
-
     <record id="action_bayt_alebaa_mock_messages" model="ir.actions.act_window">
         <field name="name">Mock WATI Outbox</field>
         <field name="res_model">bayt.alebaa.mock.message</field>
         <field name="view_mode">list,form</field>
     </record>
 
-    <menuitem id="menu_bayt_alebaa_operations_root"
-              name="Operations"
-              sequence="45"
-              groups="base.group_system"/>
-    <menuitem id="menu_bayt_alebaa_operation_cases"
-              name="Operation Cases"
-              parent="menu_bayt_alebaa_operations_root"
-              action="action_bayt_alebaa_operation_cases"
-              sequence="10"
-              groups="base.group_system"/>
-    <menuitem id="menu_bayt_alebaa_workflow_instances"
-              name="Workflow Instances"
-              parent="menu_bayt_alebaa_operations_root"
-              action="action_bayt_alebaa_workflow_instances"
-              sequence="20"
-              groups="base.group_system"/>
+    <menuitem id="menu_bayt_alebaa_operations_root" name="Operations" sequence="45" groups="base.group_system"/>
+    <menuitem id="menu_bayt_alebaa_operation_cases" name="Operation Cases" parent="menu_bayt_alebaa_operations_root" action="action_bayt_alebaa_operation_cases" sequence="10" groups="base.group_system"/>
+    <menuitem id="menu_bayt_alebaa_workflow_instances" name="Workflow Instances" parent="menu_bayt_alebaa_operations_root" action="action_bayt_alebaa_workflow_instances" sequence="20" groups="base.group_system"/>
 
-    <menuitem id="menu_bayt_alebaa_task_forms_root"
-              name="Task Forms"
-              sequence="46"
-              groups="base.group_system"/>
-    <menuitem id="menu_bayt_alebaa_decor_measurements"
-              name="Decor Measurement Forms"
-              parent="menu_bayt_alebaa_task_forms_root"
-              action="action_bayt_alebaa_decor_measurements"
-              sequence="10"
-              groups="base.group_system"/>
-    <menuitem id="menu_bayt_alebaa_installation_forms"
-              name="Installation Forms"
-              parent="menu_bayt_alebaa_task_forms_root"
-              action="action_bayt_alebaa_installation_forms"
-              sequence="20"
-              groups="base.group_system"/>
+    <menuitem id="menu_bayt_alebaa_task_forms_root" name="Task Forms" sequence="46" groups="base.group_system"/>
+    <menuitem id="menu_bayt_alebaa_decor_measurements" name="Decor Measurement Forms" parent="menu_bayt_alebaa_task_forms_root" action="action_bayt_alebaa_decor_measurements" sequence="10" groups="base.group_system"/>
+    <menuitem id="menu_bayt_alebaa_installation_forms" name="Installation Forms" parent="menu_bayt_alebaa_task_forms_root" action="action_bayt_alebaa_installation_forms" sequence="20" groups="base.group_system"/>
 
-    <menuitem id="menu_bayt_alebaa_appointments_root"
-              name="Appointments"
-              sequence="47"
-              groups="base.group_system"/>
-    <menuitem id="menu_bayt_alebaa_appointment_types"
-              name="Appointment Types"
-              parent="menu_bayt_alebaa_appointments_root"
-              action="action_bayt_alebaa_appointment_types"
-              sequence="10"
-              groups="base.group_system"/>
-    <menuitem id="menu_bayt_alebaa_appointment_bookings"
-              name="Bookings"
-              parent="menu_bayt_alebaa_appointments_root"
-              action="action_bayt_alebaa_appointment_bookings"
-              sequence="20"
-              groups="base.group_system"/>
+    <menuitem id="menu_bayt_alebaa_appointments_root" name="Appointments" sequence="47" groups="base.group_system"/>
+    <menuitem id="menu_bayt_alebaa_appointment_types" name="Appointment Types" parent="menu_bayt_alebaa_appointments_root" action="action_bayt_alebaa_appointment_types" sequence="10" groups="base.group_system"/>
+    <menuitem id="menu_bayt_alebaa_appointment_bookings" name="Bookings" parent="menu_bayt_alebaa_appointments_root" action="action_bayt_alebaa_appointment_bookings" sequence="20" groups="base.group_system"/>
 
-    <menuitem id="menu_bayt_alebaa_qa_group"
-              name="QA Simulator"
-              parent="wati_connector.menu_wati_root"
-              sequence="80"
-              groups="base.group_system"/>
-    <menuitem id="menu_bayt_alebaa_qa_lab"
-              name="Control Panel"
-              parent="menu_bayt_alebaa_qa_group"
-              action="action_bayt_alebaa_simulator"
-              sequence="10"
-              groups="base.group_system"/>
-    <menuitem id="menu_bayt_alebaa_test_matrix"
-              name="Test Matrix"
-              parent="menu_bayt_alebaa_qa_group"
-              action="action_bayt_alebaa_test_results"
-              sequence="20"
-              groups="base.group_system"/>
-    <menuitem id="menu_bayt_alebaa_mock_outbox"
-              name="Mock WATI Outbox"
-              parent="menu_bayt_alebaa_qa_group"
-              action="action_bayt_alebaa_mock_messages"
-              sequence="30"
-              groups="base.group_system"/>
+    <menuitem id="menu_bayt_alebaa_helpdesk_root" name="Helpdesk" sequence="48" groups="base.group_system"/>
+    <menuitem id="menu_bayt_alebaa_helpdesk_tickets" name="Tickets" parent="menu_bayt_alebaa_helpdesk_root" action="action_bayt_alebaa_helpdesk_tickets" sequence="10" groups="base.group_system"/>
+    <menuitem id="menu_bayt_alebaa_helpdesk_stages" name="Stages" parent="menu_bayt_alebaa_helpdesk_root" action="action_bayt_alebaa_helpdesk_stages" sequence="20" groups="base.group_system"/>
+
+    <menuitem id="menu_bayt_alebaa_qa_group" name="QA Simulator" parent="wati_connector.menu_wati_root" sequence="80" groups="base.group_system"/>
+    <menuitem id="menu_bayt_alebaa_qa_lab" name="Control Panel" parent="menu_bayt_alebaa_qa_group" action="action_bayt_alebaa_simulator" sequence="10" groups="base.group_system"/>
+    <menuitem id="menu_bayt_alebaa_test_matrix" name="Test Matrix" parent="menu_bayt_alebaa_qa_group" action="action_bayt_alebaa_test_results" sequence="20" groups="base.group_system"/>
+    <menuitem id="menu_bayt_alebaa_mock_outbox" name="Mock WATI Outbox" parent="menu_bayt_alebaa_qa_group" action="action_bayt_alebaa_mock_messages" sequence="30" groups="base.group_system"/>
 </odoo>
