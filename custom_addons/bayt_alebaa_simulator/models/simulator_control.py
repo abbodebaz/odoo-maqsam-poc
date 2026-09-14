@@ -80,16 +80,7 @@ class BaytAlebaaSimulator(models.Model):
         Partner = self.env["res.partner"]
         partner = Partner.search([("ref", "=", "SIM-CUST-001")], limit=1)
         if not partner:
-            vals = {
-                "name": "عميل محاكي بيت الإباء",
-                "ref": "SIM-CUST-001",
-                "phone": "+966500009606",
-                "email": "simulator@example.com",
-                "city": "جدة",
-                "lang": "ar_001" if "ar_001" in self.env["res.lang"].get_installed() else "en_US",
-            }
-            # Bayt Alebaa has extra/custom contact fields that are not guaranteed
-            # to exist in the isolated QA database. Seed them only when available.
+            vals = {"name": "عميل محاكي بيت الإباء", "ref": "SIM-CUST-001", "phone": "+966500009606", "email": "simulator@example.com", "city": "جدة", "lang": "ar_001" if "ar_001" in self.env["res.lang"].get_installed() else "en_US"}
             if "mobile" in Partner._fields:
                 vals["mobile"] = "+966500009606"
             if "x_mobile" in Partner._fields:
@@ -102,15 +93,18 @@ class BaytAlebaaSimulator(models.Model):
     def _product(self):
         product = self.env["product.product"].search([("default_code", "=", "SIM-KITCHEN")], limit=1)
         if not product:
-            product = self.env["product.product"].create({
-                "name": "مطبخ-kitchen (Simulator)",
-                "default_code": "SIM-KITCHEN",
-                "list_price": 1000.0,
-                "standard_price": 600.0,
-                "purchase_ok": True,
-                "sale_ok": True,
-            })
+            product = self.env["product.product"].create({"name": "مطبخ-kitchen (Simulator)", "default_code": "SIM-KITCHEN", "list_price": 1000.0, "standard_price": 600.0, "purchase_ok": True, "sale_ok": True})
         return product
+
+    def _ensure_journal(self, journal_type):
+        Journal = self.env["account.journal"]
+        journal = Journal.search([("type", "=", journal_type), ("company_id", "=", self.env.company.id)], limit=1)
+        if journal:
+            return journal
+        codes = {"sale": "SINV", "bank": "SBK"}
+        names = {"sale": "Simulator Sales", "bank": "Simulator Bank"}
+        vals = {"name": names[journal_type], "type": journal_type, "code": codes[journal_type], "company_id": self.env.company.id}
+        return Journal.create(vals)
 
     def action_seed_all(self):
         self.ensure_one()
@@ -155,14 +149,13 @@ class BaytAlebaaSimulator(models.Model):
         return rec, {"state": rec.state, "origin": rec.origin, "amount_total": rec.amount_total}
 
     def _create_invoice(self, partner, product):
-        vals = {"move_type": "out_invoice", "partner_id": partner.id, "invoice_line_ids": [(0, 0, {"product_id": product.id, "quantity": 1, "price_unit": 451.03})]}
+        journal = self._ensure_journal("sale")
+        vals = {"move_type": "out_invoice", "journal_id": journal.id, "partner_id": partner.id, "invoice_line_ids": [(0, 0, {"product_id": product.id, "quantity": 1, "price_unit": 451.03})]}
         rec = self.env["account.move"].create(vals)
-        return rec, {"state": rec.state, "move_type": rec.move_type, "amount_total": rec.amount_total}
+        return rec, {"state": rec.state, "move_type": rec.move_type, "amount_total": rec.amount_total, "journal": journal.display_name}
 
     def _create_payment(self, partner, sale):
-        journal = self.env["account.journal"].search([("type", "in", ("bank", "cash")), ("company_id", "=", self.env.company.id)], limit=1)
-        if not journal:
-            raise UserError(_("No Bank/Cash journal exists in the simulator database."))
+        journal = self._ensure_journal("bank")
         vals = {"payment_type": "inbound", "partner_type": "customer", "partner_id": partner.id, "amount": 1300, "journal_id": journal.id, "date": fields.Date.context_today(self)}
         if "sale_order_id" in self.env["account.payment"]._fields and sale:
             vals["sale_order_id"] = sale.id
@@ -173,7 +166,10 @@ class BaytAlebaaSimulator(models.Model):
         picking_type = self.env["stock.picking.type"].search([("code", "=", "outgoing"), ("warehouse_id.company_id", "=", self.env.company.id)], limit=1)
         if not picking_type:
             raise UserError(_("No outgoing picking type exists."))
-        vals = {"partner_id": partner.id, "picking_type_id": picking_type.id, "location_id": picking_type.default_location_src_id.id, "location_dest_id": picking_type.default_location_dest_id.id, "origin": sale.name if sale else "SIM-SALE", "move_ids": [(0, 0, {"name": product.display_name, "product_id": product.id, "product_uom_qty": 1, "product_uom": product.uom_id.id, "location_id": picking_type.default_location_src_id.id, "location_dest_id": picking_type.default_location_dest_id.id})]}
+        move_vals = {"product_id": product.id, "product_uom_qty": 1, "product_uom": product.uom_id.id, "location_id": picking_type.default_location_src_id.id, "location_dest_id": picking_type.default_location_dest_id.id}
+        if "name" in self.env["stock.move"]._fields:
+            move_vals["name"] = product.display_name
+        vals = {"partner_id": partner.id, "picking_type_id": picking_type.id, "location_id": picking_type.default_location_src_id.id, "location_dest_id": picking_type.default_location_dest_id.id, "origin": sale.name if sale else "SIM-SALE", "move_ids": [(0, 0, move_vals)]}
         rec = self.env["stock.picking"].create(vals)
         return rec, {"state": rec.state, "origin": rec.origin, "picking_type": picking_type.display_name}
 
@@ -226,13 +222,18 @@ class BaytAlebaaSimulator(models.Model):
         return rec, vals
 
     def _create_appointment_type(self):
-        vals = {"name": "Measurements Appointment - Simulator", "appointment_duration": 1.0, "location": "Jeddah Simulator Branch"}
-        rec = self.env["appointment.type"].create(vals)
+        Appointment = self.env["appointment.type"]
+        vals = {"name": "Measurements Appointment - Simulator", "appointment_duration": 1.0}
+        if "location" in Appointment._fields:
+            vals["location"] = "Jeddah Simulator Branch"
+        rec = Appointment.create(vals)
         return rec, vals
 
     def _create_calendar_event(self, partner, appointment):
         start = fields.Datetime.now()
-        vals = {"name": "Measurements Appointment - Simulator", "start": start, "stop": fields.Datetime.add(start, hours=1), "partner_ids": [(6, 0, [partner.id])], "appointment_type_id": appointment.id}
+        vals = {"name": "Measurements Appointment - Simulator", "start": start, "stop": fields.Datetime.add(start, hours=1), "partner_ids": [(6, 0, [partner.id])]}
+        if "appointment_type_id" in self.env["calendar.event"]._fields:
+            vals["appointment_type_id"] = appointment.id
         rec = self.env["calendar.event"].create(vals)
         return rec, {"start": rec.start, "stop": rec.stop, "appointment_type": appointment.display_name}
 
