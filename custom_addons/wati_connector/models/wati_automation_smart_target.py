@@ -1,6 +1,15 @@
 from odoo import _, api, fields, models
 
 
+_SMART_TEXT_VALUE_HINTS = (
+    "stage",
+    "status",
+    "state",
+    "step",
+    "phase",
+)
+
+
 class WatiAutomationRuleSmartTarget(models.Model):
     _inherit = "wati.automation.rule"
 
@@ -9,6 +18,62 @@ class WatiAutomationRuleSmartTarget(models.Model):
         compute="_compute_smart_target_metadata",
         copy=False,
     )
+
+    def _smart_target_distinct_text_values(self, field_record, limit=50):
+        """Suggest live values for state-like Char fields without hard-coding models.
+
+        Some custom Odoo apps store workflow stages/statuses as plain Char fields
+        instead of Selection/Many2one fields. For automation setup, surface the
+        distinct values already present in readable records while still allowing
+        the user to type a new value manually.
+        """
+        if not field_record or field_record.model not in self.env:
+            return []
+
+        haystack = " ".join(
+            filter(
+                None,
+                [
+                    field_record.name or "",
+                    field_record.field_description or "",
+                ],
+            )
+        ).casefold()
+        if not any(token in haystack for token in _SMART_TEXT_VALUE_HINTS):
+            return []
+
+        Model = self.env[field_record.model]
+        runtime_field = Model._fields.get(field_record.name)
+        if not runtime_field or getattr(runtime_field, "type", "") != "char":
+            return []
+
+        try:
+            records = Model.search(
+                [(field_record.name, "!=", False)],
+                order="id desc",
+                limit=250,
+            )
+        except Exception:
+            return []
+
+        values = []
+        seen = set()
+        for record in records:
+            try:
+                raw = record[field_record.name]
+            except Exception:
+                continue
+            value = str(raw or "").strip()
+            if not value:
+                continue
+            key = value.casefold()
+            if key in seen:
+                continue
+            seen.add(key)
+            values.append(value)
+            if len(values) >= limit:
+                break
+        return values
 
     def _smart_target_metadata_for_field(self, field_record):
         metadata = {
@@ -98,7 +163,24 @@ class WatiAutomationRuleSmartTarget(models.Model):
                 "input_type": "datetime-local",
                 "placeholder": _("Choose date and time"),
             })
-        elif field_type in ("char", "text", "html"):
+        elif field_type == "char":
+            live_values = self._smart_target_distinct_text_values(field_record)
+            if live_values:
+                metadata.update({
+                    "mode": "suggest",
+                    "input_type": "text",
+                    "placeholder": _("Choose an existing value or type a new one"),
+                    "options": [
+                        {"value": value, "label": value}
+                        for value in live_values
+                    ],
+                })
+            else:
+                metadata.update({
+                    "input_type": "text",
+                    "placeholder": _("Type the required value"),
+                })
+        elif field_type in ("text", "html"):
             metadata.update({
                 "input_type": "text",
                 "placeholder": _("Type the required value"),
