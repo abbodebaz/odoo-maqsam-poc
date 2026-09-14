@@ -106,7 +106,7 @@
         <field name="name">Automation WhatsApp</field>
         <field name="res_model">wati.automation.rule</field>
         <field name="view_mode">list,form</field>
-        <field name="context">{'search_default_active': 1}</field>
+        <field name="context">{'active_test': False}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">Create your first base WhatsApp Without writing code</p>
             <p>Select Application, Field, Condition, Template WATI Link its variables to data Odoo.</p>
