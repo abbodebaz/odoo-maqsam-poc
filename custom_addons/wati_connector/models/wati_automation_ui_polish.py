@@ -62,3 +62,43 @@ class WatiAutomationRuleUIPolish(models.Model):
                 "next": {"type": "ir.actions.client", "tag": "soft_reload"},
             },
         }
+
+    def action_send_test(self):
+        """Surface the actual WATI failure instead of a generic test-send error."""
+        self.ensure_one()
+        result = super().action_send_test()
+        params = result.get("params", {}) if isinstance(result, dict) else {}
+        if params.get("type") != "danger":
+            return result
+
+        Log = self.env["wati.automation.log"].sudo()
+        domain = [("rule_id", "=", self.id), ("is_test", "=", True)]
+        phone = self._normalize_phone(self.test_phone)
+        if phone:
+            domain.append(("phone", "=", phone))
+        log = Log.search(domain, order="create_date desc, id desc", limit=1)
+        if not log:
+            return result
+
+        error = (log.error_message or "").strip()
+        excerpt = (log.response_excerpt or "").strip()
+        delivery_status = (getattr(log, "delivery_status", False) or "").strip()
+
+        details = []
+        if error:
+            details.append(error[:700])
+        if delivery_status:
+            details.append("Delivery status: %s" % delivery_status)
+        if excerpt and excerpt not in error:
+            details.append("WATI response: %s" % excerpt[:900])
+
+        if details:
+            params.update(
+                {
+                    "title": _("WATI test send failed"),
+                    "message": "\n".join(details),
+                    "type": "danger",
+                    "sticky": True,
+                }
+            )
+        return result
