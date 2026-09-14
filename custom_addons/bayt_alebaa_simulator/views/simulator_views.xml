@@ -21,8 +21,8 @@
             <form string="Bayt Alebaa QA Lab">
                 <header>
                     <button name="action_seed_all" type="object" string="1. Seed All Scenarios" class="btn-primary" icon="fa-database"/>
-                    <button name="action_run_state_transitions" type="object" string="2. Run State Transitions" class="btn-secondary" icon="fa-play"/>
-                    <button name="action_clear_results" type="object" string="Clear Test Logs" class="btn-secondary" confirm="Clear simulator test results and mock outbox?"/>
+                    <button name="action_run_transitions" type="object" string="2. Run State Transitions" class="btn-secondary" icon="fa-play"/>
+                    <button name="action_clear_logs" type="object" string="Clear Test Logs" class="btn-secondary" confirm="Clear simulator test results and mock outbox?"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
