@@ -55,6 +55,7 @@ from . import wati_otp_smart_target
 from . import wati_otp_recipient_preview
 from . import wati_otp_flow_defaults
 from . import wati_otp_binding_guard
+from . import wati_otp_binding_smart_fields
 from . import wati_otp_flow_relational
 from . import wati_otp_workflow_actions
 from . import wati_otp_completion_values
