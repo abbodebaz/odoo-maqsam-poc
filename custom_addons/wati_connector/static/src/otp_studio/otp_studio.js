@@ -41,7 +41,7 @@ class WatiOtpStudio extends Component {
                     "failed_count",
                     "transaction_count",
                 ],
-                { order: "sequence, id" }
+                { order: "sequence, id", context: { active_test: false } }
             );
             this.state.flows = flows;
             const active = flows.filter((flow) => flow.active).length;
@@ -119,6 +119,7 @@ class WatiOtpStudio extends Component {
             res_id: Number(flowId),
             views: [[false, "form"]],
             target: "current",
+            context: { active_test: false },
         });
     }
 
