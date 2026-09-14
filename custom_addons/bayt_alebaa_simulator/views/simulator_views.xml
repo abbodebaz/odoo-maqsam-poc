@@ -136,6 +136,26 @@
         </field>
     </record>
 
+    <!--
+        Bayt Alebaa has a real Operations application.  The simulator models
+        previously existed only as hidden QA records, so Odoo's app switcher
+        (and therefore WATI's app-first Automation Builder) could not discover
+        them.  Expose a QA-only Operations root app with the two real top-level
+        record types.  Embedded records such as operations.question.case.answer
+        remain menu-less on purpose; WATI discovers them through model relations.
+    -->
+    <record id="action_bayt_alebaa_operation_cases" model="ir.actions.act_window">
+        <field name="name">Operation Cases</field>
+        <field name="res_model">operations.operation.case</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_bayt_alebaa_workflow_instances" model="ir.actions.act_window">
+        <field name="name">Workflow Instances</field>
+        <field name="res_model">operations.workflow.instance</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
     <record id="action_bayt_alebaa_simulator" model="ir.actions.act_window">
         <field name="name">Bayt Alebaa QA Lab</field>
         <field name="res_model">bayt.alebaa.simulator</field>
@@ -153,6 +173,23 @@
         <field name="res_model">bayt.alebaa.mock.message</field>
         <field name="view_mode">list,form</field>
     </record>
+
+    <menuitem id="menu_bayt_alebaa_operations_root"
+              name="Operations"
+              sequence="45"
+              groups="base.group_system"/>
+    <menuitem id="menu_bayt_alebaa_operation_cases"
+              name="Operation Cases"
+              parent="menu_bayt_alebaa_operations_root"
+              action="action_bayt_alebaa_operation_cases"
+              sequence="10"
+              groups="base.group_system"/>
+    <menuitem id="menu_bayt_alebaa_workflow_instances"
+              name="Workflow Instances"
+              parent="menu_bayt_alebaa_operations_root"
+              action="action_bayt_alebaa_workflow_instances"
+              sequence="20"
+              groups="base.group_system"/>
 
     <menuitem id="menu_bayt_alebaa_qa_group"
               name="QA Simulator"
