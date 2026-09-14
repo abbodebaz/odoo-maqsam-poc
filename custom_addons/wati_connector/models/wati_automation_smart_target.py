@@ -134,10 +134,18 @@ class WatiAutomationRuleSmartTarget(models.Model):
                         operator="ilike",
                         limit=250,
                     )
-                    options = [
-                        {"value": str(label or record_id), "label": str(label or record_id), "record_id": record_id}
-                        for record_id, label in pairs
-                    ]
+                    seen_labels = set()
+                    for record_id, label in pairs:
+                        display = str(label or record_id).strip()
+                        key = display.casefold()
+                        if not display or key in seen_labels:
+                            continue
+                        seen_labels.add(key)
+                        options.append({
+                            "value": display,
+                            "label": display,
+                            "record_id": record_id,
+                        })
                 except Exception:
                     options = []
             metadata.update({
