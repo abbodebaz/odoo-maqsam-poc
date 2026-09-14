@@ -167,6 +167,7 @@
         <field name="name">OTP Bridge</field>
         <field name="res_model">wati.otp.bridge</field>
         <field name="view_mode">list,form</field>
+        <field name="context">{'active_test': False}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">Fasten OTP found in any application Odoo With WATI Without building a new integration</p>
             <p>Select the application, model and field OTP Mobile number and template Authentication, or use Integration Hook If the code is not saved in a field.</p>
