@@ -51,6 +51,7 @@ from . import wati_template_lifecycle
 from . import wati_message_identity
 from . import wati_otp_bridge
 from . import wati_otp_flow
+from . import wati_otp_smart_target
 from . import wati_otp_recipient_preview
 from . import wati_otp_flow_defaults
 from . import wati_otp_binding_guard
