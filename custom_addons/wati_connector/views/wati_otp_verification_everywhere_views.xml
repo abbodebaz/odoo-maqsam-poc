@@ -194,7 +194,7 @@
             <field name="attempt_count" position="after">
                 <field name="attempts_remaining" readonly="1"/>
             </field>
-            <xpath expr="//group[@string='Technical trace']" position="before">
+            <xpath expr="//field[@name='requested_by_id']/ancestor::group[2]" position="after">
                 <group string="PWA / Web App" groups="base.group_user" invisible="not pwa_verify_url">
                     <group>
                         <field name="verification_token" string="Verification token" readonly="1"/>
