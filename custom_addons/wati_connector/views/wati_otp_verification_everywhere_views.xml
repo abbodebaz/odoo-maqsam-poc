@@ -194,6 +194,18 @@
             <field name="attempt_count" position="after">
                 <field name="attempts_remaining" readonly="1"/>
             </field>
+            <xpath expr="//group[@string='Technical trace']" position="before">
+                <group string="PWA / Web App" groups="base.group_user" invisible="not pwa_verify_url">
+                    <group>
+                        <field name="verification_token" string="Verification token" readonly="1"/>
+                        <field name="pwa_verify_url" string="Verify URL" widget="url" readonly="1"/>
+                    </group>
+                    <group>
+                        <field name="pwa_status_url" string="Status URL" widget="url" readonly="1"/>
+                        <field name="pwa_resend_url" string="Resend URL" widget="url" readonly="1"/>
+                    </group>
+                </group>
+            </xpath>
         </field>
     </record>
 </odoo>
