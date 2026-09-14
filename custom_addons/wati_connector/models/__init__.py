@@ -59,6 +59,7 @@ from . import wati_otp_binding_smart_fields
 from . import wati_otp_flow_relational
 from . import wati_otp_workflow_actions
 from . import wati_otp_completion_values
+from . import wati_otp_post_action_smart_value
 from . import wati_otp_internal_audit
 from . import wati_otp_universal_triggers
 from . import wati_otp_verification_everywhere

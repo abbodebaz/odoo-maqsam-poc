@@ -26,6 +26,7 @@
         "views/wati_otp_smart_trigger_views.xml",
         "views/wati_otp_smart_binding_views.xml",
         "views/wati_otp_workflow_views.xml",
+        "views/wati_otp_post_action_smart_value_views.xml",
         "views/wati_otp_internal_audit_views.xml",
         "views/wati_otp_universal_trigger_views.xml",
         "views/wati_otp_secret_reveal_views.xml",
