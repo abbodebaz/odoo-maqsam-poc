@@ -136,14 +136,8 @@
         </field>
     </record>
 
-    <!--
-        Bayt Alebaa has a real Operations application.  The simulator models
-        previously existed only as hidden QA records, so Odoo's app switcher
-        (and therefore WATI's app-first Automation Builder) could not discover
-        them.  Expose a QA-only Operations root app with the two real top-level
-        record types.  Embedded records such as operations.question.case.answer
-        remain menu-less on purpose; WATI discovers them through model relations.
-    -->
+    <!-- QA-only app roots mirror Bayt Alebaa custom applications so WATI's
+         app-first Automation Builder can exercise the real model contracts. -->
     <record id="action_bayt_alebaa_operation_cases" model="ir.actions.act_window">
         <field name="name">Operation Cases</field>
         <field name="res_model">operations.operation.case</field>
@@ -153,6 +147,18 @@
     <record id="action_bayt_alebaa_workflow_instances" model="ir.actions.act_window">
         <field name="name">Workflow Instances</field>
         <field name="res_model">operations.workflow.instance</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_bayt_alebaa_decor_measurements" model="ir.actions.act_window">
+        <field name="name">Decor Measurement Forms</field>
+        <field name="res_model">hcos.task.form.decor.measurement</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_bayt_alebaa_installation_forms" model="ir.actions.act_window">
+        <field name="name">Installation Forms</field>
+        <field name="res_model">hcos.task.form.installation</field>
         <field name="view_mode">list,form</field>
     </record>
 
@@ -188,6 +194,23 @@
               name="Workflow Instances"
               parent="menu_bayt_alebaa_operations_root"
               action="action_bayt_alebaa_workflow_instances"
+              sequence="20"
+              groups="base.group_system"/>
+
+    <menuitem id="menu_bayt_alebaa_task_forms_root"
+              name="Task Forms"
+              sequence="46"
+              groups="base.group_system"/>
+    <menuitem id="menu_bayt_alebaa_decor_measurements"
+              name="Decor Measurement Forms"
+              parent="menu_bayt_alebaa_task_forms_root"
+              action="action_bayt_alebaa_decor_measurements"
+              sequence="10"
+              groups="base.group_system"/>
+    <menuitem id="menu_bayt_alebaa_installation_forms"
+              name="Installation Forms"
+              parent="menu_bayt_alebaa_task_forms_root"
+              action="action_bayt_alebaa_installation_forms"
               sequence="20"
               groups="base.group_system"/>
 
