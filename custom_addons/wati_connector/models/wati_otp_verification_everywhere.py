@@ -196,6 +196,43 @@ class WatiOtpTransactionVerificationEverywhere(models.Model):
         string="PWA resend URL", compute="_compute_pwa_urls"
     )
 
+    api_verification_available = fields.Boolean(
+        string="REST API enabled",
+        related="flow_id.api_verification_enabled",
+        readonly=True,
+    )
+    api_flow_key = fields.Char(
+        string="Flow technical key",
+        related="flow_id.technical_key",
+        readonly=True,
+    )
+    api_integration_secret = fields.Char(
+        string="Integration secret",
+        related="flow_id.integration_secret",
+        readonly=True,
+        groups="base.group_system",
+    )
+    api_verify_url = fields.Char(
+        string="REST API verify URL",
+        related="flow_id.api_verify_url",
+        readonly=True,
+    )
+    api_status_url = fields.Char(
+        string="REST API status URL",
+        related="flow_id.api_status_url",
+        readonly=True,
+    )
+    api_resend_url = fields.Char(
+        string="REST API resend URL",
+        related="flow_id.api_resend_url",
+        readonly=True,
+    )
+    api_verify_curl = fields.Text(
+        string="Ready test command",
+        compute="_compute_api_verify_curl",
+        groups="base.group_system",
+    )
+
     @api.depends("attempt_count", "max_attempts")
     def _compute_attempts_remaining(self):
         for transaction in self:
@@ -232,6 +269,29 @@ class WatiOtpTransactionVerificationEverywhere(models.Model):
             )
             transaction.pwa_resend_url = (
                 f"{base_url}/wati/otp/v1/pwa/{token}/resend" if enabled else False
+            )
+
+    @api.depends(
+        "flow_id.api_verification_enabled",
+        "flow_id.technical_key",
+        "flow_id.integration_secret",
+        "res_id",
+        "audit_otp_code",
+    )
+    def _compute_api_verify_curl(self):
+        for transaction in self:
+            flow = transaction.flow_id
+            if not flow.api_verification_enabled or not flow.integration_secret:
+                transaction.api_verify_curl = False
+                continue
+            otp_code = str(transaction.audit_otp_code or "OTP_CODE")
+            transaction.api_verify_curl = (
+                "curl -X POST '" + str(flow.api_verify_url or "") + "' \\\n"
+                "  -H 'Content-Type: application/json' \\\n"
+                "  -H 'X-WATI-OTP-Secret: " + str(flow.integration_secret) + "' \\\n"
+                "  -d '{\"record_id\":" + str(transaction.res_id or 0)
+                + ",\"otp_code\":\"" + otp_code
+                + "\",\"actor\":\"Bayt Alebaa API Test\"}'"
             )
 
     def _ensure_verification_token(self):
