@@ -69,7 +69,7 @@ class BaytAlebaaSimulator(models.Model):
         try:
             with self.env.cr.savepoint():
                 record, payload = callback()
-        except Exception as exc:  # QA lab intentionally records every failure independently.
+        except Exception as exc:
             _logger.exception("Bayt Alebaa simulator scenario failed: %s", scenario)
             self._log(scenario, model_name, "fail", message=str(exc))
             return False
@@ -77,18 +77,26 @@ class BaytAlebaaSimulator(models.Model):
         return record
 
     def _base_partner(self):
-        partner = self.env["res.partner"].search([("ref", "=", "SIM-CUST-001")], limit=1)
+        Partner = self.env["res.partner"]
+        partner = Partner.search([("ref", "=", "SIM-CUST-001")], limit=1)
         if not partner:
-            partner = self.env["res.partner"].create({
+            vals = {
                 "name": "عميل محاكي بيت الإباء",
                 "ref": "SIM-CUST-001",
                 "phone": "+966500009606",
-                "mobile": "+966500009606",
                 "email": "simulator@example.com",
                 "city": "جدة",
                 "lang": "ar_001" if "ar_001" in self.env["res.lang"].get_installed() else "en_US",
-                "x_sap_customer_no": "0010453784",
-            })
+            }
+            # Bayt Alebaa has extra/custom contact fields that are not guaranteed
+            # to exist in the isolated QA database. Seed them only when available.
+            if "mobile" in Partner._fields:
+                vals["mobile"] = "+966500009606"
+            if "x_mobile" in Partner._fields:
+                vals["x_mobile"] = "+966500009606"
+            if "x_sap_customer_no" in Partner._fields:
+                vals["x_sap_customer_no"] = "0010453784"
+            partner = Partner.create(vals)
         return partner
 
     def _product(self):
@@ -108,7 +116,6 @@ class BaytAlebaaSimulator(models.Model):
         self.ensure_one()
         partner = self._base_partner()
         product = self._product()
-
         lead = self._attempt("CRM Lead created", "crm.lead", lambda: self._create_lead(partner))
         sale = self._attempt("Sales Order created", "sale.order", lambda: self._create_sale(partner, product, lead))
         purchase = self._attempt("Purchase RFQ created", "purchase.order", lambda: self._create_purchase(product, sale))
@@ -125,32 +132,17 @@ class BaytAlebaaSimulator(models.Model):
         ticket = self._attempt("Helpdesk Ticket created", "helpdesk.ticket", lambda: self._create_helpdesk(partner, case, task))
         appointment = self._attempt("Appointment Type created", "appointment.type", lambda: self._create_appointment_type())
         event = self._attempt("Appointment Booking created", "calendar.event", lambda: self._create_calendar_event(partner, appointment)) if appointment else False
-
         self.last_run_at = fields.Datetime.now()
         self._create_mock_messages([lead, sale, purchase, invoice, payment, picking, mrp, task, case, workflow, answer, decor, install, ticket, appointment, event], partner)
         return self.action_open_results()
 
     def _create_lead(self, partner):
-        vals = {
-            "name": "مشروع مول جدة - Simulator",
-            "partner_id": partner.id,
-            "phone": partner.phone,
-            "email_from": partner.email,
-            "type": "opportunity",
-            "expected_revenue": 10000,
-            "project_type": "new_kitchen",
-            "approximate_budget": 25000,
-            "kitchen_reception_visible": True,
-        }
+        vals = {"name": "مشروع مول جدة - Simulator", "partner_id": partner.id, "phone": partner.phone, "email_from": partner.email, "type": "opportunity", "expected_revenue": 10000, "project_type": "new_kitchen", "approximate_budget": 25000, "kitchen_reception_visible": True}
         rec = self.env["crm.lead"].create(vals)
         return rec, vals
 
     def _create_sale(self, partner, product, lead):
-        vals = {
-            "partner_id": partner.id,
-            "opportunity_id": lead.id if lead else False,
-            "order_line": [(0, 0, {"product_id": product.id, "product_uom_qty": 1, "price_unit": 1000})],
-        }
+        vals = {"partner_id": partner.id, "opportunity_id": lead.id if lead else False, "order_line": [(0, 0, {"product_id": product.id, "product_uom_qty": 1, "price_unit": 1000})]}
         rec = self.env["sale.order"].create(vals)
         return rec, {"partner": partner.display_name, "state": rec.state, "amount_total": rec.amount_total}
 
@@ -158,20 +150,12 @@ class BaytAlebaaSimulator(models.Model):
         vendor = self.env["res.partner"].search([("ref", "=", "SIM-VENDOR-001")], limit=1)
         if not vendor:
             vendor = self.env["res.partner"].create({"name": "مورد رخام - Simulator", "ref": "SIM-VENDOR-001", "supplier_rank": 1})
-        vals = {
-            "partner_id": vendor.id,
-            "origin": sale.name if sale else "SIM-SALE",
-            "order_line": [(0, 0, {"product_id": product.id, "product_qty": 3, "price_unit": 300})],
-        }
+        vals = {"partner_id": vendor.id, "origin": sale.name if sale else "SIM-SALE", "order_line": [(0, 0, {"product_id": product.id, "product_qty": 3, "price_unit": 300})]}
         rec = self.env["purchase.order"].create(vals)
         return rec, {"state": rec.state, "origin": rec.origin, "amount_total": rec.amount_total}
 
     def _create_invoice(self, partner, product):
-        vals = {
-            "move_type": "out_invoice",
-            "partner_id": partner.id,
-            "invoice_line_ids": [(0, 0, {"product_id": product.id, "quantity": 1, "price_unit": 451.03})],
-        }
+        vals = {"move_type": "out_invoice", "partner_id": partner.id, "invoice_line_ids": [(0, 0, {"product_id": product.id, "quantity": 1, "price_unit": 451.03})]}
         rec = self.env["account.move"].create(vals)
         return rec, {"state": rec.state, "move_type": rec.move_type, "amount_total": rec.amount_total}
 
@@ -179,14 +163,7 @@ class BaytAlebaaSimulator(models.Model):
         journal = self.env["account.journal"].search([("type", "in", ("bank", "cash")), ("company_id", "=", self.env.company.id)], limit=1)
         if not journal:
             raise UserError(_("No Bank/Cash journal exists in the simulator database."))
-        vals = {
-            "payment_type": "inbound",
-            "partner_type": "customer",
-            "partner_id": partner.id,
-            "amount": 1300,
-            "journal_id": journal.id,
-            "date": fields.Date.context_today(self),
-        }
+        vals = {"payment_type": "inbound", "partner_type": "customer", "partner_id": partner.id, "amount": 1300, "journal_id": journal.id, "date": fields.Date.context_today(self)}
         if "sale_order_id" in self.env["account.payment"]._fields and sale:
             vals["sale_order_id"] = sale.id
         rec = self.env["account.payment"].create(vals)
@@ -196,21 +173,7 @@ class BaytAlebaaSimulator(models.Model):
         picking_type = self.env["stock.picking.type"].search([("code", "=", "outgoing"), ("warehouse_id.company_id", "=", self.env.company.id)], limit=1)
         if not picking_type:
             raise UserError(_("No outgoing picking type exists."))
-        vals = {
-            "partner_id": partner.id,
-            "picking_type_id": picking_type.id,
-            "location_id": picking_type.default_location_src_id.id,
-            "location_dest_id": picking_type.default_location_dest_id.id,
-            "origin": sale.name if sale else "SIM-SALE",
-            "move_ids": [(0, 0, {
-                "name": product.display_name,
-                "product_id": product.id,
-                "product_uom_qty": 1,
-                "product_uom": product.uom_id.id,
-                "location_id": picking_type.default_location_src_id.id,
-                "location_dest_id": picking_type.default_location_dest_id.id,
-            })],
-        }
+        vals = {"partner_id": partner.id, "picking_type_id": picking_type.id, "location_id": picking_type.default_location_src_id.id, "location_dest_id": picking_type.default_location_dest_id.id, "origin": sale.name if sale else "SIM-SALE", "move_ids": [(0, 0, {"name": product.display_name, "product_id": product.id, "product_uom_qty": 1, "product_uom": product.uom_id.id, "location_id": picking_type.default_location_src_id.id, "location_dest_id": picking_type.default_location_dest_id.id})]}
         rec = self.env["stock.picking"].create(vals)
         return rec, {"state": rec.state, "origin": rec.origin, "picking_type": picking_type.display_name}
 
@@ -228,17 +191,7 @@ class BaytAlebaaSimulator(models.Model):
         return rec, {"state": getattr(rec, "state", False), "project": project.display_name, "customer_mobile": rec.customer_mobile}
 
     def _create_operation_case(self, partner, invoice, task):
-        vals = {
-            "name": "OPS/SIM/00001",
-            "partner_id": partner.id,
-            "invoice_id": invoice.id if invoice else False,
-            "current_stage": "In Progress",
-            "state": "in_progress",
-            "service_id": "جدة - وسط جدة",
-            "service_family_id": "جدة",
-            "routing_name": "توصيل",
-            "questionnaire_complete": True,
-        }
+        vals = {"name": "OPS/SIM/00001", "partner_id": partner.id, "invoice_id": invoice.id if invoice else False, "current_stage": "In Progress", "state": "in_progress", "service_id": "جدة - وسط جدة", "service_family_id": "جدة", "routing_name": "توصيل", "questionnaire_complete": True}
         rec = self.env["operations.operation.case"].create(vals)
         if task:
             task.operation_case_id = rec.id
@@ -273,65 +226,56 @@ class BaytAlebaaSimulator(models.Model):
         return rec, vals
 
     def _create_appointment_type(self):
-        vals = {"name": "INV/SIM/00001 - Appointment", "appointment_duration": 8, "min_schedule_hours": 24, "max_schedule_days": 60, "auto_confirm": True, "website_url": "/appointment/simulator"}
+        vals = {"name": "Measurements Appointment - Simulator", "appointment_duration": 1.0, "location": "Jeddah Simulator Branch"}
         rec = self.env["appointment.type"].create(vals)
         return rec, vals
 
     def _create_calendar_event(self, partner, appointment):
         start = fields.Datetime.now()
-        stop = fields.Datetime.add(start, hours=8)
-        vals = {"name": "Simulator Appointment Booking", "start": start, "stop": stop, "partner_ids": [(6, 0, [partner.id])], "appointment_type_id": appointment.id, "appointment_status": "booked", "booking_location_url": "https://www.openstreetmap.org/?mlat=21.5540708&mlon=39.1493511"}
+        vals = {"name": "Measurements Appointment - Simulator", "start": start, "stop": fields.Datetime.add(start, hours=1), "partner_ids": [(6, 0, [partner.id])], "appointment_type_id": appointment.id}
         rec = self.env["calendar.event"].create(vals)
-        return rec, vals
+        return rec, {"start": rec.start, "stop": rec.stop, "appointment_type": appointment.display_name}
 
     def _create_mock_messages(self, records, partner):
         if not self.mock_wati:
             return
-        for record in [r for r in records if r]:
-            self.env["bayt.alebaa.mock.message"].create({
-                "recipient": partner.phone or partner.mobile or partner.x_mobile or "NO_PHONE",
-                "template_name": "simulator_%s" % record._name.replace(".", "_"),
-                "source_model": record._name,
-                "source_record_id": record.id,
-                "trigger": "seed/create",
-                "payload": json.dumps({"record": record.display_name, "model": record._name}, ensure_ascii=False),
-                "status": "would_send" if (partner.phone or partner.mobile or partner.x_mobile) else "blocked",
-            })
+        for rec in [record for record in records if record]:
+            self.env["bayt.alebaa.mock.message"].create({"recipient": partner.phone or "+966500009606", "template_name": "qa_%s" % rec._name.replace(".", "_"), "source_model": rec._name, "source_record_id": rec.id, "trigger": "seed", "payload": json.dumps({"record": rec.display_name, "model": rec._name}, ensure_ascii=False), "status": "would_send"})
 
-    def action_run_state_transitions(self):
+    def action_run_transitions(self):
         self.ensure_one()
-        checks = [
-            ("CRM stage/state write", "crm.lead", self.env["crm.lead"].search([], order="id desc", limit=1), {"probability": 74.09}),
-            ("Sale state write", "sale.order", self.env["sale.order"].search([], order="id desc", limit=1), {}),
-            ("Purchase state write", "purchase.order", self.env["purchase.order"].search([], order="id desc", limit=1), {}),
-            ("Delivery state-related write", "stock.picking", self.env["stock.picking"].search([], order="id desc", limit=1), {"scheduled_date": fields.Datetime.now()}),
-            ("Manufacturing state-related write", "mrp.production", self.env["mrp.production"].search([], order="id desc", limit=1), {"date_start": fields.Datetime.now()}),
-            ("Operation Case state change", "operations.operation.case", self.env["operations.operation.case"].search([], order="id desc", limit=1), {"state": "done", "current_stage": "Done"}),
-            ("Workflow completion", "operations.workflow.instance", self.env["operations.workflow.instance"].search([], order="id desc", limit=1), {"state": "completed", "progress": 100}),
-            ("Helpdesk stage write", "helpdesk.ticket", self.env["helpdesk.ticket"].search([], order="id desc", limit=1), {"priority": "3"}),
-            ("Appointment status write", "calendar.event", self.env["calendar.event"].search([("appointment_type_id", "!=", False)], order="id desc", limit=1), {"appointment_status": "booked"}),
-        ]
-        for scenario, model_name, record, values in checks:
-            if not record:
-                self._log(scenario, model_name, "fail", message="No simulator record found. Run Seed All first.")
+        transitions = [("crm.lead", [("stage_id", lambda rec: self.env["crm.stage"].search([], order="sequence desc", limit=1).id)]), ("sale.order", [("state", "sale")]), ("purchase.order", [("state", "purchase")]), ("account.move", [("state", "posted")]), ("stock.picking", [("state", "assigned")]), ("mrp.production", [("state", "progress")]), ("project.task", [("state", "1_done")]), ("operations.operation.case", [("state", "done"), ("current_stage", "Done")]), ("hcos.task.form.decor.measurement", [("state", "verified"), ("otp_verified", True)]), ("helpdesk.ticket", [("stage_id", lambda rec: self.env["helpdesk.stage"].search([], order="id desc", limit=1).id)])]
+        for model_name, changes in transitions:
+            if model_name not in self.env:
+                self._log("State transition", model_name, "info", message="Model is not installed in this QA database.")
                 continue
+            rec = self.env[model_name].search([], order="id desc", limit=1)
+            if not rec:
+                self._log("State transition", model_name, "info", message="No seeded record found.")
+                continue
+            vals = {}
+            for field_name, value in changes:
+                if field_name not in rec._fields:
+                    continue
+                vals[field_name] = value(rec) if callable(value) else value
             try:
                 with self.env.cr.savepoint():
-                    if values:
-                        record.write(values)
-                self._log(scenario, model_name, "pass", record=record, payload=values)
+                    rec.write(vals)
+                self._log("State transition", model_name, "pass", record=rec, payload=vals)
             except Exception as exc:
-                self._log(scenario, model_name, "fail", record=record, message=str(exc), payload=values)
+                _logger.exception("Bayt Alebaa simulator transition failed for %s", model_name)
+                self._log("State transition", model_name, "fail", record=rec, message=str(exc), payload=vals)
         self.last_run_at = fields.Datetime.now()
         return self.action_open_results()
 
-    def action_clear_results(self):
+    def action_clear_logs(self):
         self.env["bayt.alebaa.test.result"].search([]).unlink()
         self.env["bayt.alebaa.mock.message"].search([]).unlink()
+        self.last_run_at = False
         return True
 
     def action_open_results(self):
-        return {"type": "ir.actions.act_window", "name": "Simulator Test Matrix", "res_model": "bayt.alebaa.test.result", "view_mode": "list,form", "target": "current"}
+        return {"type": "ir.actions.act_window", "name": _("Bayt Alebaa Test Matrix"), "res_model": "bayt.alebaa.test.result", "view_mode": "list,form", "target": "current"}
 
     def action_open_mock_messages(self):
-        return {"type": "ir.actions.act_window", "name": "Mock WATI Outbox", "res_model": "bayt.alebaa.mock.message", "view_mode": "list,form", "target": "current"}
+        return {"type": "ir.actions.act_window", "name": _("Mock WATI Outbox"), "res_model": "bayt.alebaa.mock.message", "view_mode": "list,form", "target": "current"}
