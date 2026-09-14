@@ -45,7 +45,7 @@ class WatiAutomationStudio extends Component {
                 "wati.automation.rule",
                 [],
                 fields,
-                { order: "sequence, id" }
+                { order: "sequence, id", context: { active_test: false } }
             );
             this.state.rules = rules;
 
@@ -145,6 +145,7 @@ class WatiAutomationStudio extends Component {
             res_id: Number(ruleId),
             views: [[false, "form"]],
             target: "current",
+            context: { active_test: false },
         });
     }
 
