@@ -70,6 +70,48 @@ class WatiAutomationRecipient(models.Model):
         haystack = f"{getattr(field, 'name', '')} {getattr(field, 'string', '')}".casefold()
         return 0 if any(token.casefold() in haystack for token in _RELATION_HINTS) else 5
 
+    @api.model
+    def _mask_phone_for_preview(self, phone):
+        digits = "".join(ch for ch in str(phone or "") if ch.isdigit())
+        if not digits:
+            return ""
+        if len(digits) <= 4:
+            return digits
+        if len(digits) <= 7:
+            return f"{digits[:2]}{'•' * (len(digits) - 4)}{digits[-2:]}"
+        return f"{digits[:4]}{'•' * max(4, len(digits) - 7)}{digits[-3:]}"
+
+    def _recipient_preview_resolution(self, path):
+        """Resolve a configured recipient path against recent real records.
+
+        The preview intentionally masks the number and never changes business data.
+        We scan a small set of recent records so the builder can prove that a path
+        such as partner_id.phone is not only syntactically valid but actually
+        resolves to a usable number in live Odoo data.
+        """
+        self.ensure_one()
+        model_name = self.model_id.model if self.model_id else False
+        path = (path or "").strip()
+        if not model_name or model_name not in self.env or not path:
+            return "", ""
+
+        try:
+            records = self.env[model_name].sudo().search([], order="id desc", limit=20)
+        except Exception:
+            return "", ""
+
+        for record in records:
+            try:
+                raw = self._resolve_path(record, path)
+                normalized = self._normalize_phone(raw) if raw else ""
+            except Exception:
+                continue
+            if not normalized:
+                continue
+            label = record.display_name or f"{model_name},{record.id}"
+            return self._mask_phone_for_preview(normalized), label
+        return "", ""
+
     def _recipient_path_options(self, max_depth=2, limit=80):
         """Discover useful phone paths from the selected Odoo model.
 
@@ -167,18 +209,61 @@ class WatiAutomationRecipient(models.Model):
                 None,
             )
             if rule.recipient_advanced_path:
+                masked, record_label = rule._recipient_preview_resolution(rule.recipient_advanced_path)
                 rule.recipient_summary = _("Custom number path")
-                rule.recipient_preview_note = _("The advanced path specified by the administrator will be used.")
+                if masked:
+                    rule.recipient_preview_note = _(
+                        "Resolved from %(record)s: %(number)s"
+                    ) % {"record": record_label, "number": masked}
+                else:
+                    rule.recipient_preview_note = _(
+                        "The advanced path is configured, but no recent record resolved to a usable phone number."
+                    )
             elif mode == "auto":
                 rule.recipient_summary = _("Customer number automatically")
-                if options:
+                resolved = ""
+                resolved_label = ""
+                resolved_path_label = ""
+                for item in options[:12]:
+                    masked, record_label = rule._recipient_preview_resolution(item["value"])
+                    if masked:
+                        resolved = masked
+                        resolved_label = record_label
+                        resolved_path_label = item["label"]
+                        break
+                if resolved:
+                    rule.recipient_preview_note = _(
+                        "Resolved automatically from %(path)s on %(record)s: %(number)s"
+                    ) % {
+                        "path": resolved_path_label,
+                        "record": resolved_label,
+                        "number": resolved,
+                    }
+                elif options:
                     labels = ", ".join(item["label"] for item in options[:3])
-                    rule.recipient_preview_note = _("The system will automatically search in the most appropriate order, e.g: %s", labels)
+                    rule.recipient_preview_note = _(
+                        "The system will automatically search in the most appropriate order, e.g: %s",
+                        labels,
+                    )
                 else:
-                    rule.recipient_preview_note = _("We haven’t found a clear phone field yet; You can choose an advanced path if necessary.")
+                    rule.recipient_preview_note = _(
+                        "We haven’t found a clear phone field yet; You can choose an advanced path if necessary."
+                    )
             elif selected:
+                masked, record_label = rule._recipient_preview_resolution(selected["value"])
                 rule.recipient_summary = selected["label"]
-                rule.recipient_preview_note = _("The message will be sent to: %s", selected["label"])
+                if masked:
+                    rule.recipient_preview_note = _(
+                        "Resolved from %(record)s via %(path)s: %(number)s"
+                    ) % {
+                        "record": record_label,
+                        "path": selected["label"],
+                        "number": masked,
+                    }
+                else:
+                    rule.recipient_preview_note = _(
+                        "Path %(path)s is selected, but no recent record currently resolves to a usable phone number."
+                    ) % {"path": selected["label"]}
             else:
                 rule.recipient_summary = _("Choose the recipient number")
                 rule.recipient_preview_note = (
