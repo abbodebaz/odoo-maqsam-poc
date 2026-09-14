@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="bayt_alebaa_qa_lab_default" model="bayt.alebaa.simulator">
+        <field name="name">Bayt Alebaa QA Lab</field>
+        <field name="mock_wati">True</field>
+    </record>
+</odoo>

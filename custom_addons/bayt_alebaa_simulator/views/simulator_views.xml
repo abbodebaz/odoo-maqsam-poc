@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_bayt_alebaa_simulator_list" model="ir.ui.view">
+        <field name="name">bayt.alebaa.simulator.list</field>
+        <field name="model">bayt.alebaa.simulator</field>
+        <field name="arch" type="xml">
+            <list create="1" delete="0">
+                <field name="name"/>
+                <field name="mock_wati"/>
+                <field name="last_run_at"/>
+                <field name="result_count"/>
+                <field name="mock_message_count"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_bayt_alebaa_simulator_form" model="ir.ui.view">
+        <field name="name">bayt.alebaa.simulator.form</field>
+        <field name="model">bayt.alebaa.simulator</field>
+        <field name="arch" type="xml">
+            <form string="Bayt Alebaa QA Lab">
+                <header>
+                    <button name="action_seed_all" type="object" string="1. Seed All Scenarios" class="btn-primary" icon="fa-database"/>
+                    <button name="action_run_state_transitions" type="object" string="2. Run State Transitions" class="btn-secondary" icon="fa-play"/>
+                    <button name="action_clear_results" type="object" string="Clear Test Logs" class="btn-secondary" confirm="Clear simulator test results and mock outbox?"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_open_results" type="object" class="oe_stat_button" icon="fa-check-square-o">
+                            <field name="result_count" widget="statinfo" string="Test Matrix"/>
+                        </button>
+                        <button name="action_open_mock_messages" type="object" class="oe_stat_button" icon="fa-whatsapp">
+                            <field name="mock_message_count" widget="statinfo" string="Mock Outbox"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="TEST ONLY" bg_color="text-bg-warning"/>
+                    <h1><field name="name"/></h1>
+                    <group>
+                        <group string="Safety">
+                            <field name="mock_wati"/>
+                            <field name="last_run_at" readonly="1"/>
+                        </group>
+                        <group string="Purpose">
+                            <div class="text-muted">
+                                This module reproduces the Bayt Alebaa records and state transitions WATI must handle. It is isolated from the production connector and exists only in the QA environment.
+                            </div>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="How to Test">
+                            <div class="alert alert-info" role="alert">
+                                <strong>Step 1:</strong> Seed All Scenarios creates CRM, Sales, Purchase, Invoice, Payment, Delivery, Manufacturing, Project Task, Operations, Task Forms, Helpdesk and Appointment records.<br/>
+                                <strong>Step 2:</strong> Build WATI automations against those models.<br/>
+                                <strong>Step 3:</strong> Run State Transitions to fire realistic write events.<br/>
+                                <strong>Step 4:</strong> Review Test Matrix and Mock Outbox.
+                            </div>
+                        </page>
+                        <page string="Notes">
+                            <field name="notes" placeholder="QA notes..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_bayt_alebaa_test_result_list" model="ir.ui.view">
+        <field name="name">bayt.alebaa.test.result.list</field>
+        <field name="model">bayt.alebaa.test.result</field>
+        <field name="arch" type="xml">
+            <list decoration-success="status == 'pass'" decoration-danger="status == 'fail'" decoration-info="status == 'info'" create="0">
+                <field name="create_date"/>
+                <field name="scenario"/>
+                <field name="model_name"/>
+                <field name="record_ref"/>
+                <field name="status" widget="badge"/>
+                <field name="message" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_bayt_alebaa_test_result_form" model="ir.ui.view">
+        <field name="name">bayt.alebaa.test.result.form</field>
+        <field name="model">bayt.alebaa.test.result</field>
+        <field name="arch" type="xml">
+            <form create="0" edit="0">
+                <sheet>
+                    <group>
+                        <field name="scenario"/>
+                        <field name="model_name"/>
+                        <field name="record_ref"/>
+                        <field name="status" widget="badge"/>
+                        <field name="message"/>
+                    </group>
+                    <group string="Captured Payload">
+                        <field name="payload" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_bayt_alebaa_mock_message_list" model="ir.ui.view">
+        <field name="name">bayt.alebaa.mock.message.list</field>
+        <field name="model">bayt.alebaa.mock.message</field>
+        <field name="arch" type="xml">
+            <list decoration-success="status == 'would_send'" decoration-danger="status == 'blocked'" create="0">
+                <field name="create_date"/>
+                <field name="recipient"/>
+                <field name="template_name"/>
+                <field name="source_model"/>
+                <field name="source_record_id"/>
+                <field name="trigger"/>
+                <field name="status" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_bayt_alebaa_mock_message_form" model="ir.ui.view">
+        <field name="name">bayt.alebaa.mock.message.form</field>
+        <field name="model">bayt.alebaa.mock.message</field>
+        <field name="arch" type="xml">
+            <form create="0" edit="0">
+                <sheet>
+                    <group>
+                        <field name="recipient"/>
+                        <field name="template_name"/>
+                        <field name="source_model"/>
+                        <field name="source_record_id"/>
+                        <field name="trigger"/>
+                        <field name="status" widget="badge"/>
+                    </group>
+                    <field name="payload"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_bayt_alebaa_simulator" model="ir.actions.act_window">
+        <field name="name">Bayt Alebaa QA Lab</field>
+        <field name="res_model">bayt.alebaa.simulator</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_bayt_alebaa_test_results" model="ir.actions.act_window">
+        <field name="name">Simulator Test Matrix</field>
+        <field name="res_model">bayt.alebaa.test.result</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_bayt_alebaa_mock_messages" model="ir.actions.act_window">
+        <field name="name">Mock WATI Outbox</field>
+        <field name="res_model">bayt.alebaa.mock.message</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_bayt_alebaa_qa_group"
+              name="QA Simulator"
+              parent="wati_connector.menu_wati_root"
+              sequence="80"
+              groups="base.group_system"/>
+    <menuitem id="menu_bayt_alebaa_qa_lab"
+              name="Control Panel"
+              parent="menu_bayt_alebaa_qa_group"
+              action="action_bayt_alebaa_simulator"
+              sequence="10"
+              groups="base.group_system"/>
+    <menuitem id="menu_bayt_alebaa_test_matrix"
+              name="Test Matrix"
+              parent="menu_bayt_alebaa_qa_group"
+              action="action_bayt_alebaa_test_results"
+              sequence="20"
+              groups="base.group_system"/>
+    <menuitem id="menu_bayt_alebaa_mock_outbox"
+              name="Mock WATI Outbox"
+              parent="menu_bayt_alebaa_qa_group"
+              action="action_bayt_alebaa_mock_messages"
+              sequence="30"
+              groups="base.group_system"/>
+</odoo>
