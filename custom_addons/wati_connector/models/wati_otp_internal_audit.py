@@ -100,6 +100,40 @@ class WatiOtpTransactionInternalAudit(models.Model):
             self.sudo().write({"verified_by_id": int(verified_by_user_id)})
         return ok, message
 
+    def action_resend(self):
+        """Resend and navigate to the newly-created transaction.
+
+        The core resend correctly invalidates the old transaction and creates a
+        fresh OTP, but its return action opens the verification wizard while the
+        browser remains on the now-cancelled transaction.  That makes the old
+        audit code look current until a refresh.  Reuse the core resend logic,
+        extract the new transaction id from its wizard action, and open that
+        transaction instead so the operator immediately sees the fresh OTP and
+        its Waiting Verification state.
+        """
+        self.ensure_one()
+        verify_action = super().action_resend()
+        transaction_id = (verify_action.get("context") or {}).get(
+            "default_transaction_id"
+        )
+        transaction = self.browse(transaction_id).exists() if transaction_id else self.browse()
+        if not transaction:
+            return verify_action
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("OTP Transaction"),
+            "res_model": "wati.otp.transaction",
+            "res_id": transaction.id,
+            "view_mode": "form",
+            "views": [
+                (
+                    self.env.ref("wati_connector.view_wati_otp_transaction_form").id,
+                    "form",
+                )
+            ],
+            "target": "current",
+        }
+
     def action_open_source_record(self):
         self.ensure_one()
         record = self._get_record()
