@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_wati_otp_studio" model="ir.actions.client">
+        <field name="name">OTP Bridge</field>
+        <field name="tag">wati_connector.otp_studio</field>
+    </record>
+
+    <record id="menu_wati_otp_bridges" model="ir.ui.menu">
+        <field name="name">OTP Bridge</field>
+        <field name="action" ref="action_wati_otp_studio"/>
+    </record>
+</odoo>

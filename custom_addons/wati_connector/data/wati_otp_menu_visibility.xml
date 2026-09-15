@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Re-declare the menus with the Odoo menuitem loader so its `groups`
+         attribute updates menu visibility exactly like the original menu
+         declaration. Keep these declarations aligned with the managed OTP
+         experience so a later data load cannot route users back to legacy OTP. -->
+    <menuitem id="menu_wati_otp_bridges"
+              name="OTP Bridge"
+              parent="menu_wati_root"
+              action="action_wati_otp_studio"
+              groups="wati_connector.group_wati_admin,base.group_system"
+              sequence="32"/>
+
+    <menuitem id="menu_wati_otp_logs"
+              name="OTP Transactions"
+              parent="menu_wati_root"
+              action="action_wati_otp_transactions"
+              groups="wati_connector.group_wati_supervisor,base.group_system"
+              sequence="36"/>
+</odoo>

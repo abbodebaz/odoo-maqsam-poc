@@ -3,19 +3,19 @@ from odoo.exceptions import ValidationError
 
 
 _EXTRA_OPERATORS = [
-    ("eq", "يساوي"),
-    ("ne", "لا يساوي"),
-    ("contains", "يحتوي"),
-    ("gt", "أكبر من"),
-    ("gte", "أكبر من أو يساوي"),
-    ("lt", "أقل من"),
-    ("lte", "أقل من أو يساوي"),
-    ("is_set", "له قيمة"),
-    ("is_not_set", "بدون قيمة"),
+    ("eq", "equals"),
+    ("ne", "Not equal"),
+    ("contains", "Contains"),
+    ("gt", "Greater than"),
+    ("gte", "Greater than or equal to"),
+    ("lt", "less than"),
+    ("lte", "Less than or equal to"),
+    ("is_set", "It has value"),
+    ("is_not_set", "Without value"),
 ]
 
-_TRUE_VALUES = {"1", "true", "yes", "y", "on", "نعم", "صح", "صحيح"}
-_FALSE_VALUES = {"0", "false", "no", "n", "off", "لا", "خطأ", "غلط"}
+_TRUE_VALUES = {"1", "true", "yes", "y", "on", "Yes", "That’s right", "True"}
+_FALSE_VALUES = {"0", "false", "no", "n", "off", "No", "Error", "Wrong"}
 
 
 class WatiAutomationCondition(models.Model):
@@ -26,7 +26,7 @@ class WatiAutomationCondition(models.Model):
     sequence = fields.Integer(default=10)
     rule_id = fields.Many2one(
         "wati.automation.rule",
-        string="القاعدة",
+        string="The rule",
         required=True,
         ondelete="cascade",
         index=True,
@@ -39,24 +39,24 @@ class WatiAutomationCondition(models.Model):
     )
     field_id = fields.Many2one(
         "ir.model.fields",
-        string="الحقل",
+        string="field",
         required=True,
         ondelete="cascade",
         domain="[('model_id', '=', model_id), ('store', '=', True)]",
     )
     operator = fields.Selection(
         _EXTRA_OPERATORS,
-        string="الشرط",
+        string="Condition",
         required=True,
         default="eq",
     )
-    target_value = fields.Char(string="القيمة")
+    target_value = fields.Char(string="Value")
 
     @api.constrains("field_id", "model_id")
     def _check_field_model(self):
         for line in self:
             if line.field_id and line.model_id and line.field_id.model_id != line.model_id:
-                raise ValidationError("الحقل الإضافي لا ينتمي إلى التطبيق المختار في الأتمتة.")
+                raise ValidationError("The additional field does not belong to the application chosen in the automation.")
 
 
 class WatiAutomationRuleExtraConditions(models.Model):
@@ -65,7 +65,7 @@ class WatiAutomationRuleExtraConditions(models.Model):
     condition_ids = fields.One2many(
         "wati.automation.condition",
         "rule_id",
-        string="شروط إضافية",
+        string="Additional terms",
         copy=True,
     )
 

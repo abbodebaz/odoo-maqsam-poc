@@ -9,7 +9,7 @@ _GENERIC_NAMES = {
     "none",
     "null",
     "-",
-    "عميل واتساب",
+    "WhatsApp client",
 }
 
 
@@ -37,7 +37,7 @@ class WatiConversationNameGuard(models.Model):
                 vals["sender_name"] = wa_id or False
 
             if _is_generic(vals.get("name")):
-                vals["name"] = sender or wa_id or "رقم غير متوفر"
+                vals["name"] = sender or wa_id or "Number not available"
 
             normalized_list.append(vals)
         return super().create(normalized_list)
@@ -65,63 +65,7 @@ class WatiConversationNameGuard(models.Model):
 
             if "name" in normalized and _is_generic(normalized.get("name")):
                 sender = _meaningful(normalized.get("sender_name")) or _meaningful(record.sender_name)
-                normalized["name"] = sender or wa_id or "رقم غير متوفر"
+                normalized["name"] = sender or wa_id or "Number not available"
 
             result = super(WatiConversationNameGuard, record).write(normalized) and result
         return result
-
-    def init(self):
-        """Repair legacy rows and backfill missing WhatsApp numbers from messages."""
-        generic_sql = "('whatsapp','wati','unknown','none','null','-','','عميل واتساب')"
-
-        # Older conversations can have an empty wa_id even though their messages
-        # already contain the WhatsApp number. Recover the newest known number.
-        self.env.cr.execute(
-            """
-            UPDATE wati_conversation AS conversation
-               SET wa_id = latest.wa_id
-              FROM (
-                    SELECT DISTINCT ON (conversation_id)
-                           conversation_id,
-                           trim(wa_id) AS wa_id
-                      FROM wati_message
-                     WHERE conversation_id IS NOT NULL
-                       AND trim(coalesce(wa_id, '')) <> ''
-                     ORDER BY conversation_id,
-                              received_at DESC NULLS LAST,
-                              id DESC
-                   ) AS latest
-             WHERE conversation.id = latest.conversation_id
-               AND trim(coalesce(conversation.wa_id, '')) = ''
-            """
-        )
-
-        self.env.cr.execute(
-            f"""
-            UPDATE wati_conversation
-               SET name = CASE
-                    WHEN lower(trim(coalesce(name, ''))) IN {generic_sql}
-                    THEN COALESCE(
-                        NULLIF(
-                            CASE
-                                WHEN lower(trim(coalesce(sender_name, ''))) NOT IN {generic_sql}
-                                THEN trim(sender_name)
-                                ELSE ''
-                            END,
-                            ''
-                        ),
-                        NULLIF(trim(coalesce(wa_id, '')), ''),
-                        'رقم غير متوفر'
-                    )
-                    ELSE name
-               END,
-                   sender_name = CASE
-                    WHEN lower(trim(coalesce(sender_name, ''))) IN {generic_sql}
-                    THEN NULLIF(trim(coalesce(wa_id, '')), '')
-                    ELSE sender_name
-               END
-             WHERE lower(trim(coalesce(name, ''))) IN {generic_sql}
-                OR lower(trim(coalesce(sender_name, ''))) IN {generic_sql}
-                OR trim(coalesce(wa_id, '')) <> ''
-            """
-        )

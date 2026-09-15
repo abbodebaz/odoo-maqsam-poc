@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# The official Odoo image does not ship every regional locale. C.UTF-8 is
+# available in Debian-based images and avoids noisy locale fallbacks while Odoo
+# still handles each user's language and formatting through database settings.
+export LANG="C.UTF-8"
+export LC_ALL="C.UTF-8"
+
 : "${PGHOST:?PGHOST is required}"
 : "${PGPORT:=5432}"
 : "${PGUSER:?PGUSER is required}"
@@ -10,6 +16,7 @@ set -euo pipefail
 ADDONS_PATH="/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons"
 DATA_DIR="/var/lib/odoo"
 FILESTORE_DIR="${DATA_DIR}/filestore/${PGDATABASE}"
+WATI_MODULES="${WATI_MODULES:-wati_connector}"
 export PGPASSWORD
 
 echo "Waiting for PostgreSQL at ${PGHOST}:${PGPORT}..."
@@ -39,41 +46,32 @@ fi
 
 install_or_upgrade_module() {
   local module_name="$1"
-  local label="$2"
   local module_state
   module_state="$(psql -h "${PGHOST}" -p "${PGPORT}" -U "${PGUSER}" -d "${PGDATABASE}" -tAc "SELECT state FROM ir_module_module WHERE name='${module_name}' LIMIT 1" || true)"
   if [ "${module_state}" = "installed" ]; then
-    echo "Upgrading ${label} module..."
+    echo "Upgrading ${module_name}..."
     odoo "${COMMON_ARGS[@]}" -d "${PGDATABASE}" -u "${module_name}" --without-demo --stop-after-init
   else
-    echo "Installing ${label} module..."
+    echo "Installing ${module_name}..."
     odoo "${COMMON_ARGS[@]}" -d "${PGDATABASE}" -i "${module_name}" --without-demo --stop-after-init
   fi
 }
 
-# WATI owns schema extensions on res.users / wati.conversation. Upgrade it
-# before Maqsam so new WATI columns exist before another module initializes
-# the shared registry.
-install_or_upgrade_module "wati_connector" "WATI WhatsApp Connector"
-install_or_upgrade_module "maqsam_connector" "Maqsam Connector"
+IFS=',' read -ra MODULE_LIST <<< "${WATI_MODULES}"
+for module_name in "${MODULE_LIST[@]}"; do
+  module_name="$(echo "${module_name}" | xargs)"
+  [ -n "${module_name}" ] || continue
+  install_or_upgrade_module "${module_name}"
+done
 
 mkdir -p "${FILESTORE_DIR}"
 
-# Railway containers use an ephemeral Odoo filestore. The database can retain
-# generated bundle attachments whose files disappeared on a previous deploy.
-# These are safe to delete on every deploy: Odoo recreates them on first load.
+# Generated web assets are reproducible and may point to files from an older
+# ephemeral container. Removing only generated asset attachments is safe;
+# Odoo recreates them on demand.
 echo "Clearing generated Odoo web asset attachments..."
 psql -v ON_ERROR_STOP=1 -h "${PGHOST}" -p "${PGPORT}" -U "${PGUSER}" -d "${PGDATABASE}" \
   -c "DELETE FROM ir_attachment WHERE COALESCE(url, '') LIKE '/web/assets/%' OR COALESCE(name, '') LIKE '/web/assets/%';"
-
-# A short-lived WATI Inbox experiment temporarily assigned a client action to
-# the root WhatsApp menu. After rolling back, Odoo can keep that numeric menu
-# reference even though the client action record no longer exists, causing
-# /web/webclient/load_menus to return 404. Explicitly restore the root menu to
-# a container-only menu. Child actions (conversations/messages) remain intact.
-echo "Clearing stale WATI root menu action..."
-psql -v ON_ERROR_STOP=1 -h "${PGHOST}" -p "${PGPORT}" -U "${PGUSER}" -d "${PGDATABASE}" \
-  -c "UPDATE ir_ui_menu SET action = NULL WHERE id IN (SELECT res_id FROM ir_model_data WHERE module = 'wati_connector' AND name = 'menu_wati_root' AND model = 'ir.ui.menu');"
 
 echo "Starting Odoo 19..."
 exec odoo "${COMMON_ARGS[@]}" -d "${PGDATABASE}" --db-filter="^${PGDATABASE}$"

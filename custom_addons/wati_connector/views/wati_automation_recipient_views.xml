@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_automation_rule_form_smart_recipient" model="ir.ui.view">
+        <field name="name">wati.automation.rule.form.smart.recipient</field>
+        <field name="model">wati.automation.rule</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_automation_rule_form_builder"/>
+        <field name="priority">150</field>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('wati_builder_step')][@invisible=&quot;setup_step != 'recipient'&quot;]" position="replace">
+                <div class="wati_builder_step" invisible="setup_step != 'recipient'">
+                    <field name="smart_recipient_metadata" invisible="1"/>
+                    <field name="recipient_field_id" invisible="1"/>
+
+                    <div class="wati_builder_step_head">
+                        <span class="wati_builder_step_no">2</span>
+                        <div>
+                            <h2>Who should receive the WhatsApp message?</h2>
+                            <p>Choose where Odoo should get the recipient's WhatsApp number.</p>
+                        </div>
+                    </div>
+
+                    <div class="wati_recipient_mode_box">
+                        <span class="wati_section_label">Recipient source</span>
+                        <div class="wati_recipient_choices">
+                            <field name="recipient_mode" widget="radio" options="{'horizontal': True}" nolabel="1"/>
+                        </div>
+                        <div class="wati_recipient_mode_help">
+                            <div invisible="recipient_mode != 'auto'">
+                                <strong>Automatic</strong>
+                                <span>Odoo finds the best available phone number for you. Recommended for most automations.</span>
+                            </div>
+                            <div invisible="recipient_mode != 'direct'">
+                                <strong>Phone from this record</strong>
+                                <span>Choose a phone field stored directly on the current record, for example Lead → Mobile.</span>
+                            </div>
+                            <div invisible="recipient_mode != 'related'">
+                                <strong>Phone from a related record</strong>
+                                <span>Choose a phone field from a linked record, for example Lead → Customer → Mobile.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wati_recipient_context" invisible="recipient_mode != 'auto'">
+                        <div class="wati_recipient_context_icon">✓</div>
+                        <div>
+                            <strong>Use the best available customer number</strong>
+                            <p>Odoo checks the most relevant phone fields and linked contacts automatically.</p>
+                        </div>
+                    </div>
+
+                    <div class="wati_recipient_context" invisible="recipient_mode == 'auto'">
+                        <div class="wati_recipient_context_icon">↳</div>
+                        <div class="wati_recipient_select_wrap">
+                            <div class="wati_recipient_select_head">
+                                <div>
+                                    <strong invisible="recipient_mode != 'direct'">Choose from detected phone fields</strong>
+                                    <strong invisible="recipient_mode != 'related'">Choose from detected linked phone fields</strong>
+                                    <p invisible="recipient_mode != 'direct'">Odoo scanned this record for phone and mobile fields. Select one below — no typing required.</p>
+                                    <p invisible="recipient_mode != 'related'">Odoo scanned linked records for phone and mobile fields. Select the relationship you want to use — no typing required.</p>
+                                </div>
+                                <span class="wati_detected_badge">Detected automatically</span>
+                            </div>
+                            <field name="recipient_path"
+                                   widget="wati_smart_recipient"
+                                   nolabel="1"
+                                   placeholder="Select a detected phone field"/>
+                            <small class="wati_recipient_rank_note">Best matches are listed first.</small>
+                        </div>
+                    </div>
+
+                    <div class="wati_recipient_preview">
+                        <span class="wati_recipient_preview_icon">📱</span>
+                        <div>
+                            <strong>Recipient preview</strong>
+                            <field name="recipient_summary" nolabel="1" readonly="1"/>
+                            <field name="recipient_preview_note" nolabel="1" readonly="1"/>
+                        </div>
+                    </div>
+
+                    <div class="wati_policy_box wati_recipient_dedup">
+                        <div class="wati_policy_title">Duplicate protection</div>
+                        <div class="wati_dedup_control">
+                            <field name="once_per_record" nolabel="1"/>
+                            <div class="wati_dedup_copy">
+                                <strong>Send only once per record</strong>
+                                <p>Keep this on to prevent the same automation from sending duplicate WhatsApp messages to the same record. Turn it off only if that record should be allowed to trigger again later.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <details class="wati_recipient_advanced" groups="base.group_system">
+                        <summary>Advanced settings <span class="wati_advanced_optional">Optional</span></summary>
+                        <div class="wati_recipient_advanced_body">
+                            <div class="wati_advanced_field">
+                                <label for="recipient_advanced_path" string="Custom phone path"/>
+                                <field name="recipient_advanced_path"
+                                       nolabel="1"
+                                       placeholder="Example: partner_id.mobile"/>
+                                <small>Use an Odoo field path only when the normal recipient choices do not cover your case.</small>
+                            </div>
+                            <div class="wati_advanced_field">
+                                <label for="channel_number" string="WATI channel number"/>
+                                <field name="channel_number"
+                                       nolabel="1"
+                                       placeholder="Leave blank to use the normal channel"/>
+                                <small>Set this only when this automation must send from a specific WATI number.</small>
+                            </div>
+                        </div>
+                    </details>
+
+                    <div class="wati_builder_nav">
+                        <button name="action_previous_step" type="object" string="Previous: Trigger" icon="fa-arrow-left" class="btn-secondary"/>
+                        <button name="action_next_step" type="object" string="Next: Message" icon="fa-arrow-right" class="btn-primary wati_builder_next"/>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

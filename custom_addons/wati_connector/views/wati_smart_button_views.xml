@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_smart_button_location_list" model="ir.ui.view">
+        <field name="name">wati.smart.button.location.list</field>
+        <field name="model">wati.smart.button.location</field>
+        <field name="arch" type="xml">
+            <list string="Button places WhatsApp" decoration-success="mapping_state == 'ready' and active" decoration-muted="not active">
+                <field name="sequence" widget="handle"/>
+                <field name="active" widget="boolean_toggle"/>
+                <field name="name"/>
+                <field name="app_menu_id" string="Application"/>
+                <field name="model_id" string="Model"/>
+                <field name="button_label"/>
+                <field name="phone_field_id" optional="show"/>
+                <field name="phone_path" optional="show"/>
+                <field name="mapping_state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_wati_smart_button_location_form" model="ir.ui.view">
+        <field name="name">wati.smart.button.location.form</field>
+        <field name="model">wati.smart.button.location</field>
+        <field name="arch" type="xml">
+            <form string="Place button WhatsApp">
+                <header>
+                    <button name="action_auto_detect" type="object" string="Intelligent discovery" icon="fa-magic" class="btn-secondary" invisible="not model_id"/>
+                    <button name="action_sync_view" type="object" string="Update button on Odoo" icon="fa-refresh" class="btn-primary" invisible="not active"/>
+                    <field name="active" widget="boolean_toggle"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="Example: button WhatsApp By chance CRM"/></h1>
+                    </div>
+
+                    <div class="alert alert-info" role="status">
+                        Choose Application and then Record Type. The system detects a screen Form And the mobile number and the customer as much as possible, and after activation, a button is installed WhatsApp Automatically without modifying an application CRM Or sales or any other application.
+                    </div>
+
+                    <group string="1. Where does the button appear?">
+                        <group>
+                            <field name="available_app_menu_ids" invisible="1"/>
+                            <field name="available_model_ids" invisible="1"/>
+                            <field name="app_menu_id" options="{'no_create': True}" domain="[('id', 'in', available_app_menu_ids)]"/>
+                            <field name="model_id" options="{'no_create': True}" domain="[('id', 'in', available_model_ids)]"/>
+                        </group>
+                        <group>
+                            <field name="button_label"/>
+                            <field name="mapping_state" widget="badge" readonly="1"/>
+                            <field name="mapping_summary" readonly="1" nolabel="1"/>
+                        </group>
+                    </group>
+
+                    <group string="2. Where do we read the customer number?">
+                        <group>
+                            <field name="phone_field_id" options="{'no_create': True}"/>
+                            <field name="phone_path" placeholder="Example: partner_id.mobile"/>
+                        </group>
+                        <group>
+                            <field name="partner_path" placeholder="Example: partner_id"/>
+                            <div class="text-muted">The customer path is optional but makes the conversation automatically link to the customer card and theWhatsApp Timeline.</div>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Advanced details" groups="base.group_system">
+                            <group>
+                                <field name="view_id" options="{'no_create': True}"/>
+                                <field name="model_name" readonly="1"/>
+                                <field name="generated_view_id" readonly="1"/>
+                            </group>
+                            <div class="text-muted">If the model has more than Form View You can select the desired screen here, then press «Update button on Odoo».</div>
+                        </page>
+                        <page string="How does the feature work?">
+                            <ol>
+                                <li>Add a place for each screen where you want a button to appear WhatsApp.</li>
+                                <li>Select the application and model and press «Intelligent discovery».</li>
+                                <li>Review the mobile number field or path, then activate the location.</li>
+                                <li>The employee opens any record on that screen and clicks WhatsApp.</li>
+                                <li>The window automatically captures the customer and number and allows a regular message or Template Certified.</li>
+                                <li>More than one location can be created CRM Customers, sales, invoices and any other model.</li>
+                            </ol>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_wati_smart_button_locations" model="ir.actions.act_window">
+        <field name="name">Button places WhatsApp</field>
+        <field name="res_model">wati.smart.button.location</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Add button WhatsApp To any screen in Odoo Without programming</p>
+            <p>Choose the application, model, and source of the mobile number, and you can add more than one place at the same time.</p>
+        </field>
+    </record>
+
+    <record id="view_wati_universal_compose_parameter_list" model="ir.ui.view">
+        <field name="name">wati.universal.compose.parameter.list</field>
+        <field name="model">wati.universal.compose.parameter</field>
+        <field name="arch" type="xml">
+            <list editable="bottom" create="false" delete="false">
+                <field name="param_name" string="variable" readonly="1"/>
+                <field name="value" string="Value"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_wati_universal_compose_wizard_form" model="ir.ui.view">
+        <field name="name">wati.universal.compose.wizard.form</field>
+        <field name="model">wati.universal.compose.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Send WhatsApp">
+                <div class="alert alert-success" role="status">
+                    <strong>Intelligent sending of current record.</strong> The customer and number were captured WhatsApp Prepared by the location, and you can modify the number before sending if you need.
+                </div>
+                <group>
+                    <group>
+                        <field name="record_name"/>
+                        <field name="partner_id"/>
+                    </group>
+                    <group>
+                        <field name="phone"/>
+                        <field name="send_mode" widget="radio"/>
+                    </group>
+                </group>
+                <group invisible="send_mode != 'session'">
+                    <field name="message" nolabel="1" placeholder="Write a message WhatsApp..."/>
+                    <div class="text-muted">The normal message works when it is a session WhatsApp open. If the session is closed use Template Certified.</div>
+                </group>
+                <group invisible="send_mode != 'template'">
+                    <field name="template_id" options="{'no_create': True}"/>
+                    <field name="parameter_ids" nolabel="1" invisible="not template_id">
+                        <list editable="bottom" create="false" delete="false">
+                            <field name="param_name" readonly="1"/>
+                            <field name="value"/>
+                        </list>
+                    </field>
+                </group>
+                <field name="rule_id" invisible="1"/>
+                <field name="source_model" invisible="1"/>
+                <field name="source_res_id" invisible="1"/>
+                <field name="request_key" invisible="1"/>
+                <footer>
+                    <button name="action_send" type="object" string="Send WhatsApp" class="btn-primary" icon="fa-paper-plane"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_wati_universal_compose" model="ir.actions.act_window">
+        <field name="name">Send WhatsApp</field>
+        <field name="res_model">wati.universal.compose.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="view_partner_form_wati_timeline" model="ir.ui.view">
+        <field name="name">res.partner.form.wati.timeline</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_open_wati_timeline"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-whatsapp"
+                        groups="wati_connector.group_wati_user">
+                    <field name="wati_message_count" widget="statinfo" string="WhatsApp"/>
+                </button>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="WhatsApp" name="wati_timeline" groups="wati_connector.group_wati_user">
+                    <div class="alert alert-light border" role="status">
+                        <strong>Customer WhatsApp Timeline</strong>
+                        <span class="ms-2">Last communication:</span>
+                        <field name="wati_last_message_at" class="d-inline" readonly="1"/>
+                    </div>
+                    <field name="wati_timeline_message_ids" readonly="1" nolabel="1">
+                        <list create="false" edit="false" delete="false" default_order="received_at desc, id desc"
+                              decoration-success="direction == 'outbound'"
+                              decoration-info="direction == 'inbound'">
+                            <field name="received_at" string="time"/>
+                            <field name="direction" string="direction" widget="badge"/>
+                            <field name="message_type" string="Type" optional="hide"/>
+                            <field name="text" string="The message"/>
+                            <field name="status" string="Status" widget="badge"/>
+                            <field name="operator_name" string="Employee" optional="show"/>
+                            <field name="channel_phone_number" string="Channel" optional="hide"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

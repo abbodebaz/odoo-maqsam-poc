@@ -1,0 +1,336 @@
+.wati_recipient_mode_box {
+    padding: 16px 18px;
+    border: 1px solid #e4e8ed;
+    border-radius: 16px;
+    background: #fbfcfd;
+    margin-bottom: 14px;
+}
+
+.wati_recipient_choices {
+    width: 100%;
+}
+
+.wati_recipient_choices .o_field_radio {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+    width: 100% !important;
+    align-items: stretch !important;
+}
+
+/* Odoo may insert one internal wrapper around radio options. Flatten it so
+   the three choices remain real grid cards instead of stacking vertically. */
+.wati_recipient_choices .o_field_radio > div:not(.o_radio_item) {
+    display: contents !important;
+}
+
+.wati_recipient_choices .o_radio_item {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 88px;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px !important;
+    border: 1px solid #e1e5ea !important;
+    border-radius: 15px !important;
+    background: #fff !important;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+
+.wati_recipient_choices .o_radio_item:hover {
+    transform: translateY(-1px);
+    border-color: rgba(113, 75, 135, .28) !important;
+    box-shadow: 0 6px 16px rgba(17, 24, 39, .05);
+}
+
+.wati_recipient_choices .o_radio_item:has(input:checked) {
+    border-color: rgba(113, 75, 135, .55) !important;
+    background: #f8f4fa !important;
+    box-shadow: 0 6px 18px rgba(113, 75, 135, .10);
+}
+
+.wati_recipient_choices .o_radio_item label {
+    margin: 0 !important;
+    color: #273142;
+    font-weight: 800;
+    line-height: 1.35;
+    cursor: pointer;
+}
+
+.wati_recipient_mode_help {
+    margin-top: 12px;
+    padding: 11px 13px;
+    border-radius: 12px;
+    background: #f4f1f6;
+    color: #677280;
+    font-size: .8rem;
+    line-height: 1.5;
+}
+
+.wati_recipient_mode_help strong {
+    display: inline;
+    margin-right: 5px;
+    color: #3f3347;
+}
+
+.wati_recipient_context {
+    display: flex;
+    align-items: flex-start;
+    gap: 13px;
+    padding: 16px;
+    border: 1px solid #e2e6eb;
+    border-radius: 17px;
+    background: #fff;
+    margin-bottom: 14px;
+}
+
+.wati_recipient_context_icon,
+.wati_recipient_preview_icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    border-radius: 12px;
+    background: #f1ebf5;
+    color: #714b87;
+    font-weight: 900;
+}
+
+.wati_recipient_context strong,
+.wati_recipient_preview strong {
+    display: block;
+    margin-bottom: 4px;
+    color: #253041;
+    font-weight: 900;
+}
+
+.wati_recipient_context p,
+.wati_recipient_advanced_body p {
+    margin: 0;
+    color: #8792a0;
+    font-size: .82rem;
+    line-height: 1.55;
+}
+
+.wati_recipient_select_wrap {
+    width: 100%;
+}
+
+.wati_recipient_select_head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.wati_detected_badge {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: #eef8f1;
+    color: #16814b;
+    font-size: .7rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.wati_recipient_select_wrap .o_field_widget,
+.wati_recipient_select_wrap .o_input,
+.wati_smart_recipient_select {
+    width: 100% !important;
+}
+
+.wati_recipient_select_wrap .o_field_widget {
+    margin-top: 2px;
+}
+
+.wati_smart_recipient_select {
+    min-height: 46px !important;
+    padding: 0 42px 0 13px !important;
+    border: 1px solid #d7dce3 !important;
+    border-radius: 12px !important;
+    background-color: #fff !important;
+    color: #273142 !important;
+    box-shadow: none !important;
+    appearance: auto !important;
+    cursor: pointer;
+}
+
+.wati_smart_recipient_select:focus {
+    border-color: rgba(113, 75, 135, .65) !important;
+    box-shadow: 0 0 0 3px rgba(113, 75, 135, .08) !important;
+}
+
+.wati_recipient_rank_note {
+    display: block;
+    margin-top: 7px;
+    color: #8a94a1;
+    font-size: .74rem;
+}
+
+.wati_smart_recipient_empty {
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #fff7ed;
+    color: #9a5b13;
+    font-size: .82rem;
+}
+
+.wati_recipient_preview {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 15px 17px;
+    border: 1px solid rgba(34, 197, 94, .25);
+    border-radius: 15px;
+    background: rgba(34, 197, 94, .045);
+    margin: 14px 0;
+}
+
+.wati_recipient_preview_icon {
+    background: #dcfce7;
+    color: #07883b;
+}
+
+.wati_recipient_preview .o_field_widget:first-of-type {
+    display: block;
+    color: #22302a;
+    font-weight: 800;
+}
+
+.wati_recipient_preview .o_field_widget:last-of-type {
+    display: block;
+    margin-top: 3px;
+    color: #77838f;
+    font-size: .8rem;
+}
+
+.wati_policy_title {
+    margin-bottom: 10px;
+    color: #253041;
+    font-weight: 900;
+}
+
+.wati_recipient_dedup {
+    padding: 16px 18px;
+}
+
+.wati_dedup_control {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.wati_dedup_control .o_field_widget {
+    flex: 0 0 auto;
+    margin-top: 2px;
+}
+
+.wati_dedup_copy {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.wati_dedup_copy strong {
+    display: block;
+    margin-bottom: 4px;
+    color: #344054;
+    font-size: .9rem;
+    font-weight: 800;
+}
+
+.wati_dedup_copy p {
+    margin: 0;
+    max-width: 780px;
+    color: #7f8996;
+    font-size: .79rem;
+    line-height: 1.5;
+}
+
+.wati_recipient_advanced {
+    margin-top: 18px;
+    border: 1px solid #e5e8ec;
+    border-radius: 14px;
+    background: #fafbfc;
+    overflow: hidden;
+}
+
+.wati_recipient_advanced summary {
+    padding: 13px 16px;
+    cursor: pointer;
+    color: #5f6875;
+    font-weight: 800;
+}
+
+.wati_advanced_optional {
+    display: inline-flex;
+    margin-left: 7px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: #eee9f1;
+    color: #765989;
+    font-size: .68rem;
+    font-weight: 800;
+    vertical-align: middle;
+}
+
+.wati_recipient_advanced_body {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    padding: 16px;
+    border-top: 1px solid #eceff2;
+}
+
+.wati_advanced_field {
+    min-width: 0;
+    padding: 14px;
+    border: 1px solid #e5e8ec;
+    border-radius: 12px;
+    background: #fff;
+}
+
+.wati_advanced_field label {
+    display: block;
+    margin-bottom: 7px;
+    color: #344054;
+    font-weight: 800;
+}
+
+.wati_advanced_field .o_field_widget,
+.wati_advanced_field .o_input {
+    width: 100% !important;
+}
+
+.wati_advanced_field small {
+    display: block;
+    margin-top: 7px;
+    color: #8a94a1;
+    font-size: .76rem;
+    line-height: 1.45;
+}
+
+@media (max-width: 900px) {
+    .wati_recipient_choices .o_field_radio,
+    .wati_recipient_advanced_body {
+        grid-template-columns: 1fr !important;
+    }
+
+    .wati_recipient_choices .o_radio_item {
+        min-height: 68px;
+    }
+
+    .wati_recipient_select_head {
+        flex-direction: column;
+        gap: 8px;
+    }
+}

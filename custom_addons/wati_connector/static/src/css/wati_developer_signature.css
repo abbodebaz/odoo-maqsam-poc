@@ -1,0 +1,18 @@
+.o_wati_developer_signature {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 10px 12px 4px;
+    color: #98a2b3;
+    font-size: 10.5px;
+    line-height: 1.4;
+    letter-spacing: .01em;
+    user-select: none;
+}
+
+.o_wati_developer_signature strong {
+    color: #667085;
+    font-weight: 700;
+}

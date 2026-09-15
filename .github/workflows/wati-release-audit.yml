@@ -1,0 +1,180 @@
+name: WATI Release Audit
+
+on:
+  push:
+    branches:
+      - refactor/wati-commercial-ready
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Audit final delivery source
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import ast
+          import re
+          import subprocess
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+          root = Path('.')
+          addons = root / 'custom_addons'
+          modules = sorted(
+              p for p in addons.glob('wati_connector*')
+              if p.is_dir() and (p / '__manifest__.py').exists()
+          )
+          if not modules:
+              raise SystemExit('No WATI addons found.')
+
+          tracked = subprocess.check_output(['git', 'ls-files'], text=True).splitlines()
+          generated = [
+              p for p in tracked
+              if '/__pycache__/' in f'/{p}/'
+              or p.endswith(('.pyc', '.pyo', '/.DS_Store'))
+              or p == '.DS_Store'
+              or '/.env' in f'/{p}'
+          ]
+          if generated:
+              raise SystemExit('Generated or local artifacts are tracked:\n' + '\n'.join(generated))
+
+          versions = {}
+          for module in modules:
+              manifest = ast.literal_eval((module / '__manifest__.py').read_text(encoding='utf-8'))
+              version = str(manifest.get('version') or '')
+              if not re.fullmatch(r'19\.0\.\d+\.\d+\.\d+', version):
+                  raise SystemExit(f'Invalid Odoo 19 version in {module.name}: {version!r}')
+              versions[module.name] = version
+              if manifest.get('installable') is not True:
+                  raise SystemExit(f'{module.name} is not installable.')
+              if not manifest.get('license'):
+                  raise SystemExit(f'{module.name} has no license.')
+              for relative in manifest.get('data', []):
+                  target = module / relative
+                  if not target.exists():
+                      raise SystemExit(f'{module.name} references missing file: {relative}')
+              for xml_file in module.rglob('*.xml'):
+                  try:
+                      ET.parse(xml_file)
+                  except ET.ParseError as exc:
+                      raise SystemExit(f'Invalid XML {xml_file}: {exc}') from exc
+
+          if len(set(versions.values())) != 1:
+              raise SystemExit(f'Addon versions are not aligned: {versions}')
+          version = next(iter(versions.values()))
+          core = addons / 'wati_connector'
+          if not (core / 'migrations' / version / 'post-migration.py').exists():
+              raise SystemExit(f'Missing core migration for {version}.')
+
+          readme = (root / 'delivery' / 'README_FIRST.md').read_text(encoding='utf-8')
+          if f'Current delivery version: `{version}`.' not in readme:
+              raise SystemExit('Delivery README version does not match the manifests.')
+
+          skipped = {'tests', 'docs', 'notes', 'i18n', 'migrations'}
+          runtime_ext = {'.py', '.xml', '.js', '.css', '.scss'}
+          arabic = re.compile(r'[\u0600-\u06FF]')
+          marker = re.compile(r'\b(TODO|FIXME|XXX|HACK|DEBUG ONLY)\b', re.I)
+          staging = re.compile(r'(railway\.app|localhost|127\.0\.0\.1)', re.I)
+          secret = re.compile(
+              r'(Bearer\s+[A-Za-z0-9._-]{20,}|api[_-]?token\s*[=:]\s*["\'][^"\']{16,}|password\s*[=:]\s*["\'][^"\']{8,})',
+              re.I,
+          )
+          arabic_hits = []
+          marker_hits = []
+          staging_hits = []
+          secret_hits = []
+          runtime_files = []
+          for module in modules:
+              for path in module.rglob('*'):
+                  if not path.is_file() or path.suffix not in runtime_ext:
+                      continue
+                  if skipped.intersection(path.parts):
+                      continue
+                  runtime_files.append(path)
+                  text = path.read_text(encoding='utf-8')
+                  rel = str(path)
+                  if arabic.search(text):
+                      arabic_hits.append(rel)
+                  if marker.search(text):
+                      marker_hits.append(rel)
+                  if staging.search(text):
+                      staging_hits.append(rel)
+                  if secret.search(text):
+                      secret_hits.append(rel)
+
+          if arabic_hits:
+              raise SystemExit('Mixed-language runtime source remains:\n' + '\n'.join(arabic_hits))
+          if marker_hits:
+              raise SystemExit('Development markers remain:\n' + '\n'.join(marker_hits))
+          if staging_hits:
+              raise SystemExit('Local/staging URLs remain in runtime source:\n' + '\n'.join(staging_hits))
+          if secret_hits:
+              raise SystemExit('Possible embedded secrets detected:\n' + '\n'.join(secret_hits))
+
+          core_manifest = ast.literal_eval((core / '__manifest__.py').read_text(encoding='utf-8'))
+          optional_dependencies = {'crm', 'sale', 'sale_management', 'account', 'project', 'helpdesk', 'industry_fsm'}
+          leaked_dependencies = optional_dependencies.intersection(core_manifest.get('depends', []))
+          if leaked_dependencies:
+              raise SystemExit(f'Optional dependencies leaked into core: {sorted(leaked_dependencies)}')
+
+          optional_models = ('crm.lead', 'sale.order', 'account.move', 'project.task', 'helpdesk.ticket')
+          model_leaks = []
+          for area in ('models', 'controllers', 'services', 'views', 'static'):
+              folder = core / area
+              if not folder.exists():
+                  continue
+              for path in folder.rglob('*'):
+                  if not path.is_file() or path.suffix not in {'.py', '.xml', '.js'}:
+                      continue
+                  if skipped.intersection(path.parts):
+                      continue
+                  text = path.read_text(encoding='utf-8')
+                  for model in optional_models:
+                      if model in text:
+                          model_leaks.append(f'{path}: {model}')
+          if model_leaks:
+              raise SystemExit('Optional Odoo model leaked into core:\n' + '\n'.join(model_leaks))
+
+          allowed_http = {
+              core / 'services' / 'client.py',
+              core / 'services' / 'media.py',
+          }
+          transport_leaks = []
+          for module in modules:
+              for path in module.rglob('*.py'):
+                  if skipped.intersection(path.parts) or path in allowed_http:
+                      continue
+                  text = path.read_text(encoding='utf-8')
+                  if 'import requests' in text or 'requests.' in text:
+                      transport_leaks.append(str(path))
+          if transport_leaks:
+              raise SystemExit('Direct HTTP outside service layer:\n' + '\n'.join(transport_leaks))
+
+          for path in (core / 'models').glob('*.py'):
+              text = path.read_text(encoding='utf-8')
+              if '_sql_constraints' in text:
+                  raise SystemExit(f'Legacy _sql_constraints remains: {path}')
+              if re.search(r'^\s*def init\s*\(self\)', text, re.M):
+                  raise SystemExit(f'Model init hook remains: {path}')
+
+          print('WATI final release audit passed.')
+          print('Version:', version)
+          print('Addons:', ', '.join(module.name for module in modules))
+          print('Runtime files audited:', len(runtime_files))
+          PY
+
+      - name: Compile all addon Python
+        run: |
+          for module in custom_addons/wati_connector*; do
+            [ -d "$module" ] || continue
+            python -m compileall -q "$module"
+          done

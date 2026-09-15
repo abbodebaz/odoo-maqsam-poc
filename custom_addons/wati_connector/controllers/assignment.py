@@ -20,7 +20,7 @@ class WatiAssignmentController(http.Controller):
 
         conversation = request.env["wati.conversation"].browse(conversation_id).exists()
         if not conversation:
-            return request.make_json_response({"ok": False, "message": "المحادثة غير موجودة."}, status=404)
+            return request.make_json_response({"ok": False, "message": "The conversation does not exist."}, status=404)
 
         current_user = request.env.user
         assigned = conversation.assigned_user_id
@@ -57,14 +57,14 @@ class WatiAssignmentController(http.Controller):
 
         conversation = request.env["wati.conversation"].browse(conversation_id).exists()
         if not conversation:
-            return request.make_json_response({"ok": False, "message": "المحادثة غير موجودة."}, status=404)
+            return request.make_json_response({"ok": False, "message": "The conversation does not exist."}, status=404)
 
         current_user = request.env.user
         previous_user = conversation.assigned_user_id
         takeover_requested = str(force or "").lower() in ("1", "true", "yes")
         if takeover_requested and previous_user and previous_user != current_user and not current_user._wati_can_supervise():
             return request.make_json_response(
-                {"ok": False, "message": "أخذ محادثة موظف آخر متاح فقط لمشرف WATI أو Administrator."},
+                {"ok": False, "message": "Taking another employee’s conversation is only available to a supervisor WATI Or Administrator."},
                 status=403,
             )
 
@@ -77,14 +77,14 @@ class WatiAssignmentController(http.Controller):
         conversation.invalidate_recordset(["assigned_user_id"])
         if conversation.assigned_user_id != current_user:
             return request.make_json_response(
-                {"ok": False, "message": "تعذر تثبيت إسناد المحادثة. حدّث الصفحة وحاول مرة أخرى."},
+                {"ok": False, "message": "Unable to install conversation attribution. Refresh the page and try again."},
                 status=409,
             )
 
         if previous_user and previous_user != current_user:
-            message = f"تم نقل المحادثة من {previous_user.name} إلى {current_user.name} ✅"
+            message = f"The conversation has been moved from {previous_user.name} To {current_user.name} ✅"
         else:
-            message = f"تم إسناد المحادثة إلى {current_user.name} ✅"
+            message = f"The conversation has been assigned to {current_user.name} ✅"
 
         return request.make_json_response(
             {

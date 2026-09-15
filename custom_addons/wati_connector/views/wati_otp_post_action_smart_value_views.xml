@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_otp_post_action_form_smart_value" model="ir.ui.view">
+        <field name="name">wati.otp.post.action.form.smart.value</field>
+        <field name="model">wati.otp.post.action</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_otp_post_action_form"/>
+        <field name="priority">360</field>
+        <field name="arch" type="xml">
+            <field name="model_id" position="after">
+                <field name="smart_target_metadata" invisible="1"/>
+            </field>
+            <field name="value" position="attributes">
+                <attribute name="widget">wati_smart_target</attribute>
+                <attribute name="placeholder">Choose or enter the new value</attribute>
+            </field>
+        </field>
+    </record>
+</odoo>

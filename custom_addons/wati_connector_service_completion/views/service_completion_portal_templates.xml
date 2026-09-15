@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="portal_service_completion_list" name="My Service Tasks">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">Service Tasks</t>
+            </t>
+            <div class="o_wati_service_portal container py-4">
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <div>
+                        <p class="text-uppercase text-muted small fw-semibold mb-1">Service Completion</p>
+                        <h2 class="mb-1">My service tasks</h2>
+                        <p class="text-muted mb-0">Open a task to review the service and complete customer OTP confirmation.</p>
+                    </div>
+                </div>
+                <div t-if="not tasks" class="alert alert-light border py-4 text-center">
+                    No service tasks are available yet.
+                </div>
+                <div class="row g-3" t-else="">
+                    <div class="col-12 col-lg-6" t-foreach="tasks" t-as="task">
+                        <a t-att-href="task.access_url" class="text-decoration-none text-reset">
+                            <div class="card h-100 shadow-sm border-0 o_wati_service_task_card">
+                                <div class="card-body p-4">
+                                    <div class="d-flex justify-content-between gap-3">
+                                        <div>
+                                            <div class="small text-muted" t-esc="task.name"/>
+                                            <h5 class="mt-1 mb-2" t-esc="task.service_name"/>
+                                            <div class="text-muted" t-esc="task.customer_id.display_name"/>
+                                        </div>
+                                        <span class="badge rounded-pill align-self-start"
+                                              t-att-class="'text-bg-success' if task.state == 'completed' else ('text-bg-warning' if task.state == 'ready' else 'text-bg-light')"
+                                              t-esc="dict(task._fields['state'].selection).get(task.state)"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                <div t-if="pager" class="mt-4">
+                    <t t-call="portal.pager"/>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="portal_service_completion_detail" name="Service Completion Task">
+        <t t-call="portal.portal_layout">
+            <div class="o_wati_service_portal container py-4 py-lg-5">
+                <div class="mb-4">
+                    <a href="/my/service-completions" class="text-decoration-none small">&#8592; Back to my service tasks</a>
+                </div>
+
+                <div t-if="flash" t-att-class="'alert alert-%s' % flash.get('level', 'info')" role="alert">
+                    <t t-esc="flash.get('message')"/>
+                </div>
+
+                <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 align-items-lg-start mb-4">
+                    <div>
+                        <div class="small text-uppercase text-muted fw-semibold mb-2">Service task</div>
+                        <h1 class="h3 mb-2">
+                            <span t-if="task.external_reference" t-esc="task.external_reference"/>
+                            <span t-else="" t-esc="task.name"/>
+                        </h1>
+                        <div class="text-muted" t-esc="task.service_name"/>
+                    </div>
+                    <span class="badge rounded-pill px-3 py-2"
+                          t-att-class="'text-bg-success' if task.state == 'completed' else ('text-bg-warning' if task.state == 'ready' else 'text-bg-secondary')"
+                          t-esc="dict(task._fields['state'].selection).get(task.state)"/>
+                </div>
+
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <div class="row g-4">
+                            <div class="col-12 col-md-6">
+                                <div class="text-muted small mb-1">Customer</div>
+                                <div class="fw-semibold" t-esc="task.customer_id.display_name"/>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div class="text-muted small mb-1">Driver / Technician</div>
+                                <div class="fw-semibold" t-esc="task.assigned_user_id.name or '-'"/>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div class="text-muted small mb-1">Started</div>
+                                <div class="fw-semibold" t-esc="task.started_at or '-'"/>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div class="text-muted small mb-1">Completed</div>
+                                <div class="fw-semibold" t-esc="task.completed_at or '-'"/>
+                            </div>
+                        </div>
+                        <div class="mt-4" t-if="task.location_url">
+                            <a class="btn btn-outline-secondary btn-sm" t-att-href="task.location_url" target="_blank" rel="noopener">
+                                View customer location
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm mb-4" t-if="task.before_photo or task.completion_photo">
+                    <div class="card-body p-4">
+                        <h3 class="h5 mb-3">Photos</h3>
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6" t-if="task.before_photo">
+                                <div class="small text-muted mb-2">Before service</div>
+                                <img class="img-fluid rounded o_wati_service_photo" t-att-src="'/web/image/wati.service.completion.task/%s/before_photo' % task.id" alt="Before service"/>
+                            </div>
+                            <div class="col-12 col-md-6" t-if="task.completion_photo">
+                                <div class="small text-muted mb-2">Completion proof</div>
+                                <img class="img-fluid rounded o_wati_service_photo" t-att-src="'/web/image/wati.service.completion.task/%s/completion_photo' % task.id" alt="Completion proof"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm o_wati_otp_confirmation">
+                    <div class="card-body p-4 p-lg-5">
+                        <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
+                            <div>
+                                <div class="small text-uppercase text-muted fw-semibold mb-1">Customer confirmation</div>
+                                <h2 class="h4 mb-2">Confirm task completion</h2>
+                                <p class="text-muted mb-0">Send a WhatsApp OTP to the customer and enter the 6-digit confirmation code to complete this service.</p>
+                            </div>
+                            <span t-if="verified_transaction" class="badge text-bg-success align-self-start px-3 py-2">OTP verified</span>
+                            <span t-elif="waiting_transaction" class="badge text-bg-info align-self-start px-3 py-2">OTP sent</span>
+                        </div>
+
+                        <div t-if="flow_error" class="alert alert-warning" t-esc="flow_error"/>
+                        <div t-elif="not otp_flow" class="alert alert-warning">
+                            No active Manual OTP Flow is configured for this record type yet. Create it in WhatsApp &gt; OTP Bridge.
+                        </div>
+
+                        <div t-if="verified_transaction">
+                            <div t-if="task.state == 'completed' or verified_transaction.post_actions_state == 'success'" class="alert alert-success mb-0">
+                                Customer verification succeeded and this service is completed.
+                            </div>
+                            <div t-elif="verified_transaction.post_actions_state in ('failed', 'partial')" class="alert alert-warning mb-0">
+                                <strong>OTP verified successfully.</strong>
+                                A follow-up action needs attention, so the OTP will not be requested again. An administrator can review the OTP transaction details.
+                            </div>
+                            <div t-else="" class="alert alert-success mb-0">
+                                Customer verification succeeded.
+                            </div>
+                        </div>
+
+                        <div t-elif="waiting_transaction">
+                            <div class="alert alert-info d-flex justify-content-between flex-wrap gap-2">
+                                <span>OTP is waiting for customer verification.</span>
+                                <span t-if="waiting_transaction.expires_at">Expires: <t t-esc="waiting_transaction.expires_at"/></span>
+                            </div>
+                            <form t-att-action="'/my/service-completions/%s/otp/verify' % task.id" method="post" class="row g-2 align-items-center">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <div class="col-12 col-sm-auto flex-grow-1">
+                                    <input class="form-control form-control-lg" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" name="otp_code" placeholder="6-digit code" autocomplete="one-time-code" required="required"/>
+                                </div>
+                                <div class="col-12 col-sm-auto">
+                                    <button type="submit" class="btn btn-primary btn-lg w-100">Confirm OTP</button>
+                                </div>
+                            </form>
+                            <form t-att-action="'/my/service-completions/%s/otp/resend' % task.id" method="post" class="mt-3">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <button type="submit" class="btn btn-outline-secondary">Resend OTP</button>
+                            </form>
+                        </div>
+
+                        <div t-elif="can_send_otp">
+                            <form t-att-action="'/my/service-completions/%s/otp/send' % task.id" method="post">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <button type="submit" class="btn btn-primary btn-lg">Send OTP to customer</button>
+                            </form>
+                        </div>
+
+                        <div t-elif="otp_flow" class="alert alert-light border mb-0">
+                            OTP is not available for the current task status. Move the task to the status configured in the OTP Flow button condition.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>

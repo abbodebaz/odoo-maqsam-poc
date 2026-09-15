@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_otp_flow_smart_trigger" model="ir.ui.view">
+        <field name="name">wati.otp.flow.smart.trigger</field>
+        <field name="model">wati.otp.flow</field>
+        <field name="inherit_id" ref="view_wati_otp_flow_form"/>
+        <field name="arch" type="xml">
+            <field name="smart_recipient_metadata" position="after">
+                <field name="smart_target_metadata" invisible="1"/>
+            </field>
+            <field name="trigger_value" position="attributes">
+                <attribute name="widget">wati_smart_target</attribute>
+                <attribute name="placeholder">Choose or type the value</attribute>
+            </field>
+        </field>
+    </record>
+</odoo>

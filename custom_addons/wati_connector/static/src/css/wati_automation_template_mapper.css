@@ -1,0 +1,606 @@
+.wati_message_step {
+    direction: ltr;
+    text-align: left;
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(310px, .65fr);
+    gap: 18px 22px;
+}
+
+.wati_message_step > .wati_builder_step_head,
+.wati_message_step > .wati_template_picker_smart,
+.wati_message_step > .wati_builder_nav {
+    grid-column: 1 / -1;
+}
+
+.wati_message_step > .wati_builder_step_head {
+    grid-row: 1;
+    margin-bottom: 0;
+}
+
+.wati_message_step > .wati_template_picker_smart {
+    grid-row: 2;
+}
+
+.wati_message_step > .wati_mapping_head_smart {
+    grid-column: 1;
+    grid-row: 3;
+}
+
+.wati_message_step > .wati_template_validation_strip,
+.wati_message_step > .wati_contract_notice {
+    grid-column: 1;
+}
+
+.wati_message_step > .wati_parameter_mapper,
+.wati_message_step > .wati_no_template_variables {
+    grid-column: 1;
+}
+
+.wati_message_step > .wati_template_preview_smart {
+    grid-column: 2;
+    grid-row: 3 / span 5;
+    align-self: start;
+    position: sticky;
+    top: 12px;
+}
+
+.wati_message_step > .wati_builder_nav {
+    grid-row: auto;
+}
+
+.wati_template_picker_smart {
+    display: grid !important;
+    grid-template-columns: minmax(190px, .72fr) minmax(280px, 1.25fr) auto !important;
+    gap: 18px !important;
+    align-items: center !important;
+    padding: 18px 20px !important;
+    border: 1px solid #e4e7ec !important;
+    border-radius: 18px !important;
+    background: #fff !important;
+    box-shadow: 0 8px 28px rgba(17, 24, 39, .045);
+}
+
+.wati_template_picker_intro {
+    align-self: center;
+    min-width: 0;
+}
+
+.wati_template_picker_intro strong,
+.wati_template_picker_intro small,
+.wati_template_step_label {
+    display: block;
+}
+
+.wati_template_step_label {
+    margin-bottom: 4px;
+    color: #714b87;
+    font-size: .72rem;
+    font-weight: 900;
+    letter-spacing: .035em;
+    text-transform: uppercase;
+}
+
+.wati_template_picker_intro strong {
+    color: #202939;
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.wati_template_picker_intro small {
+    margin-top: 4px;
+    color: #8992a3;
+    font-size: .79rem;
+    line-height: 1.45;
+}
+
+.wati_template_field {
+    min-width: 0;
+}
+
+.wati_template_field .wati_section_label {
+    margin-bottom: 6px;
+}
+
+.wati_template_field .o_field_widget,
+.wati_template_field .o_input {
+    width: 100% !important;
+    max-width: 100%;
+}
+
+.wati_template_field .o_input {
+    min-height: 42px;
+    padding: 9px 12px;
+    border-radius: 11px;
+    border-color: #d9dee7;
+    background: #f8fafc;
+    font-weight: 700;
+}
+
+.wati_template_meta {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+.wati_template_meta_item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 100%;
+    padding: 4px 8px;
+    border: 1px solid #e4e7ec;
+    border-radius: 999px;
+    color: #667085;
+    background: #fafbfc;
+    font-size: .72rem;
+    line-height: 1;
+}
+
+.wati_template_meta_item .fa-check-circle {
+    color: #16a34a;
+}
+
+.wati_template_meta_item .o_field_widget {
+    min-width: 0;
+    max-width: 145px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.wati_template_picker_actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.wati_template_picker_actions .btn {
+    min-height: 42px;
+    padding-inline: 14px;
+    border-radius: 11px !important;
+    white-space: nowrap;
+    font-weight: 750;
+}
+
+.wati_template_validation_strip {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px 14px;
+    align-items: center;
+    padding: 11px 12px;
+    border: 1px solid #e4e7ec;
+    border-radius: 13px;
+    background: #fafbfc;
+}
+
+.wati_validation_main,
+.wati_validation_actions {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+}
+
+.wati_validation_main strong,
+.wati_validation_main small {
+    display: block;
+}
+
+.wati_validation_main strong {
+    color: #344054;
+    font-size: .82rem;
+}
+
+.wati_validation_main small {
+    margin-top: 2px;
+    color: #8a93a0;
+    font-size: .72rem;
+}
+
+.wati_validation_icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    flex: 0 0 30px;
+    border-radius: 9px;
+    color: #714b87;
+    background: #f1edf4;
+}
+
+.wati_validation_actions {
+    justify-content: flex-end;
+}
+
+.wati_validation_actions .btn {
+    min-height: 32px;
+    border-radius: 9px !important;
+    font-size: .76rem;
+}
+
+.wati_template_validation_strip > .o_field_widget:last-child {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: #b42318;
+    font-size: .75rem;
+}
+
+.wati_contract_notice {
+    padding: 11px 13px;
+    border: 1px solid #f3d5a5;
+    border-radius: 13px;
+    background: #fffbeb;
+    color: #704b13;
+}
+
+.wati_contract_notice_head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.wati_contract_notice strong,
+.wati_contract_notice small {
+    display: block;
+}
+
+.wati_contract_notice strong {
+    font-size: .82rem;
+}
+
+.wati_contract_notice small {
+    margin-top: 2px;
+    color: #8a641f;
+    font-size: .72rem;
+}
+
+.wati_contract_notice > .o_field_widget {
+    margin-top: 7px;
+    font-size: .75rem;
+}
+
+.wati_template_preview_smart {
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 330px;
+    overflow: hidden;
+    border: 1px solid #dde3df !important;
+    border-radius: 20px !important;
+    background: #efeae2 !important;
+    box-shadow: 0 10px 28px rgba(17, 24, 39, .055);
+}
+
+.wati_template_preview_empty {
+    min-height: 330px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 28px;
+    text-align: center;
+    color: #667085;
+    background:
+        radial-gradient(circle at 12px 12px, rgba(255,255,255,.34) 1px, transparent 1px),
+        #efeae2;
+    background-size: 24px 24px;
+}
+
+.wati_template_preview_empty strong {
+    margin-top: 7px;
+    color: #344054;
+    font-size: .98rem;
+}
+
+.wati_template_preview_empty small {
+    max-width: 230px;
+    color: #7c8794;
+    line-height: 1.5;
+}
+
+.wati_preview_icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    color: #fff;
+    background: #25d366;
+    font-size: 1.35rem;
+    box-shadow: 0 7px 18px rgba(37, 211, 102, .23);
+}
+
+.wati_preview_icon_small {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    font-size: .95rem;
+    box-shadow: none;
+}
+
+.wati_template_preview_content {
+    min-height: 330px;
+}
+
+.wati_template_preview_head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 13px 15px;
+    border-bottom: 1px solid #e4e7e3;
+    background: rgba(255, 255, 255, .96);
+}
+
+.wati_preview_identity {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+}
+
+.wati_preview_identity > div {
+    min-width: 0;
+}
+
+.wati_template_preview_head strong {
+    display: block;
+    max-width: 180px;
+    overflow: hidden;
+    color: #273142;
+    font-size: .86rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.wati_template_variable_count {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex: 0 0 auto;
+    padding: 5px 8px;
+    border-radius: 999px;
+    color: #52606d;
+    background: #f8faf9;
+    border: 1px solid #e1e7e3;
+    font-size: .7rem;
+    font-weight: 800;
+}
+
+.wati_template_message_canvas {
+    min-height: 270px;
+    padding: 22px 16px 26px;
+    background:
+        radial-gradient(circle at 10px 10px, rgba(255,255,255,.26) 1px, transparent 1px),
+        #efeae2;
+    background-size: 22px 22px;
+}
+
+.wati_template_message_bubble {
+    margin-left: auto;
+    width: min(92%, 320px);
+    padding: 11px 12px;
+    border-radius: 12px 12px 3px 12px;
+    background: #d9fdd3;
+    box-shadow: 0 1px 2px rgba(17, 24, 39, .12);
+    white-space: pre-wrap;
+    line-height: 1.62;
+    color: #26332d;
+    font-size: .86rem;
+}
+
+.wati_template_message_bubble .o_field_widget,
+.wati_template_message_bubble .o_field_text {
+    width: 100%;
+    margin: 0;
+}
+
+.wati_mapping_head_smart {
+    align-items: center !important;
+    margin: 0 0 10px !important;
+    min-width: 0;
+}
+
+.wati_mapping_head_smart h3 {
+    margin: 1px 0 2px !important;
+    color: #202939;
+    font-size: 1.02rem !important;
+}
+
+.wati_mapping_head_smart p {
+    color: #8a93a0;
+    font-size: .8rem;
+}
+
+.wati_mapping_actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.wati_mapping_actions .btn {
+    min-height: 36px;
+    border-radius: 10px !important;
+}
+
+.wati_mapping_progress {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 9px;
+    border: 1px solid #e2e6eb;
+    border-radius: 10px;
+    background: #fafbfc;
+    color: #667085;
+    font-size: .75rem;
+}
+
+.wati_parameter_mapper {
+    overflow: hidden;
+    border: 1px solid #e2e6eb;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 5px 18px rgba(17, 24, 39, .035);
+}
+
+.wati_parameter_mapper .o_list_renderer {
+    border: 0 !important;
+}
+
+.wati_parameter_mapper .o_list_table {
+    margin-bottom: 0 !important;
+}
+
+.wati_parameter_mapper .o_list_table thead th {
+    padding-top: 11px !important;
+    padding-bottom: 11px !important;
+    color: #667085;
+    background: #f8fafc;
+    font-size: .75rem;
+    font-weight: 850;
+}
+
+.wati_parameter_mapper .o_list_table tbody td {
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+    vertical-align: middle;
+}
+
+.wati_parameter_mapper .o_input,
+.wati_parameter_mapper .o_field_widget {
+    max-width: 100%;
+}
+
+.wati_parameter_mapper_hint {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 10px 13px;
+    border-top: 1px solid #edf0f3;
+    color: #7a8492;
+    background: #fafbfc;
+    font-size: .76rem;
+}
+
+.wati_parameter_mapper_hint .fa {
+    color: #714b87;
+}
+
+.wati_parameter_mapper_hint p {
+    margin: 0;
+    line-height: 1.5;
+}
+
+.wati_no_template_variables {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 16px;
+    border: 1px solid rgba(34, 197, 94, .24);
+    border-radius: 15px;
+    background: rgba(34, 197, 94, .045);
+}
+
+.wati_no_template_variables_icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    border-radius: 50%;
+    color: #07883b;
+    background: #dcfce7;
+    font-weight: 900;
+}
+
+.wati_no_template_variables strong,
+.wati_no_template_variables small {
+    display: block;
+}
+
+.wati_no_template_variables small {
+    margin-top: 3px;
+    color: #7d8794;
+    font-size: .78rem;
+}
+
+@media (max-width: 1180px) {
+    .wati_message_step {
+        grid-template-columns: minmax(0, 1fr) 300px;
+    }
+
+    .wati_template_picker_smart {
+        grid-template-columns: minmax(180px, .7fr) minmax(230px, 1fr) !important;
+    }
+
+    .wati_template_picker_actions {
+        grid-column: 1 / -1;
+        justify-content: flex-end;
+    }
+}
+
+@media (max-width: 980px) {
+    .wati_message_step {
+        display: block;
+    }
+
+    .wati_message_step > * + * {
+        margin-top: 16px;
+    }
+
+    .wati_message_step > .wati_template_preview_smart {
+        position: static;
+    }
+
+    .wati_template_picker_smart {
+        grid-template-columns: 1fr !important;
+        align-items: stretch !important;
+    }
+
+    .wati_template_picker_actions,
+    .wati_mapping_actions {
+        justify-content: stretch;
+    }
+
+    .wati_template_picker_actions .btn,
+    .wati_mapping_actions .btn {
+        flex: 1 1 180px;
+    }
+}
+
+@media (max-width: 640px) {
+    .wati_template_picker_smart {
+        padding: 15px !important;
+    }
+
+    .wati_template_preview_head,
+    .wati_mapping_head_smart,
+    .wati_template_validation_strip,
+    .wati_contract_notice_head {
+        align-items: stretch !important;
+        flex-direction: column;
+    }
+
+    .wati_template_validation_strip {
+        display: flex;
+    }
+
+    .wati_validation_actions,
+    .wati_mapping_actions {
+        justify-content: flex-start;
+    }
+
+    .wati_template_message_bubble {
+        width: 96%;
+    }
+}

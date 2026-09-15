@@ -1,10 +1,13 @@
 import json
 import re
+import time
 
-import requests
-
-from odoo import _, api, models
+from odoo import _, models
 from odoo.exceptions import UserError
+
+from ..services.client import WatiClient
+from ..services.config import WatiConfig
+from ..services.exceptions import WatiError
 
 
 def _find_template_list(payload):
@@ -64,11 +67,23 @@ def _template_body(item):
     return ""
 
 
-def _template_param_names(item):
+def _dedupe_names(values):
+    result = []
+    seen = set()
+    for value in values:
+        name = str(value or "").strip()
+        key = name.casefold()
+        if not name or key in seen:
+            continue
+        seen.add(key)
+        result.append(name)
+    return result
+
+
+def _template_custom_param_names(item):
     names = []
     if not isinstance(item, dict):
         return names
-
     for key in ("customParams", "params", "parameters"):
         raw = item.get(key)
         if not isinstance(raw, list):
@@ -80,32 +95,65 @@ def _template_param_names(item):
                 name = entry.strip()
             else:
                 name = ""
-            if name and name not in names:
+            if name:
                 names.append(name)
+    return _dedupe_names(names)
 
-    body = _template_body(item)
-    for token in re.findall(r"{{\s*([^{}]+?)\s*}}", body or ""):
-        token = token.strip()
-        if token and token not in names:
-            names.append(token)
-    return names
+
+def _template_body_tokens(item):
+    return _dedupe_names(
+        token.strip()
+        for token in re.findall(r"{{\s*([^{}]+?)\s*}}", _template_body(item) or "")
+    )
+
+
+def _template_param_names(item):
+    """Return the canonical WATI variable names without double counting aliases.
+
+    WATI commonly returns friendly custom parameter names (for example
+    ``services``, ``serdate`` and ``sertime``) while the template body itself
+    contains positional placeholders (``{{1}}``, ``{{2}}``, ``{{3}}``).  They
+    describe the same three variables and must not become six mapping rows.
+
+    Prefer WATI's custom parameter names when positional BODY placeholders are
+    present. Named BODY placeholders that are not represented in metadata are
+    retained as additional variables.
+    """
+    if not isinstance(item, dict):
+        return []
+
+    custom_names = _template_custom_param_names(item)
+    body_tokens = _template_body_tokens(item)
+    if not custom_names:
+        return body_tokens
+    if not body_tokens:
+        return custom_names
+
+    positional = [token for token in body_tokens if token.isdigit()]
+    named = [token for token in body_tokens if not token.isdigit()]
+
+    # Positional BODY placeholders are aliases for the ordered customParams.
+    # Do not append {{1}}, {{2}}, ... as separate variables.
+    if positional:
+        return _dedupe_names(custom_names + named)
+
+    return _dedupe_names(custom_names + named)
 
 
 def _error_summary(payload):
     if not isinstance(payload, dict):
-        return "WATI أعاد نتيجة فشل غير مفهومة."
+        return "WATI It returned an incomprehensible failure result."
     errors = payload.get("errors")
     if isinstance(errors, dict):
-        error = errors.get("error")
+        parts = []
+        if errors.get("error"):
+            parts.append(str(errors["error"]))
         invalid_numbers = errors.get("invalidWhatsappNumbers") or []
         invalid_params = errors.get("invalidCustomParameters") or []
-        parts = []
-        if error:
-            parts.append(str(error))
         if invalid_numbers:
-            parts.append("أرقام غير صالحة: " + ", ".join(map(str, invalid_numbers)))
+            parts.append("Invalid numbers: " + ", ".join(map(str, invalid_numbers)))
         if invalid_params:
-            parts.append("متغيرات القالب: " + " | ".join(map(str, invalid_params)))
+            parts.append("Template variables: " + " | ".join(map(str, invalid_params)))
         if parts:
             return " — ".join(parts)
     if errors:
@@ -113,7 +161,7 @@ def _error_summary(payload):
             return json.dumps(errors, ensure_ascii=False, default=str)[:1000]
         except Exception:
             return str(errors)[:1000]
-    return "WATI أعاد result=false؛ لم يتم إرسال الرسالة."
+    return "WATI He repeated result=false; The message was not sent."
 
 
 class WatiAutomationRuleImprovements(models.Model):
@@ -125,37 +173,57 @@ class WatiAutomationRuleImprovements(models.Model):
             return line.static_value
         return value
 
+    def _sync_template_parameters(self, param_names):
+        """Make mapping rows exactly match the selected template variables.
+
+        Existing mappings with the same parameter name are preserved. Stale
+        rows from another template, duplicate rows, and the old numeric aliases
+        are removed so changing or refreshing a template cannot accumulate
+        garbage rows over time.
+        """
+        self.ensure_one()
+        desired = _dedupe_names(param_names)
+        desired_keys = {name.casefold() for name in desired}
+        existing_by_key = {}
+        duplicates = self.env["wati.automation.parameter"]
+
+        for line in self.parameter_ids.sorted("sequence, id"):
+            key = (line.param_name or "").strip().casefold()
+            if not key or key not in desired_keys or key in existing_by_key:
+                duplicates |= line
+                continue
+            existing_by_key[key] = line
+
+        if duplicates:
+            duplicates.unlink()
+
+        created = 0
+        for index, name in enumerate(desired, start=1):
+            key = name.casefold()
+            line = existing_by_key.get(key)
+            vals = {"param_name": name, "sequence": index * 10}
+            if line:
+                line.write(vals)
+            else:
+                vals.update({
+                    "rule_id": self.id,
+                    "source_type": "field",
+                })
+                self.env["wati.automation.parameter"].create(vals)
+                created += 1
+        return created
+
     def action_fetch_template_params(self):
         self.ensure_one()
         if not self.template_name:
-            raise UserError(_("اكتب أو اختر اسم WATI Template أولًا."))
-
-        endpoint, token, _channel = self._wati_config()
-        if not endpoint or not token:
-            raise UserError(_("إعدادات WATI API غير مكتملة."))
-
+            raise UserError(_("Type or choose a name WATI Template First."))
         try:
-            response = requests.get(
-                f"{endpoint}/api/v1/getMessageTemplates",
-                headers={
-                    "Authorization": f"Bearer {token}",
-                    "Accept": "application/json",
-                    "Content-Type": "application/json",
-                },
-                params={"pageSize": 200, "pageNumber": 1},
-                timeout=25,
-            )
-        except requests.RequestException as exc:
-            raise UserError(_("تعذر الاتصال بـ WATI لجلب القالب: %s", exc)) from exc
-
-        if not response.ok:
-            detail = (response.text or response.reason or "").strip()[:700]
-            raise UserError(_("WATI رفض جلب القوالب (%(status)s): %(detail)s", status=response.status_code, detail=detail))
-
-        try:
+            response = WatiClient(self.env).get_message_templates(page_size=200, page_number=1)
             payload = response.json()
+        except WatiError as exc:
+            raise UserError(_("Unable to contact WATI To bring the template: %s", exc)) from exc
         except ValueError as exc:
-            raise UserError(_("WATI أعاد استجابة غير مفهومة عند جلب القوالب.")) from exc
+            raise UserError(_("WATI Returned an unintelligible response when fetching templates.")) from exc
 
         wanted = (self.template_name or "").strip().casefold()
         template = next(
@@ -163,40 +231,40 @@ class WatiAutomationRuleImprovements(models.Model):
             None,
         )
         if not template:
-            raise UserError(_("لم أجد Template باسم %s داخل حساب WATI.", self.template_name))
+            raise UserError(_("I did not find Template In the name of %s Inside an account WATI.", self.template_name))
 
         param_names = _template_param_names(template)
-        existing = {
-            (line.param_name or "").strip().casefold(): line
-            for line in self.parameter_ids
-            if line.param_name
-        }
-        created = 0
-        for name in param_names:
-            if name.casefold() in existing:
-                continue
-            self.env["wati.automation.parameter"].create({
-                "rule_id": self.id,
-                "param_name": name,
-                "source_type": "field",
-            })
-            created += 1
+        created = self._sync_template_parameters(param_names)
+
+        # Run the conservative existing mapper after synchronization. Exact
+        # field-name matches and known safe aliases are filled automatically;
+        # anything uncertain remains for the user to choose explicitly.
+        auto_mapped = 0
+        auto_mapper = getattr(self, "_auto_map_parameters", None)
+        if callable(auto_mapper) and param_names:
+            try:
+                auto_mapped = auto_mapper()
+            except Exception:
+                auto_mapped = 0
 
         if not param_names:
-            message = _("تم العثور على القالب، ولا توجد متغيرات BODY واضحة فيه.")
+            message = _("Template found, no variables found BODY Clear in it.")
             notification_type = "warning"
-        elif created:
-            message = _("تم جلب %(total)s متغيرًا من WATI وإضافة %(created)s متغير جديد. اربط المتغيرات الجديدة بحقول Odoo.", total=len(param_names), created=created)
-            notification_type = "success"
         else:
-            message = _("القالب يحتوي على %s متغيرات، وكلها موجودة بالفعل في القاعدة.", len(param_names))
+            details = []
+            if created:
+                details.append(_("has been created %s Rows matching the template.", created))
+            if auto_mapped:
+                details.append(_("has been linked %s variables automatically.", auto_mapped))
+            suffix = " " + " ".join(details) if details else ""
+            message = _("Synchronized %(total)s Variables from the template without duplication.%(suffix)s", total=len(param_names), suffix=suffix)
             notification_type = "success"
 
         return {
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
-                "title": _("متغيرات WATI Template"),
+                "title": _("variables WATI Template"),
                 "message": message,
                 "type": notification_type,
                 "sticky": False,
@@ -205,12 +273,7 @@ class WatiAutomationRuleImprovements(models.Model):
         }
 
     def _send_template(self, record, phone, custom_params):
-        endpoint, token, configured_channel = self._wati_config()
         Log = self.env["wati.automation.log"].sudo()
-        if not endpoint or not token:
-            Log.create(self._log_values(record, "failed", phone=phone, error_message="إعدادات WATI API غير مكتملة."))
-            return False
-
         empty_params = [
             str(item.get("name") or "").strip()
             for item in custom_params
@@ -222,48 +285,36 @@ class WatiAutomationRuleImprovements(models.Model):
                 "failed",
                 phone=phone,
                 error_message=(
-                    "لم يتم استدعاء WATI لأن متغيرات القالب التالية بدون قيمة: "
+                    "Not called WATI Because the following template variables are worthless: "
                     + ", ".join(filter(None, empty_params))
-                    + ". اربطها بحقل Odoo أو ضع قيمة احتياطية."
+                    + ". Link it to a field Odoo Or set a reserve value."
                 ),
             ))
             return False
 
         body = {
             "template_name": self.template_name,
-            "broadcast_name": f"odoo_auto_{self.id}_{record.id}_{int(__import__('time').time())}",
+            "broadcast_name": f"odoo_auto_{self.id}_{record.id}_{int(time.time())}",
             "receivers": [{"whatsappNumber": phone, "customParams": custom_params}],
         }
-        effective_channel = (self.channel_number or configured_channel or "").strip()
-        if effective_channel:
-            body["channel_number"] = effective_channel
+        channel = (self.channel_number or WatiConfig(self.env).channel_number or "").strip()
+        if channel:
+            body["channel_number"] = channel
 
         try:
-            response = requests.post(
-                f"{endpoint}/api/v1/sendTemplateMessages",
-                headers={
-                    "Authorization": f"Bearer {token}",
-                    "Accept": "application/json",
-                    "Content-Type": "application/json",
-                },
-                json=body,
-                timeout=20,
-            )
-        except requests.RequestException as exc:
-            Log.create(self._log_values(record, "failed", phone=phone, error_message=f"تعذر الاتصال بـ WATI: {exc}"))
-            return False
-
-        excerpt = (response.text or response.reason or "").strip()[:1200]
-        if not response.ok:
+            response = WatiClient(self.env).send_template_messages(body)
+        except WatiError as exc:
+            excerpt = getattr(exc, "response_text", "") or str(exc)
             Log.create(self._log_values(
                 record,
                 "failed",
                 phone=phone,
-                error_message=f"WATI رفض الإرسال ({response.status_code}).",
-                response_excerpt=excerpt,
+                error_message=str(exc),
+                response_excerpt=excerpt[:1200],
             ))
             return False
 
+        excerpt = (response.text or response.reason or "").strip()[:1200]
         try:
             response_payload = response.json()
         except ValueError:
@@ -283,37 +334,4 @@ class WatiAutomationRuleImprovements(models.Model):
             return False
 
         Log.create(self._log_values(record, "sent", phone=phone, response_excerpt=excerpt))
-        return True
-
-    @api.model
-    def _upgrade_repair_demo_rule(self):
-        """Keep the seeded demo useful and repair false-success logs from v2.0.0."""
-        rule = self.env.ref("wati_connector.wati_automation_demo_crm_qualified", raise_if_not_found=False)
-        if rule:
-            client_line = self.env.ref("wati_connector.wati_automation_demo_param_client", raise_if_not_found=False)
-            if client_line:
-                client_line.sudo().write({
-                    "source_type": "record_name",
-                    "source_field_id": False,
-                    "source_path": False,
-                    "static_value": False,
-                })
-            dep_line = self.env.ref("wati_connector.wati_automation_demo_param_dep", raise_if_not_found=False)
-            if dep_line:
-                dep_line.sudo().write({
-                    "source_type": "static",
-                    "source_field_id": False,
-                    "source_path": False,
-                    "static_value": "المبيعات",
-                })
-
-        false_success_logs = self.env["wati.automation.log"].sudo().search([
-            ("status", "=", "sent"),
-            ("response_excerpt", "ilike", '"result":false'),
-        ])
-        if false_success_logs:
-            false_success_logs.write({
-                "status": "failed",
-                "error_message": "WATI أعاد result=false في هذا التشغيل؛ تم تصحيح الحالة من تم الإرسال إلى فشل.",
-            })
         return True

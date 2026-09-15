@@ -79,17 +79,17 @@ class WatiAutomationLogLifecycle(models.Model):
     _inherit = "wati.automation.log"
 
     status = fields.Selection(
-        selection_add=[("read", "تمت القراءة")],
+        selection_add=[("read", "Read done")],
         ondelete={"read": "cascade"},
     )
 
-    accepted_at = fields.Datetime(string="وقت قبول الطلب", readonly=True, index=True)
-    sent_at = fields.Datetime(string="وقت الإرسال", readonly=True, index=True)
-    delivered_at = fields.Datetime(string="وقت التسليم", readonly=True, index=True)
-    read_at = fields.Datetime(string="وقت القراءة", readonly=True, index=True)
-    failed_at = fields.Datetime(string="وقت الفشل", readonly=True, index=True)
-    last_webhook_at = fields.Datetime(string="آخر Webhook", readonly=True, index=True)
-    last_webhook_status = fields.Char(string="آخر حالة Webhook", readonly=True)
+    accepted_at = fields.Datetime(string="Time of accepting the application", readonly=True, index=True)
+    sent_at = fields.Datetime(string="Transmission time", readonly=True, index=True)
+    delivered_at = fields.Datetime(string="Delivery time", readonly=True, index=True)
+    read_at = fields.Datetime(string="Reading time", readonly=True, index=True)
+    failed_at = fields.Datetime(string="Failure time", readonly=True, index=True)
+    last_webhook_at = fields.Datetime(string="Another Webhook", readonly=True, index=True)
+    last_webhook_status = fields.Char(string="Latest case Webhook", readonly=True)
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -249,7 +249,7 @@ class WatiWebhookEventLifecycle(models.Model):
             # the message; never downgrade it because of a late failure event.
             if current not in ("delivered", "read"):
                 error_text = _payload_error_text(payload) or (
-                    "فشل تسليم الرسالة في WATI/WhatsApp: " + raw_status
+                    "Message delivery failed WATI/WhatsApp: " + raw_status
                 )
                 values.update(
                     {
@@ -297,8 +297,8 @@ class WatiWebhookEventLifecycle(models.Model):
             )
             if template_failure:
                 message = (
-                    "تم إيقاف الأتمتة تلقائيًا لأن WhatsApp/WATI رفض القالب "
-                    f"«{log.template_name}». السبب: {values.get('error_message') or raw_status}"
+                    "Automation was automatically turned off because WhatsApp/WATI Template rejection "
+                    f"«{log.template_name}». The reason: {values.get('error_message') or raw_status}"
                 )[:1500]
                 log.rule_id.with_context(wati_guard_internal=True).write(
                     {

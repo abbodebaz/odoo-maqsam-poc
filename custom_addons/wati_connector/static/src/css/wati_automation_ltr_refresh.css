@@ -1,0 +1,333 @@
+/* Final English UX pass for Automation Center.
+   Keep business logic untouched; this file only owns layout, direction and visual density. */
+
+.wati_builder_sheet,
+.wati_builder_topbar,
+.wati_builder_layout,
+.wati_builder_main,
+.wati_builder_sidebar,
+.wati_builder_step,
+.wati_workflow_card,
+.wati_universal_event_builder,
+.wati_recipient_mode_box,
+.wati_recipient_context,
+.wati_review_step,
+.wati_message_step {
+    direction: ltr !important;
+    text-align: left !important;
+}
+
+.wati_builder_header,
+.wati_builder_header .o_statusbar_status {
+    direction: ltr !important;
+}
+
+.wati_builder_sheet {
+    max-width: 1460px;
+    padding-top: 14px !important;
+}
+
+.wati_builder_topbar {
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.wati_builder_title h1 {
+    font-size: 1.45rem;
+}
+
+.wati_builder_title h1 .o_field_widget {
+    min-width: min(560px, 62vw);
+}
+
+.wati_builder_layout {
+    grid-template-columns: minmax(0, 1fr) 290px !important;
+    gap: 18px !important;
+    align-items: start;
+}
+
+.wati_builder_main {
+    grid-column: 1;
+    min-width: 0;
+}
+
+.wati_builder_sidebar {
+    grid-column: 2;
+    min-width: 0;
+    position: sticky;
+    top: 12px;
+}
+
+.wati_builder_step {
+    padding: 22px 24px 18px !important;
+    border-radius: 18px !important;
+    box-shadow: 0 8px 28px rgba(17, 24, 39, .045) !important;
+}
+
+.wati_builder_step_head {
+    justify-content: flex-start;
+    gap: 12px;
+    padding-bottom: 15px;
+    margin-bottom: 16px;
+}
+
+.wati_builder_step_head > div {
+    min-width: 0;
+}
+
+.wati_builder_step_head h2 {
+    font-size: 1.25rem;
+    line-height: 1.3;
+}
+
+.wati_builder_step_head p {
+    margin-top: 2px;
+    max-width: 720px;
+    font-size: .88rem;
+    line-height: 1.5;
+}
+
+.wati_builder_step_no {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+    border-radius: 12px;
+}
+
+.wati_builder_nav {
+    direction: ltr !important;
+}
+
+.wati_builder_nav_single {
+    justify-content: flex-end;
+}
+
+.wati_builder_nav .btn,
+.wati_builder_top_actions .btn {
+    border-radius: 10px !important;
+}
+
+/* Sidebar: useful summary only, no long explanatory paragraph. */
+.wati_workflow_card {
+    padding: 15px;
+    border-radius: 17px;
+    box-shadow: 0 7px 22px rgba(17, 24, 39, .045);
+}
+
+.wati_workflow_card_head {
+    padding-bottom: 10px;
+    margin-bottom: 11px;
+}
+
+.wati_flow_node {
+    padding: 11px 12px;
+    border-radius: 12px;
+}
+
+.wati_flow_arrow {
+    line-height: 1.5;
+}
+
+.wati_workflow_sentence,
+.wati_sidebar_tip {
+    display: none !important;
+}
+
+/* Trigger step: remove documentation-like copy and keep the choices central. */
+.wati_universal_event_builder {
+    padding: 14px !important;
+    border-radius: 16px !important;
+    background: #fbfcfd;
+}
+
+.wati_universal_event_intro {
+    padding: 2px 2px 12px !important;
+    margin-bottom: 12px !important;
+}
+
+.wati_universal_event_intro p,
+.wati_event_meta,
+.wati_universal_hint {
+    display: none !important;
+}
+
+.wati_universal_event_intro h3 {
+    margin: 0 !important;
+    font-size: .98rem !important;
+}
+
+.wati_dynamic_badge {
+    padding: 5px 9px !important;
+    font-size: .7rem !important;
+}
+
+.wati_event_question {
+    grid-template-columns: 34px minmax(0, 1fr) !important;
+    gap: 11px !important;
+    padding: 12px 13px !important;
+    border-radius: 14px !important;
+    box-shadow: none !important;
+}
+
+.wati_event_question_no {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 10px !important;
+    font-size: .8rem !important;
+}
+
+.wati_event_question_title {
+    margin-bottom: 2px !important;
+    font-size: .92rem !important;
+}
+
+.wati_event_question_help {
+    margin-bottom: 8px !important;
+    font-size: .76rem !important;
+    line-height: 1.4;
+}
+
+.wati_event_field_box {
+    padding: 4px 8px !important;
+    border-radius: 10px !important;
+    background: #fff;
+}
+
+.wati_event_field_box .o_input,
+.wati_event_field_box select,
+.wati_smart_target_select,
+.wati_smart_target_input {
+    min-height: 36px;
+}
+
+.wati_event_connector {
+    height: 15px !important;
+    justify-content: flex-start !important;
+    padding-left: 15px;
+    color: #b0a4b7;
+}
+
+.wati_event_live_summary {
+    margin-top: 12px !important;
+    padding: 11px 13px !important;
+    border-radius: 12px !important;
+}
+
+/* Recipient step: keep the decision and preview, hide redundant prose. */
+.wati_recipient_mode_box {
+    padding: 14px !important;
+    margin-bottom: 12px !important;
+}
+
+.wati_recipient_mode_box .o_radio_item {
+    min-height: 62px !important;
+    padding: 11px 13px !important;
+    border-radius: 12px !important;
+}
+
+.wati_recipient_context {
+    padding: 14px !important;
+    margin-bottom: 12px !important;
+    border-radius: 14px !important;
+}
+
+.wati_recipient_context p,
+.wati_policy_box p,
+.wati_recipient_advanced_body > p {
+    display: none !important;
+}
+
+.wati_recipient_preview {
+    margin: 12px 0 !important;
+    padding: 13px 15px !important;
+}
+
+.wati_policy_box {
+    padding: 13px 15px !important;
+}
+
+/* Message step remains LTR but message text itself can use its own bidi direction. */
+.wati_message_step {
+    grid-template-columns: minmax(0, 1.35fr) minmax(300px, .65fr) !important;
+}
+
+.wati_template_message_bubble,
+.wati_review_message_preview {
+    unicode-bidi: plaintext;
+}
+
+.wati_template_picker_smart {
+    text-align: left !important;
+}
+
+.wati_template_picker_actions,
+.wati_mapping_actions,
+.wati_validation_actions {
+    direction: ltr !important;
+}
+
+/* Review: compact the explanatory sections. */
+.wati_review_step_head p,
+.wati_review_test_section .wati_review_section_head p,
+.wati_review_send_test_copy p,
+.wati_review_activate_box p,
+.wati_review_active_box p {
+    max-width: 680px;
+    line-height: 1.45;
+}
+
+.wati_review_summary_grid {
+    direction: ltr !important;
+}
+
+.wati_review_summary_card,
+.wati_review_readiness,
+.wati_review_test_section,
+.wati_review_send_test,
+.wati_review_activate_box,
+.wati_review_active_box {
+    text-align: left !important;
+}
+
+@media (max-width: 980px) {
+    .wati_builder_layout {
+        grid-template-columns: 1fr !important;
+    }
+
+    .wati_builder_main,
+    .wati_builder_sidebar {
+        grid-column: 1;
+    }
+
+    .wati_builder_sidebar {
+        position: static;
+        order: 2 !important;
+    }
+
+    .wati_workflow_card {
+        display: block !important;
+    }
+
+    .wati_message_step {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+@media (max-width: 640px) {
+    .wati_builder_sheet {
+        padding: 8px !important;
+    }
+
+    .wati_builder_step {
+        padding: 15px !important;
+    }
+
+    .wati_builder_step_head {
+        align-items: flex-start;
+    }
+
+    .wati_builder_title h1 .o_field_widget {
+        min-width: 0;
+        width: 100%;
+    }
+}

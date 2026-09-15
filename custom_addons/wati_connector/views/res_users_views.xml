@@ -7,20 +7,141 @@
         <field name="arch" type="xml">
             <xpath expr="//notebook" position="inside">
                 <page string="WhatsApp / WATI" name="wati_user_integration">
-                    <group>
-                        <group string="ربط حساب الموظف">
-                            <field name="wati_operator_email" string="WATI Operator Email" placeholder="employee@company.com"/>
-                            <field name="wati_is_supervisor" string="مشرف WATI"/>
-                            <div class="text-muted">
-                                أدخل إيميل الموظف كما هو مسجل داخل WATI Team Inbox. فعّل «مشرف WATI» فقط لمن يحق له نقل محادثة من موظف إلى موظف آخر.
+                    <div class="wati-user-integration py-3">
+                        <div class="wati-user-integration__intro mb-4">
+                            <h3 class="mb-1">WATI access &amp; assignment</h3>
+                            <p class="text-muted mb-0">
+                                Link this Odoo user to the matching WATI Team Inbox operator and review their WhatsApp access level.
+                            </p>
+                        </div>
+
+                        <div class="row g-3 wati-settings-card-grid">
+                            <div class="col-12 col-xl-5">
+                                <div class="wati-settings-card h-100">
+                                    <div class="d-flex align-items-start gap-3 mb-3">
+                                        <span class="wati-settings-card-icon" title="Link WATI account">
+                                            <i class="fa fa-link"/>
+                                        </span>
+                                        <div class="min-w-0">
+                                            <h4 class="mb-1">Link WATI account</h4>
+                                            <p class="text-muted mb-0">
+                                                Link this user to their WATI operator.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div class="wati-email-field">
+                                        <label for="wati_operator_email" string="WATI Operator Email" class="fw-bold d-block mb-1"/>
+                                        <div class="wati-email-input">
+                                            <field name="wati_operator_email"
+                                                   nolabel="1"
+                                                   placeholder="employee@company.com"/>
+                                        </div>
+                                    </div>
+                                    <div class="wati-helper-text text-muted mt-2">
+                                        Use the same email registered for this employee in WATI Team Inbox.
+                                    </div>
+                                </div>
                             </div>
-                        </group>
-                        <group string="طريقة العمل">
-                            <div class="text-muted">
-                                المحادثة غير المسندة يستطيع الموظف استلامها. بعد الاستلام لا يستطيع موظف آخر أخذها أو الرد عليها. النقل القسري متاح فقط لمشرف WATI أو Administrator، وجميع عمليات النقل تُحفظ في سجل الإسناد.
+
+                            <div class="col-12 col-xl-7">
+                                <div class="wati-settings-card h-100">
+                                    <div class="d-flex align-items-start gap-3 mb-3">
+                                        <span class="wati-settings-card-icon" title="WhatsApp roles">
+                                            <i class="fa fa-users"/>
+                                        </span>
+                                        <div class="min-w-0">
+                                            <h4 class="mb-1">WhatsApp roles</h4>
+                                            <p class="text-muted mb-0">
+                                                WATI roles control WhatsApp responsibilities without granting extra Odoo administration rights.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div class="wati-role-list">
+                                        <div class="wati-role-item">
+                                            <div class="wati-role-item__title">WATI User / Agent</div>
+                                            <div class="text-muted">Handles daily customer conversations and replies.</div>
+                                        </div>
+                                        <div class="wati-role-item">
+                                            <div class="wati-role-item__title">WATI Supervisor</div>
+                                            <div class="text-muted">Supervises agents and transfers conversations between team members.</div>
+                                        </div>
+                                        <div class="wati-role-item">
+                                            <div class="wati-role-item__title">WATI Administrator</div>
+                                            <div class="text-muted">
+                                                Manages WhatsApp permissions, Automation Center, Operation Log, and Webhook Monitoring.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </group>
-                    </group>
+                        </div>
+
+                        <div class="wati-settings-card mt-3 wati-settings-card-grid">
+                            <div class="d-flex align-items-start gap-3 mb-3">
+                                <span class="wati-settings-card-icon" title="How assignment works">
+                                    <i class="fa fa-random"/>
+                                </span>
+                                <div class="min-w-0">
+                                    <h4 class="mb-1">How conversation assignment works</h4>
+                                    <p class="text-muted mb-0">
+                                        Ownership stays clear so two agents do not reply to the same conversation at once.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="d-flex flex-column gap-2 wati-step-list">
+                                <div class="wati-step">
+                                    <span class="wati-step-number">1</span>
+                                    <div>
+                                        <div class="fw-bold mb-1">Conversation arrives</div>
+                                        <div class="text-muted">
+                                            Any available WATI Agent can take an unassigned conversation.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="wati-step">
+                                    <span class="wati-step-number">2</span>
+                                    <div>
+                                        <div class="fw-bold mb-1">Agent takes ownership</div>
+                                        <div class="text-muted">
+                                            After assignment, only the assigned agent can reply unless the conversation is transferred.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="wati-step">
+                                    <span class="wati-step-number">3</span>
+                                    <div>
+                                        <div class="fw-bold mb-1">Transfer when needed</div>
+                                        <div class="text-muted">
+                                            A WATI Supervisor or Administrator can transfer the conversation.
+                                            <br/>
+                                            The transfer is recorded in the assignment log.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="wati-security-note mt-3 wati-settings-card-grid" role="status">
+                            <div class="d-flex align-items-start gap-3">
+                                <span class="wati-settings-card-icon" title="Security note">
+                                    <i class="fa fa-shield"/>
+                                </span>
+                                <div class="min-w-0">
+                                    <div class="fw-bold mb-1">Security note</div>
+                                    <div>
+                                        <strong>WATI Administrator</strong> does not make the user an Odoo Administrator.
+                                        <br/>
+                                        It only grants access to the WhatsApp features and permissions enabled for your company.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </page>
             </xpath>
         </field>

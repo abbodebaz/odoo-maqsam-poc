@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_smart_button_app_policy_list" model="ir.ui.view">
+        <field name="name">wati.smart.button.app.policy.list</field>
+        <field name="model">wati.smart.button.app.policy</field>
+        <field name="arch" type="xml">
+            <list string="WhatsApp Smart Buttons by Application" create="false" delete="false" edit="true">
+                <header>
+                    <button name="action_refresh_applications" type="object" string="Refresh Applications" icon="fa-refresh" class="btn-primary"/>
+                </header>
+                <field name="sequence" widget="handle" optional="hide"/>
+                <field name="active" widget="boolean_toggle" string="WhatsApp"/>
+                <field name="app_name" string="Application"/>
+                <field name="model_count" string="Detected record types"/>
+                <field name="model_names" string="Technical models" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_wati_smart_button_app_policies" model="ir.actions.act_window">
+        <field name="name">Smart Buttons &amp; Customer Timeline</field>
+        <field name="res_model">wati.smart.button.app.policy</field>
+        <field name="view_mode">list</field>
+        <field name="context">{'active_test': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Applications are discovered automatically from this Odoo database.</p>
+            <p>WhatsApp is enabled by default. Turn it off only for applications where employees should not see the global WhatsApp controls.</p>
+        </field>
+    </record>
+</odoo>

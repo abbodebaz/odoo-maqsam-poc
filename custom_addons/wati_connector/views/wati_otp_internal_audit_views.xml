@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_otp_flow_form_internal_audit" model="ir.ui.view">
+        <field name="name">wati.otp.flow.form.internal.audit</field>
+        <field name="model">wati.otp.flow</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_otp_flow_form"/>
+        <field name="priority">340</field>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('wati_otp_security_note')]" position="replace">
+                <div class="wati_otp_security_note">
+                    <i class="fa fa-lock" title="Internal audit"/>
+                    Internal audit mode: the exact OTP is retained for internal employees, while salted cryptographic verification is still used to validate the customer code.
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_wati_otp_transaction_list_internal_audit" model="ir.ui.view">
+        <field name="name">wati.otp.transaction.list.internal.audit</field>
+        <field name="model">wati.otp.transaction</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_otp_transaction_list"/>
+        <field name="priority">340</field>
+        <field name="arch" type="xml">
+            <!-- Keep the operational list compact. Everything hidden remains available
+                 from the column picker when an auditor needs more detail. -->
+            <field name="create_date" position="after">
+                <field name="sent_at" optional="hide"/>
+            </field>
+            <field name="state" position="after">
+                <field name="audit_otp_code" string="OTP Code" optional="show" groups="base.group_user"/>
+            </field>
+            <field name="flow_id" position="after">
+                <field name="application_name" string="Application" optional="show"/>
+                <field name="record_type_name" string="Record type" optional="hide"/>
+            </field>
+            <field name="res_name" position="attributes">
+                <attribute name="string">Record</attribute>
+            </field>
+            <field name="res_name" position="after">
+                <field name="source" optional="show"/>
+                <field name="trigger_snapshot" string="Trigger details" optional="hide"/>
+            </field>
+            <field name="phone_masked" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </field>
+            <field name="phone_masked" position="after">
+                <field name="recipient_phone" string="Recipient number" optional="hide" groups="base.group_user"/>
+            </field>
+            <field name="template_name" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </field>
+            <field name="expires_at" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </field>
+            <field name="verified_at" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </field>
+            <field name="verified_by_id" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </field>
+            <field name="verified_by_id" position="after">
+                <field name="requested_by_id" optional="hide"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_wati_otp_transaction_form_internal_audit" model="ir.ui.view">
+        <field name="name">wati.otp.transaction.form.internal.audit</field>
+        <field name="model">wati.otp.transaction</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_otp_transaction_form"/>
+        <field name="priority">340</field>
+        <field name="arch" type="xml">
+            <button name="action_cancel" position="after">
+                <button name="action_open_source_record" type="object" string="Open Source Record" icon="fa-external-link" class="btn-secondary"/>
+            </button>
+
+            <xpath expr="//sheet/div[hasclass('alert-info')]" position="replace">
+                <div class="alert alert-light border mb-3" role="alert">
+                    <strong>Internal traceability.</strong>
+                    OTP evidence and its source are visible to internal Odoo users for operational audit.
+                </div>
+            </xpath>
+
+            <xpath expr="//sheet/div[hasclass('alert-light')]" position="after">
+                <group string="OTP evidence" groups="base.group_user">
+                    <group>
+                        <field name="audit_otp_code" string="OTP Code" readonly="1"/>
+                        <field name="recipient_phone" string="Recipient number" readonly="1"/>
+                    </group>
+                    <group>
+                        <field name="template_name" readonly="1"/>
+                        <field name="sent_at" readonly="1"/>
+                    </group>
+                </group>
+            </xpath>
+
+            <!-- Replace the original long two-column dump with two purposeful sections. -->
+            <xpath expr="//sheet/group[.//field[@name='flow_id']][1]" position="replace">
+                <group>
+                    <group string="Source &amp; record">
+                        <field name="flow_id" readonly="1"/>
+                        <field name="application_name" readonly="1"/>
+                        <field name="record_type_name" readonly="1"/>
+                        <field name="source" readonly="1"/>
+                        <field name="trigger_snapshot" string="Trigger details" readonly="1"/>
+                    </group>
+                    <group string="Verification &amp; result">
+                        <field name="expires_at" readonly="1"/>
+                        <field name="attempt_count" readonly="1"/>
+                        <field name="post_actions_state" widget="badge" readonly="1"/>
+                        <field name="post_actions_error" readonly="1" invisible="not post_actions_error"/>
+                        <field name="verified_at" readonly="1"/>
+                        <field name="verified_by_id" readonly="1"/>
+                        <field name="requested_by_id" readonly="1"/>
+                    </group>
+                </group>
+                <group string="Technical trace" groups="base.group_system">
+                    <group>
+                        <field name="model_name" readonly="1"/>
+                        <field name="res_id" readonly="1"/>
+                    </group>
+                    <group>
+                        <field name="flow_name_snapshot" readonly="1"/>
+                        <field name="recipient_source_snapshot" readonly="1"/>
+                    </group>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-inherit="mail.Chatter" t-inherit-mode="extension">
+        <xpath expr="//button[hasclass('o-mail-Chatter-activity')]" position="after">
+            <button t-if="state.watiGlobalEnabled and props.threadId"
+                    class="o-wati-global-compose btn btn-secondary text-nowrap ms-1"
+                    t-att-class="{ 'my-2': !props.compactHeight }"
+                    title="Send WhatsApp"
+                    t-on-click="openWatiGlobalCompose">
+                <i class="fa fa-whatsapp me-1"/>WhatsApp
+            </button>
+            <button t-if="state.watiGlobalEnabled and props.threadId"
+                    class="o-wati-global-timeline btn btn-secondary text-nowrap ms-1"
+                    t-att-class="{ 'my-2': !props.compactHeight }"
+                    title="Customer WhatsApp Timeline"
+                    t-on-click="openWatiGlobalTimeline">
+                <i class="fa fa-history me-1"/>Timeline
+            </button>
+        </xpath>
+    </t>
+</templates>
