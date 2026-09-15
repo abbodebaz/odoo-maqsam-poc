@@ -45,11 +45,11 @@ class WatiSmartButtonAppPolicy(models.Model):
 
     @api.model
     def _discover_apps(self):
-        Menu = self.env["ir.ui.menu"].sudo().with_context(active_test=False)
-        roots = Menu.search([("parent_id", "=", False), ("active", "=", True)], order="sequence, id")
+        Menu = self.env["ir.ui.menu"].sudo()
+        roots = Menu.search([("parent_id", "=", False)], order="sequence, id")
         result = []
         for root in roots:
-            menus = Menu.search([("id", "child_of", root.id), ("active", "=", True)])
+            menus = Menu.search([("id", "child_of", root.id)])
             models_found = {model_name for menu in menus if (model_name := self._menu_action_model(menu))}
             if models_found:
                 result.append((root, sorted(models_found)))
@@ -63,7 +63,6 @@ class WatiSmartButtonAppPolicy(models.Model):
         generated = locations.mapped("generated_view_id").sudo().with_context(active_test=False).exists()
         if generated:
             generated.write({"active": False})
-        # Also catch orphaned generated extensions left by older records/releases.
         orphaned = self.env["ir.ui.view"].sudo().with_context(active_test=False).search([
             ("name", "like", "WATI Smart Button ·%"),
             ("active", "=", True),
@@ -75,22 +74,15 @@ class WatiSmartButtonAppPolicy(models.Model):
     @api.model
     def sync_discovered_apps(self):
         Policy = self.sudo().with_context(active_test=False)
-        discovered_ids = set()
         for root, model_names in self._discover_apps():
-            discovered_ids.add(root.id)
             policy = Policy.search([("app_menu_id", "=", root.id)], limit=1)
             vals = {"model_names": "\n".join(model_names), "sequence": root.sequence or 10}
             if policy:
+                # Never overwrite the administrator's ON/OFF choice.
                 policy.write(vals)
             else:
                 vals.update({"app_menu_id": root.id, "active": True})
                 Policy.create(vals)
-
-        # Keep the screen truthful: policies for removed/non-application roots are archived,
-        # while a user's explicit ON/OFF choice is preserved for every discovered app.
-        stale = Policy.search([("app_menu_id", "not in", sorted(discovered_ids))]) if discovered_ids else Policy.search([])
-        if stale:
-            stale.write({"active": False})
         self._disable_legacy_generated_buttons()
         return True
 
