@@ -6,56 +6,51 @@
         <field name="inherit_id" ref="wati_connector.res_config_settings_view_form_wati"/>
         <field name="arch" type="xml">
             <xpath expr="//div[@id='wati_smart_button_settings_slot']" position="replace">
-                <block title="button WhatsApp Smart and customer history" name="wati_smart_button_settings">
+                <block title="WhatsApp Smart Buttons &amp; Customer Timeline" name="wati_smart_button_settings">
                     <div class="wati-settings-note alert alert-info mb16" role="status">
-                        <strong>Control from one place.</strong>
-                        Add button WhatsApp Register the client to the screens of your choice within Odoo Without modifying the original applications.
+                        <strong>Bring WhatsApp into any Odoo screen.</strong>
+                        Add a WhatsApp action and customer conversation history without modifying the original Odoo application.
                     </div>
 
                     <div class="row g-3 wati-settings-card-grid">
                         <div class="col-12 col-xl-6">
                             <div class="wati-settings-card h-100">
                                 <div class="d-flex align-items-start gap-3 mb-3">
-                                    <div class="wati-settings-card-icon">
-                                        <i class="fa fa-whatsapp" title="WhatsApp"/>
-                                    </div>
+                                    <div class="wati-settings-card-icon"><i class="fa fa-whatsapp" title="WhatsApp Smart Button"/></div>
                                     <div class="min-w-0">
-                                        <h4 class="mb-1">Where a button appears WhatsApp</h4>
-                                        <p class="text-muted mb-0">Select the screens where the submit button appears and record WhatsApp.</p>
+                                        <h4 class="mb-1">WhatsApp Smart Buttons</h4>
+                                        <p class="text-muted mb-0">Choose exactly where employees can open WhatsApp from an Odoo record.</p>
                                     </div>
                                 </div>
-
-                                <ul class="wati-settings-list text-muted mb-3">
-                                    <li>Select the desired application and model.</li>
-                                    <li>Select the mobile number field or use smart discovery.</li>
-                                    <li>More than one screen can be activated at the same time.</li>
-                                </ul>
-
-                                <button name="action_wati_manage_smart_buttons"
-                                        type="object"
-                                        string="Manage button places WhatsApp"
-                                        class="btn btn-primary"
-                                        icon="fa-whatsapp"/>
+                                <div class="small fw-bold mb-2">Setup in 3 simple steps</div>
+                                <ol class="wati-settings-list text-muted mb-3 ps-3">
+                                    <li>Choose the application and record type.</li>
+                                    <li>Let smart discovery find the customer and mobile number.</li>
+                                    <li>Activate the location — the WhatsApp button appears automatically.</li>
+                                </ol>
+                                <button name="action_wati_manage_smart_buttons" type="object"
+                                        string="Manage Smart Buttons" class="btn btn-primary" icon="fa-whatsapp"/>
                             </div>
                         </div>
 
                         <div class="col-12 col-xl-6">
                             <div class="wati-settings-card h-100">
                                 <div class="d-flex align-items-start gap-3 mb-3">
-                                    <div class="wati-settings-card-icon">
-                                        <i class="fa fa-history" title="WhatsApp Timeline"/>
-                                    </div>
+                                    <div class="wati-settings-card-icon"><i class="fa fa-history" title="Customer Timeline"/></div>
                                     <div class="min-w-0">
                                         <h4 class="mb-1">Customer WhatsApp Timeline</h4>
-                                        <p class="text-muted mb-0">Show date WhatsApp From the same current working screen.</p>
+                                        <p class="text-muted mb-0">Keep the customer's WhatsApp history available from the same Odoo workflow.</p>
                                     </div>
                                 </div>
-
+                                <div class="small fw-bold mb-2">What employees can see</div>
                                 <ul class="wati-settings-list text-muted mb-0">
-                                    <li>Displays incoming and outgoing messages and their status.</li>
-                                    <li>Depends on the associated customer or mobile number.</li>
-                                    <li>The customer’s card is keptTimeline Automatically complete.</li>
+                                    <li>Incoming and outgoing WhatsApp messages.</li>
+                                    <li>Delivery/read status and the responsible employee.</li>
+                                    <li>Conversation history linked automatically when the customer is detected.</li>
                                 </ul>
+                                <div class="alert alert-light border mt-3 mb-0 py-2">
+                                    <i class="fa fa-link me-1"/> Smart Buttons and Timeline use the same customer mapping, so setup stays in one place.
+                                </div>
                             </div>
                         </div>
                     </div>
