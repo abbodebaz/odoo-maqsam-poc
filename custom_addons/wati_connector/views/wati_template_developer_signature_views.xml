@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_template_developer_signature" model="ir.ui.view">
+        <field name="name">wati.template.developer.signature</field>
+        <field name="model">wati.template</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_template_form_designer"/>
+        <field name="priority">120</field>
+        <field name="arch" type="xml">
+            <xpath expr="//main[contains(@class, 'o_wati_template_editor')]" position="inside">
+                <div class="o_wati_developer_signature">
+                    <span>Developed by</span>
+                    <strong>Abdulrhman Bazarah</strong>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

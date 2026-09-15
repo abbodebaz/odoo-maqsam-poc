@@ -19,6 +19,7 @@
         "views/wati_ticket_views.xml",
         "views/wati_template_views.xml",
         "views/wati_template_designer_views.xml",
+        "views/wati_template_developer_signature_views.xml",
         "views/wati_template_variable_save_views.xml",
         "views/wati_template_readiness_views.xml",
         "views/wati_automation_views.xml",
@@ -70,6 +71,7 @@
             "wati_connector/static/src/css/wati_template_designer.css",
             "wati_connector/static/src/css/wati_template_builder.css",
             "wati_connector/static/src/css/wati_settings.css",
+            "wati_connector/static/src/css/wati_developer_signature.css",
             "wati_connector/static/src/mini_inbox/mini_inbox.css",
             "wati_connector/static/src/mini_inbox/mini_inbox.js",
             "wati_connector/static/src/mini_inbox/mini_inbox.xml",
@@ -89,7 +91,8 @@
             "wati_connector/static/src/workspace/workspace.js",
             "wati_connector/static/src/workspace/workspace.xml",
             "wati_connector/static/src/workspace/workspace_alerts.xml",
-            "wati_connector/static/src/workspace/workspace_access.xml"
+            "wati_connector/static/src/workspace/workspace_access.xml",
+            "wati_connector/static/src/branding/developer_signature.xml"
         ]
     },
     "installable": True,
