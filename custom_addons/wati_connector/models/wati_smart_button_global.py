@@ -57,18 +57,26 @@ class WatiSmartButtonAppPolicy(models.Model):
 
     @api.model
     def _disable_legacy_generated_buttons(self):
-        """The chatter controls are the single global UI; old generated header buttons must never coexist."""
+        """Retire every old per-form Smart Button view; chatter is now the only Smart Button UI."""
+        View = self.env["ir.ui.view"].sudo().with_context(active_test=False)
         Location = self.env["wati.smart.button.location"].sudo().with_context(active_test=False)
+
+        # Disable views still linked to legacy Smart Button configuration records.
         locations = Location.search([])
         generated = locations.mapped("generated_view_id").sudo().with_context(active_test=False).exists()
         if generated:
             generated.write({"active": False})
-        orphaned = self.env["ir.ui.view"].sudo().with_context(active_test=False).search([
+
+        # Older database revisions may have lost the generated_view_id link or used
+        # a different display name. The generated XML itself always carried the
+        # wati_button_rule_id context marker, so use that as the authoritative cleanup.
+        legacy_views = View.search([
+            "|",
             ("name", "like", "WATI Smart Button ·%"),
-            ("active", "=", True),
+            ("arch_db", "ilike", "wati_button_rule_id"),
         ])
-        if orphaned:
-            orphaned.write({"active": False})
+        if legacy_views:
+            legacy_views.write({"active": False})
         return True
 
     @api.model
@@ -78,7 +86,6 @@ class WatiSmartButtonAppPolicy(models.Model):
             policy = Policy.search([("app_menu_id", "=", root.id)], limit=1)
             vals = {"model_names": "\n".join(model_names), "sequence": root.sequence or 10}
             if policy:
-                # Never overwrite the administrator's ON/OFF choice.
                 policy.write(vals)
             else:
                 vals.update({"app_menu_id": root.id, "active": True})
@@ -119,7 +126,6 @@ class WatiSmartButtonLocationGlobalOnly(models.Model):
     _inherit = "wati.smart.button.location"
 
     def _sync_generated_view(self):
-        """Legacy per-form header buttons are retired; always keep their generated views disabled."""
         for record in self:
             current = record.generated_view_id.sudo().with_context(active_test=False).exists()
             if current and current.active:
