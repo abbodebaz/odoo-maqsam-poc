@@ -48,6 +48,7 @@ from . import wati_template_button_guard
 from . import wati_template_button_contract
 from . import wati_template_custom_params_contract
 from . import wati_template_lifecycle
+from . import wati_template_readiness
 from . import wati_message_identity
 from . import wati_otp_bridge
 from . import wati_otp_flow

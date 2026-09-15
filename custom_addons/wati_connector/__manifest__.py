@@ -20,6 +20,7 @@
         "views/wati_template_views.xml",
         "views/wati_template_designer_views.xml",
         "views/wati_template_variable_save_views.xml",
+        "views/wati_template_readiness_views.xml",
         "views/wati_automation_views.xml",
         "views/wati_otp_bridge_views.xml",
         "views/wati_otp_flow_views.xml",
