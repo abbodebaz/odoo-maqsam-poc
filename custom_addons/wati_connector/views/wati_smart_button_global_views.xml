@@ -5,6 +5,9 @@
         <field name="model">wati.smart.button.app.policy</field>
         <field name="arch" type="xml">
             <list string="WhatsApp Smart Buttons by Application" create="false" delete="false" edit="true">
+                <header>
+                    <button name="action_refresh_applications" type="object" string="Refresh Applications" icon="fa-refresh" class="btn-primary"/>
+                </header>
                 <field name="sequence" widget="handle" optional="hide"/>
                 <field name="active" widget="boolean_toggle" string="WhatsApp"/>
                 <field name="app_name" string="Application"/>
