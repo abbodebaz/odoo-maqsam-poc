@@ -54,9 +54,7 @@ class WatiSmartButtonAppPolicy(models.Model):
     @api.model
     def sync_discovered_apps(self):
         Policy = self.sudo()
-        seen = set()
         for root, model_names in self._discover_apps():
-            seen.add(root.id)
             policy = Policy.search([("app_menu_id", "=", root.id)], limit=1)
             vals = {"model_names": "\n".join(model_names)}
             if policy:
@@ -80,11 +78,15 @@ class WatiSmartButtonAppPolicy(models.Model):
     @api.model
     def smart_button_state(self, model_name):
         policy = self.policy_for_model(model_name)
-        return {
-            "enabled": bool(policy and policy.active),
-            "app_id": policy.app_menu_id.id if policy else False,
-            "app_name": policy.app_name if policy else False,
-        }
+        return {"enabled": bool(policy and policy.active), "app_id": policy.app_menu_id.id if policy else False, "app_name": policy.app_name if policy else False}
+
+
+class ResConfigSettingsWatiSmartButtons(models.TransientModel):
+    _inherit = "res.config.settings"
+
+    def action_wati_manage_smart_buttons(self):
+        self.env["wati.smart.button.app.policy"].sync_discovered_apps()
+        return self.env.ref("wati_connector.action_wati_smart_button_app_policies").read()[0]
 
 
 class WatiGlobalRecordResolver(models.AbstractModel):
@@ -109,7 +111,6 @@ class WatiGlobalRecordResolver(models.AbstractModel):
                 if getattr(candidate, "_name", "") == "res.partner" and len(candidate) == 1:
                     partner = candidate
                     break
-
         candidates = []
         for path in ("mobile", "phone", "customer_mobile", "partner_id.mobile", "partner_id.phone", "commercial_partner_id.mobile", "commercial_partner_id.phone", "customer_id.mobile", "customer_id.phone"):
             value = self._resolve_path(record, path)
@@ -145,13 +146,7 @@ class WatiUniversalComposeGlobal(models.TransientModel):
         if not record:
             return values
         partner, phone = self.env["wati.global.record.resolver"].resolve_record(record)
-        values.update({
-            "source_model": model_name,
-            "source_res_id": res_id,
-            "record_name": record.display_name,
-            "partner_id": partner.id if partner else False,
-            "phone": phone or "",
-        })
+        values.update({"source_model": model_name, "source_res_id": res_id, "record_name": record.display_name, "partner_id": partner.id if partner else False, "phone": phone or ""})
         return values
 
 
@@ -173,11 +168,5 @@ class WatiUniversalTimelineGlobal(models.TransientModel):
         if not record:
             return values
         partner, phone = self.env["wati.global.record.resolver"].resolve_record(record)
-        values.update({
-            "source_model": model_name,
-            "source_res_id": res_id,
-            "record_name": record.display_name,
-            "partner_id": partner.id if partner else False,
-            "phone": phone or "",
-        })
+        values.update({"source_model": model_name, "source_res_id": res_id, "record_name": record.display_name, "partner_id": partner.id if partner else False, "phone": phone or ""})
         return values
