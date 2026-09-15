@@ -68,3 +68,4 @@ from . import wati_smart_button
 from . import wati_smart_button_compat
 from . import wati_smart_button_admin_visibility
 from . import wati_universal_timeline
+from . import wati_smart_button_global
