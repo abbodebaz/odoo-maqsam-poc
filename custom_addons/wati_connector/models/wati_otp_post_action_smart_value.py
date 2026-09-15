@@ -17,6 +17,53 @@ class WatiOtpPostActionSmartValue(models.Model):
         for action in self:
             action.smart_target_metadata = action._build_smart_target_metadata()
 
+    def _relation_options(self, field_record, limit=200):
+        """Return stable, user-visible choices for a many2one post action.
+
+        Do not rely on ``name_search('', ...)`` alone. Some custom Odoo models
+        override name_search and return no rows for an empty term even though
+        records exist. That made fields such as CRM Stage render an empty
+        dropdown. Search the relation first, then use name_get/display_name.
+        """
+        self.ensure_one()
+        relation = field_record.relation
+        if not relation or relation not in self.env:
+            return []
+
+        Target = self.env[relation].sudo().with_context(active_test=False)
+        try:
+            records = Target.search([], limit=limit)
+        except Exception:
+            records = Target.browse()
+
+        rows = []
+        if records:
+            try:
+                rows = records.name_get()
+            except Exception:
+                rows = [(record.id, record.display_name) for record in records]
+
+        # Last-resort compatibility for unusual relation models.
+        if not rows:
+            try:
+                rows = Target.name_search(name="", args=[], operator="ilike", limit=limit)
+            except Exception:
+                rows = []
+
+        options = []
+        seen_ids = set()
+        for record_id, label in rows:
+            if not record_id or record_id in seen_ids:
+                continue
+            seen_ids.add(record_id)
+            options.append(
+                {
+                    "value": str(record_id),
+                    "label": _clean(label) or str(record_id),
+                }
+            )
+        return options
+
     def _build_smart_target_metadata(self):
         self.ensure_one()
         field_record = self.field_id
@@ -61,24 +108,20 @@ class WatiOtpPostActionSmartValue(models.Model):
             }
 
         if field_type == "many2one":
-            relation = field_record.relation
-            options = []
-            if relation and relation in self.env:
-                try:
-                    rows = self.env[relation].sudo().name_search(name="", args=[], operator="ilike", limit=100)
-                except Exception:
-                    rows = []
-                seen = set()
-                for record_id, label in rows:
-                    key = str(record_id)
-                    if key in seen:
-                        continue
-                    seen.add(key)
-                    options.append({"value": key, "label": _clean(label) or key})
+            options = self._relation_options(field_record)
+            if options:
+                return {
+                    "mode": "select",
+                    "placeholder": "Choose the related record",
+                    "options": options,
+                }
+            # Never leave the administrator trapped in a dead dropdown. The
+            # execution layer already accepts an exact visible name or ID.
             return {
-                "mode": "select",
-                "placeholder": "Choose the related record",
-                "options": options,
+                "mode": "input",
+                "input_type": "text",
+                "placeholder": "Enter the exact visible value or record ID",
+                "options": [],
             }
 
         if field_type in ("integer", "float"):
