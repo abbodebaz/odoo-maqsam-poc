@@ -39,6 +39,8 @@ access_wati_otp_verify_wizard_agent,wati.otp.verify.wizard agent,model_wati_otp_
 access_wati_otp_verify_wizard_admin,wati.otp.verify.wizard admin,model_wati_otp_verify_wizard,wati_connector.group_wati_admin,1,1,1,1
 access_wati_smart_button_location_agent,wati.smart.button.location agent,model_wati_smart_button_location,wati_connector.group_wati_agent,1,0,0,0
 access_wati_smart_button_location_admin,wati.smart.button.location admin,model_wati_smart_button_location,wati_connector.group_wati_admin,1,1,1,1
+access_wati_smart_button_app_policy_agent,wati.smart.button.app.policy agent,model_wati_smart_button_app_policy,wati_connector.group_wati_agent,1,0,0,0
+access_wati_smart_button_app_policy_admin,wati.smart.button.app.policy admin,model_wati_smart_button_app_policy,wati_connector.group_wati_admin,1,1,1,1
 access_wati_universal_compose_wizard_agent,wati.universal.compose.wizard agent,model_wati_universal_compose_wizard,wati_connector.group_wati_agent,1,1,1,1
 access_wati_universal_compose_parameter_agent,wati.universal.compose.parameter agent,model_wati_universal_compose_parameter,wati_connector.group_wati_agent,1,1,1,1
 access_wati_universal_timeline_wizard_agent,wati.universal.timeline.wizard agent,model_wati_universal_timeline_wizard,wati_connector.group_wati_agent,1,1,1,1
@@ -68,6 +70,7 @@ access_wati_otp_post_variable_system,wati.otp.post.variable.binding system,model
 access_wati_otp_transaction_system,wati.otp.transaction system,model_wati_otp_transaction,base.group_system,1,1,1,1
 access_wati_otp_verify_wizard_system,wati.otp.verify.wizard system,model_wati_otp_verify_wizard,base.group_system,1,1,1,1
 access_wati_smart_button_location_system,wati.smart.button.location system,model_wati_smart_button_location,base.group_system,1,1,1,1
+access_wati_smart_button_app_policy_system,wati.smart.button.app.policy system,model_wati_smart_button_app_policy,base.group_system,1,1,1,1
 access_wati_universal_compose_wizard_system,wati.universal.compose.wizard system,model_wati_universal_compose_wizard,base.group_system,1,1,1,1
 access_wati_universal_compose_parameter_system,wati.universal.compose.parameter system,model_wati_universal_compose_parameter,base.group_system,1,1,1,1
 access_wati_universal_timeline_wizard_system,wati.universal.timeline.wizard system,model_wati_universal_timeline_wizard,base.group_system,1,1,1,1
