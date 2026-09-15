@@ -34,11 +34,6 @@ class WatiSmartButtonAppPolicy(models.Model):
 
     @api.model
     def _menu_action_model(self, menu):
-        """Resolve an act_window model from any menu, including root apps.
-
-        Odoo root application menus commonly have no action themselves; the
-        usable record models live on child menus. Do not require a root action.
-        """
         action = menu.action
         if action and action._name == "ir.actions.act_window":
             model_name = _clean(action.res_model)
@@ -51,17 +46,31 @@ class WatiSmartButtonAppPolicy(models.Model):
     @api.model
     def _discover_apps(self):
         Menu = self.env["ir.ui.menu"].sudo().with_context(active_test=False)
-        # A real Odoo application is represented by a top-level menu. Most
-        # standard apps (CRM, Sales, Project, Inventory...) intentionally have
-        # no action on that root menu, so filtering root.action removed them.
-        roots = Menu.search([("parent_id", "=", False)], order="sequence, id")
+        roots = Menu.search([("parent_id", "=", False), ("active", "=", True)], order="sequence, id")
         result = []
         for root in roots:
-            menus = Menu.search([("id", "child_of", root.id)])
+            menus = Menu.search([("id", "child_of", root.id), ("active", "=", True)])
             models_found = {model_name for menu in menus if (model_name := self._menu_action_model(menu))}
             if models_found:
                 result.append((root, sorted(models_found)))
         return result
+
+    @api.model
+    def _disable_legacy_generated_buttons(self):
+        """The chatter controls are the single global UI; old generated header buttons must never coexist."""
+        Location = self.env["wati.smart.button.location"].sudo().with_context(active_test=False)
+        locations = Location.search([])
+        generated = locations.mapped("generated_view_id").sudo().with_context(active_test=False).exists()
+        if generated:
+            generated.write({"active": False})
+        # Also catch orphaned generated extensions left by older records/releases.
+        orphaned = self.env["ir.ui.view"].sudo().with_context(active_test=False).search([
+            ("name", "like", "WATI Smart Button ·%"),
+            ("active", "=", True),
+        ])
+        if orphaned:
+            orphaned.write({"active": False})
+        return True
 
     @api.model
     def sync_discovered_apps(self):
@@ -70,15 +79,32 @@ class WatiSmartButtonAppPolicy(models.Model):
         for root, model_names in self._discover_apps():
             discovered_ids.add(root.id)
             policy = Policy.search([("app_menu_id", "=", root.id)], limit=1)
-            vals = {"model_names": "\n".join(model_names)}
+            vals = {"model_names": "\n".join(model_names), "sequence": root.sequence or 10}
             if policy:
-                # Preserve the administrator's ON/OFF choice. Reactivate only
-                # records archived by a previous discovery implementation.
-                policy.with_context(active_test=False).write(vals)
+                policy.write(vals)
             else:
-                vals.update({"app_menu_id": root.id, "active": True, "sequence": root.sequence or 10})
+                vals.update({"app_menu_id": root.id, "active": True})
                 Policy.create(vals)
+
+        # Keep the screen truthful: policies for removed/non-application roots are archived,
+        # while a user's explicit ON/OFF choice is preserved for every discovered app.
+        stale = Policy.search([("app_menu_id", "not in", sorted(discovered_ids))]) if discovered_ids else Policy.search([])
+        if stale:
+            stale.write({"active": False})
+        self._disable_legacy_generated_buttons()
         return True
+
+    @api.model
+    def action_refresh_applications(self):
+        self.sync_discovered_apps()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Smart Buttons & Customer Timeline"),
+            "res_model": "wati.smart.button.app.policy",
+            "view_mode": "list",
+            "target": "current",
+            "context": {"active_test": False},
+        }
 
     @api.model
     def policy_for_model(self, model_name):
@@ -86,8 +112,6 @@ class WatiSmartButtonAppPolicy(models.Model):
         if not model_name or model_name not in self.env:
             return self.browse()
         self.sync_discovered_apps()
-        # Include disabled policies while resolving so OFF really means OFF
-        # instead of looking like the application was never discovered.
         for policy in self.sudo().with_context(active_test=False).search([]):
             if model_name in policy._models():
                 return policy
@@ -97,6 +121,18 @@ class WatiSmartButtonAppPolicy(models.Model):
     def smart_button_state(self, model_name):
         policy = self.policy_for_model(model_name)
         return {"enabled": bool(policy and policy.active), "app_id": policy.app_menu_id.id if policy else False, "app_name": policy.app_name if policy else False}
+
+
+class WatiSmartButtonLocationGlobalOnly(models.Model):
+    _inherit = "wati.smart.button.location"
+
+    def _sync_generated_view(self):
+        """Legacy per-form header buttons are retired; always keep their generated views disabled."""
+        for record in self:
+            current = record.generated_view_id.sudo().with_context(active_test=False).exists()
+            if current and current.active:
+                current.write({"active": False})
+        return True
 
 
 class ResConfigSettingsWatiSmartButtons(models.TransientModel):
