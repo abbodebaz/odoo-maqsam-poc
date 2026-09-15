@@ -57,26 +57,30 @@ class WatiSmartButtonAppPolicy(models.Model):
 
     @api.model
     def _disable_legacy_generated_buttons(self):
-        """Retire every old per-form Smart Button view; chatter is now the only Smart Button UI."""
-        View = self.env["ir.ui.view"].sudo().with_context(active_test=False)
-        Location = self.env["wati.smart.button.location"].sudo().with_context(active_test=False)
+        """Retire old per-form Smart Button views without validating broken inherited XML.
 
-        # Disable views still linked to legacy Smart Button configuration records.
-        locations = Location.search([])
-        generated = locations.mapped("generated_view_id").sudo().with_context(active_test=False).exists()
-        if generated:
-            generated.write({"active": False})
-
-        # Older database revisions may have lost the generated_view_id link or used
-        # a different display name. The generated XML itself always carried the
-        # wati_button_rule_id context marker, so use that as the authoritative cleanup.
-        legacy_views = View.search([
-            "|",
-            ("name", "like", "WATI Smart Button ·%"),
-            ("arch_db", "ilike", "wati_button_rule_id"),
-        ])
-        if legacy_views:
-            legacy_views.write({"active": False})
+        Some historical generated views reference form/header nodes that no longer
+        exist. ORM writes force Odoo to validate those stale views and can take
+        several seconds (or fail). A targeted SQL update is safe here: only views
+        created by the retired Smart Button engine are disabled, then caches are
+        invalidated. This runs only from application discovery/settings, never
+        while a business record is opening.
+        """
+        self.env.cr.execute(
+            """
+            UPDATE ir_ui_view
+               SET active = FALSE
+             WHERE active = TRUE
+               AND (
+                    name LIKE 'WATI Smart Button ·%%'
+                    OR arch_db::text LIKE '%%wati_button_rule_id%%'
+               )
+            RETURNING id
+            """
+        )
+        disabled_ids = [row[0] for row in self.env.cr.fetchall()]
+        if disabled_ids:
+            self.env["ir.ui.view"].invalidate_model(["active"])
         return True
 
     @api.model
@@ -107,10 +111,10 @@ class WatiSmartButtonAppPolicy(models.Model):
 
     @api.model
     def policy_for_model(self, model_name):
+        """Fast read-only lookup used by the chatter on every record open."""
         model_name = _clean(model_name)
         if not model_name or model_name not in self.env:
             return self.browse()
-        self.sync_discovered_apps()
         for policy in self.sudo().with_context(active_test=False).search([]):
             if model_name in policy._models():
                 return policy
@@ -119,17 +123,20 @@ class WatiSmartButtonAppPolicy(models.Model):
     @api.model
     def smart_button_state(self, model_name):
         policy = self.policy_for_model(model_name)
-        return {"enabled": bool(policy and policy.active), "app_id": policy.app_menu_id.id if policy else False, "app_name": policy.app_name if policy else False}
+        return {
+            "enabled": bool(policy and policy.active),
+            "app_id": policy.app_menu_id.id if policy else False,
+            "app_name": policy.app_name if policy else False,
+        }
 
 
 class WatiSmartButtonLocationGlobalOnly(models.Model):
     _inherit = "wati.smart.button.location"
 
     def _sync_generated_view(self):
-        for record in self:
-            current = record.generated_view_id.sudo().with_context(active_test=False).exists()
-            if current and current.active:
-                current.write({"active": False})
+        """Legacy per-form header buttons are retired; never create them again."""
+        # Avoid ORM validation of historical broken inherited views. Discovery
+        # performs the targeted cleanup once from Settings.
         return True
 
 
