@@ -33,32 +33,48 @@ class WatiSmartButtonAppPolicy(models.Model):
         return [item for item in _clean(self.model_names).split("\n") if item]
 
     @api.model
+    def _menu_action_model(self, menu):
+        """Resolve an act_window model from any menu, including root apps.
+
+        Odoo root application menus commonly have no action themselves; the
+        usable record models live on child menus. Do not require a root action.
+        """
+        action = menu.action
+        if action and action._name == "ir.actions.act_window":
+            model_name = _clean(action.res_model)
+            if model_name and model_name in self.env:
+                model = self.env["ir.model"].sudo().search([("model", "=", model_name)], limit=1)
+                if model and not model.transient and not model.abstract:
+                    return model_name
+        return False
+
+    @api.model
     def _discover_apps(self):
-        Menu = self.env["ir.ui.menu"].sudo()
-        roots = Menu.search([("parent_id", "=", False), ("action", "!=", False)], order="sequence, id")
+        Menu = self.env["ir.ui.menu"].sudo().with_context(active_test=False)
+        # A real Odoo application is represented by a top-level menu. Most
+        # standard apps (CRM, Sales, Project, Inventory...) intentionally have
+        # no action on that root menu, so filtering root.action removed them.
+        roots = Menu.search([("parent_id", "=", False)], order="sequence, id")
         result = []
         for root in roots:
             menus = Menu.search([("id", "child_of", root.id)])
-            models_found = set()
-            for action in menus.mapped("action"):
-                if action and action._name == "ir.actions.act_window":
-                    model_name = _clean(action.res_model)
-                    if model_name and model_name in self.env:
-                        model = self.env["ir.model"].sudo().search([("model", "=", model_name)], limit=1)
-                        if model and not model.transient and not model.abstract:
-                            models_found.add(model_name)
+            models_found = {model_name for menu in menus if (model_name := self._menu_action_model(menu))}
             if models_found:
                 result.append((root, sorted(models_found)))
         return result
 
     @api.model
     def sync_discovered_apps(self):
-        Policy = self.sudo()
+        Policy = self.sudo().with_context(active_test=False)
+        discovered_ids = set()
         for root, model_names in self._discover_apps():
+            discovered_ids.add(root.id)
             policy = Policy.search([("app_menu_id", "=", root.id)], limit=1)
             vals = {"model_names": "\n".join(model_names)}
             if policy:
-                policy.write(vals)
+                # Preserve the administrator's ON/OFF choice. Reactivate only
+                # records archived by a previous discovery implementation.
+                policy.with_context(active_test=False).write(vals)
             else:
                 vals.update({"app_menu_id": root.id, "active": True, "sequence": root.sequence or 10})
                 Policy.create(vals)
@@ -70,7 +86,9 @@ class WatiSmartButtonAppPolicy(models.Model):
         if not model_name or model_name not in self.env:
             return self.browse()
         self.sync_discovered_apps()
-        for policy in self.sudo().search([]):
+        # Include disabled policies while resolving so OFF really means OFF
+        # instead of looking like the application was never discovered.
+        for policy in self.sudo().with_context(active_test=False).search([]):
             if model_name in policy._models():
                 return policy
         return self.browse()
