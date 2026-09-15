@@ -7,6 +7,12 @@ from ..services.feature_access import ensure_feature_access
 
 
 _LANGUAGE_RE = re.compile(r"^[a-z]{2,3}(?:_[A-Z]{2})?$")
+_PLACEHOLDER_EDGE_RE = re.compile(r"^\s*{{[^{}]+}}|{{[^{}]+}}\s*$")
+_OTP_CONTENT_RE = re.compile(
+    r"(?:\botp\b|one[ -]?time(?: password| passcode)?|verification code|security code|"
+    r"رمز\s*(?:التحقق|التأكيد|الأمان)|كود\s*(?:التحقق|التأكيد|الأمان))",
+    re.IGNORECASE,
+)
 _PROTECTED_CONTENT_FIELDS = {
     "name",
     "language",
@@ -83,3 +89,33 @@ class WatiTemplatePolicy(models.Model):
                 raise ValidationError(
                     _("Do not put variables inside the footer. Place variables inside the main template body.")
                 )
+
+    def _assert_can_submit(self):
+        """Block patterns WATI/Meta reject before making a provider request.
+
+        WATI supports named variables, but Meta rejects templates that start/end
+        with a variable. OTP/verification content must use an Authentication
+        template rather than a Standard Utility/Marketing template.
+        """
+        self.ensure_one()
+        body = (self.body or "").strip()
+
+        if _PLACEHOLDER_EDGE_RE.search(body):
+            raise UserError(
+                _(
+                    "Meta does not allow a template to start or end with a variable. "
+                    "Add fixed text before the first variable and after the last variable."
+                )
+            )
+
+        if self.category in {"UTILITY", "MARKETING"} and _OTP_CONTENT_RE.search(body):
+            raise UserError(
+                _(
+                    "This message contains an OTP or verification code. Meta requires "
+                    "verification-code messages to use an Authentication template with "
+                    "the preset OTP format and a Copy Code/One-Tap button. Do not submit "
+                    "this content as Utility or Marketing."
+                )
+            )
+
+        return super()._assert_can_submit()
