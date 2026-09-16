@@ -10,7 +10,7 @@ _LANGUAGE_RE = re.compile(r"^[a-z]{2,3}(?:_[A-Z]{2})?$")
 _PLACEHOLDER_EDGE_RE = re.compile(r"^\s*{{[^{}]+}}|{{[^{}]+}}\s*$")
 _OTP_CONTENT_RE = re.compile(
     r"(?:\botp\b|one[ -]?time(?: password| passcode)?|verification code|security code|"
-    r"رمز\s*(?:التحقق|التأكيد|الأمان)|كود\s*(?:التحقق|التأكيد|الأمان))",
+    r"\u0631\u0645\u0632\s*(?:\u0627\u0644\u062a\u062d\u0642\u0642|\u0627\u0644\u062a\u0623\u0643\u064a\u062f|\u0627\u0644\u0623\u0645\u0627\u0646)|\u0643\u0648\u062f\s*(?:\u0627\u0644\u062a\u062d\u0642\u0642|\u0627\u0644\u062a\u0623\u0643\u064a\u062f|\u0627\u0644\u0623\u0645\u0627\u0646))",
     re.IGNORECASE,
 )
 _PROTECTED_CONTENT_FIELDS = {
