@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="wati_connector.WatiMiniInboxIdentity" t-inherit="wati_connector.WatiMiniInbox" t-inherit-mode="extension">
+        <xpath expr="//t[@t-if='!state.selectedId']" position="attributes">
+            <attribute name="t-if">!state.selectedId || state.identityError</attribute>
+        </xpath>
+        <xpath expr="//div[contains(@class, 'o_wati_mini_toolbar')]" position="attributes">
+            <attribute name="t-if">!state.identityError</attribute>
+        </xpath>
+        <xpath expr="//div[contains(@class, 'o_wati_mini_list')]" position="attributes">
+            <attribute name="t-if">!state.identityError</attribute>
+        </xpath>
+        <xpath expr="//div[contains(@class, 'o_wati_mini_footer')]" position="attributes">
+            <attribute name="t-if">!state.identityError</attribute>
+        </xpath>
+        <xpath expr="//div[contains(@class, 'o_wati_mini_footer')]" position="after">
+            <div t-if="state.identityError" class="o_wati_mini_empty" role="alert" style="padding:30px 20px;text-align:center;line-height:1.7;">
+                <strong style="display:block;margin-bottom:12px;">WATI Agent verification required</strong>
+                <p t-esc="state.identityError"/>
+                <button type="button" t-on-click="manualRefresh" t-att-disabled="state.loading" style="margin-top:12px;padding:8px 16px;border-radius:8px;">Retry after correction</button>
+            </div>
+        </xpath>
+    </t>
+</templates>
