@@ -1,0 +1,50 @@
+name: QA import exact WATI delivery ZIP
+
+on:
+  push:
+    branches:
+      - qa/wati-zip-acceptance-20260916
+    paths:
+      - .github/workflows/wati-qa-import-delivery.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  import-delivery:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout isolated QA branch
+        uses: actions/checkout@v4
+      - name: Download original ZIP from successful reference-release run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p qa_wati
+          gh run download 35081708722 --repo "$GITHUB_REPOSITORY" --name WATI-Odoo-19-clean-19.0.11.0.9 --dir qa_wati
+          echo '147c1cc6ce5902ebae8ea8bfd10a5fc01f55da26b8e6144268291dda41b88c2d  qa_wati/WATI-Odoo-19-19.0.11.0.9.zip' | sha256sum -c -
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile
+          p = Path('qa_wati/WATI-Odoo-19-19.0.11.0.9.zip')
+          with zipfile.ZipFile(p) as z:
+              assert z.testzip() is None, 'ZIP corruption'
+              names = z.namelist()
+              expected = {'wati_connector', 'wati_connector_crm', 'wati_connector_sale', 'wati_connector_account', 'wati_connector_project'}
+              addons = {n.split('/addons/')[1].split('/')[0] for n in names if '/addons/' in n}
+              assert addons == expected, (addons, expected)
+          print('EXACT_DELIVERY_ZIP_VERIFIED')
+          PY
+      - name: Commit verified ZIP to isolated QA branch only
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f qa_wati/WATI-Odoo-19-19.0.11.0.9.zip
+          if ! git diff --cached --quiet; then
+            git commit -m 'qa: stage SHA-verified original WATI delivery ZIP'
+            git push origin HEAD:refs/heads/qa/wati-zip-acceptance-20260916
+          fi
