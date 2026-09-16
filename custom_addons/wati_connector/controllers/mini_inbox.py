@@ -253,7 +253,7 @@ class WatiMiniInboxController(http.Controller):
             return {"ok": False, "message": "The conversation does not exist."}
 
         idem = WatiIdempotency(request.env)
-        scope = f"outbound:mini-text:user:{request.env.user.id}"
+        scope = f"outbound:text:user:{request.env.user.id}"
         key = (request_id or "").strip() or idem.digest(conversation_id, text)
         if not idem.acquire_durable(scope, key, ttl_seconds=120):
             return {
