@@ -14,12 +14,24 @@ class ResUsers(models.Model):
     )
 
     def _wati_email(self):
+        """Never silently identify a WATI agent using the Odoo login or email."""
         self.ensure_one()
-        for value in (self.wati_operator_email, self.email, self.login):
-            value = (value or "").strip()
-            if "@" in value:
-                return value
-        return ""
+        return (self.wati_operator_email or "").strip()
+
+    def _wati_require_operator_email(self):
+        self.ensure_one()
+        email = self._wati_email()
+        if not email:
+            raise UserError(_(
+                "Your WATI Agent account is not linked. Ask an administrator to set "
+                "WATI Operator Email on your Odoo user before assigning or sending messages."
+            ))
+        if "@" not in email or email.startswith("@") or email.endswith("@"):
+            raise UserError(_(
+                "WATI Operator Email is invalid. Ask an administrator to enter the email "
+                "registered for your Agent account in WATI."
+            ))
+        return email
 
     def _wati_can_supervise(self):
         self.ensure_one()
@@ -70,19 +82,14 @@ class WatiConversation(models.Model):
                     )
                 )
 
-        email = user._wati_email()
-        if not email:
-            raise UserError(
-                _(
-                    "There is no mail WATI Associated with this user. "
-                    "Add WATI Operator Email In the user card."
-                )
-            )
+        email = user._wati_require_operator_email()
         if not self.wa_id:
             raise UserError(_("There is no number WhatsApp for this conversation."))
 
         try:
-            WatiClient(self.env).assign_operator(self.wa_id, email)
+            response = WatiClient(self.env).assign_operator(self.wa_id, email)
+            # WATI can return an application-level rejection inside HTTP 200.
+            WatiClient(self.env)._ensure_application_success(response, "operator assignment")
         except WatiConfigurationError as exc:
             raise UserError(_("Settings WATI API Incomplete.")) from exc
         except WatiRequestError as exc:
@@ -118,6 +125,7 @@ class WatiConversation(models.Model):
     def send_session_message(self, text):
         self.ensure_one()
         current_user = self.env.user
+        current_user._wati_require_operator_email()
         if not self.assigned_user_id:
             self.assign_to_odoo_user(current_user)
         elif self.assigned_user_id != current_user:
