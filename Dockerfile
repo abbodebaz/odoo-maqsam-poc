@@ -7,7 +7,8 @@ RUN echo '147c1cc6ce5902ebae8ea8bfd10a5fc01f55da26b8e6144268291dda41b88c2d  /tmp
  && rm -rf /tmp/wati-release.zip /tmp/wati-extract \
  && chown -R odoo:odoo /mnt/extra-addons
 COPY qa_wati/run-odoo.sh /usr/local/bin/run-wati-odoo
-RUN chmod 755 /usr/local/bin/run-wati-odoo
+COPY qa_wati/install-core.py /usr/local/bin/install-wati-core.py
+RUN chmod 755 /usr/local/bin/run-wati-odoo /usr/local/bin/install-wati-core.py
 USER odoo
 EXPOSE 8069
 ENTRYPOINT ["/usr/local/bin/run-wati-odoo"]
