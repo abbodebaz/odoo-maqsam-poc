@@ -5,95 +5,52 @@ from odoo.http import request
 
 class WatiAssignmentController(http.Controller):
 
-    @http.route(
-        "/wati/inbox/assignment",
-        type="http",
-        auth="user",
-        methods=["GET"],
-        csrf=False,
-    )
+    @http.route("/wati/inbox/assignment", type="http", auth="user", methods=["GET"], csrf=False)
     def assignment(self, conversation_id=None, **kwargs):
         try:
             conversation_id = int(conversation_id or 0)
         except (TypeError, ValueError):
             conversation_id = 0
-
         conversation = request.env["wati.conversation"].browse(conversation_id).exists()
         if not conversation:
             return request.make_json_response({"ok": False, "message": "The conversation does not exist."}, status=404)
-
         current_user = request.env.user
         assigned = conversation.assigned_user_id
-        can_supervise = current_user._wati_can_supervise()
-        return request.make_json_response(
-            {
-                "ok": True,
-                "conversation_id": conversation.id,
-                "assigned_user_id": assigned.id if assigned else False,
-                "assigned_user_name": assigned.name if assigned else "",
-                "assigned_to_me": bool(assigned and assigned == current_user),
-                "is_unassigned": not bool(assigned),
-                "can_takeover": bool(assigned and assigned != current_user and can_supervise),
-                "current_user_id": current_user.id,
-                "current_user_name": current_user.name,
-                "wati_email": current_user._wati_email(),
-                "is_supervisor": can_supervise,
-                "is_admin": current_user.has_group("base.group_system"),
-            },
-            status=200,
-        )
+        return request.make_json_response({
+            "ok": True,
+            "conversation_id": conversation.id,
+            "assigned_user_id": assigned.id if assigned else False,
+            "assigned_user_name": assigned.name if assigned else "",
+            "assigned_to_me": bool(assigned and assigned == current_user),
+            "is_unassigned": not bool(assigned),
+            "can_takeover": bool(assigned and assigned != current_user and current_user._wati_email()),
+            "current_user_id": current_user.id,
+            "current_user_name": current_user.name,
+            "wati_email": current_user._wati_email(),
+            "is_supervisor": current_user._wati_can_supervise(),
+            "is_admin": current_user.has_group("base.group_system"),
+        }, status=200)
 
-    @http.route(
-        "/wati/inbox/assign-me",
-        type="http",
-        auth="user",
-        methods=["POST"],
-    )
+    @http.route("/wati/inbox/assign-me", type="http", auth="user", methods=["POST"])
     def assign_me(self, conversation_id=None, force=None, **kwargs):
         try:
             conversation_id = int(conversation_id or 0)
         except (TypeError, ValueError):
             conversation_id = 0
-
         conversation = request.env["wati.conversation"].browse(conversation_id).exists()
         if not conversation:
             return request.make_json_response({"ok": False, "message": "The conversation does not exist."}, status=404)
-
         current_user = request.env.user
-        previous_user = conversation.assigned_user_id
-        takeover_requested = str(force or "").lower() in ("1", "true", "yes")
-        if takeover_requested and previous_user and previous_user != current_user and not current_user._wati_can_supervise():
-            return request.make_json_response(
-                {"ok": False, "message": "Taking another employee’s conversation is only available to a supervisor WATI Or Administrator."},
-                status=403,
-            )
-
         try:
-            conversation.assign_to_odoo_user(current_user, force=takeover_requested)
+            conversation.assign_to_odoo_user(current_user)
         except UserError as exc:
             return request.make_json_response({"ok": False, "message": str(exc)}, status=409)
-
-        # Re-read after the locked assignment transaction logic.
         conversation.invalidate_recordset(["assigned_user_id"])
         if conversation.assigned_user_id != current_user:
-            return request.make_json_response(
-                {"ok": False, "message": "Unable to install conversation attribution. Refresh the page and try again."},
-                status=409,
-            )
-
-        if previous_user and previous_user != current_user:
-            message = f"The conversation has been moved from {previous_user.name} To {current_user.name} ✅"
-        else:
-            message = f"The conversation has been assigned to {current_user.name} ✅"
-
-        return request.make_json_response(
-            {
-                "ok": True,
-                "message": message,
-                "assigned_user_id": current_user.id,
-                "assigned_user_name": current_user.name,
-                "previous_user_id": previous_user.id if previous_user else False,
-                "previous_user_name": previous_user.name if previous_user else "",
-            },
-            status=200,
-        )
+            return request.make_json_response({"ok": False, "message": "Could not confirm the assignment. Refresh and retry."}, status=409)
+        return request.make_json_response({
+            "ok": True,
+            "message": f"The conversation is now assigned to {current_user.name}.",
+            "assigned_user_id": current_user.id,
+            "assigned_user_name": current_user.name,
+        }, status=200)

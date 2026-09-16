@@ -14,7 +14,6 @@ class ResUsers(models.Model):
     )
 
     def _wati_email(self):
-        """Never silently identify a WATI agent using the Odoo login or email."""
         self.ensure_one()
         return (self.wati_operator_email or "").strip()
 
@@ -45,21 +44,12 @@ class WatiConversation(models.Model):
     _inherit = "wati.conversation"
 
     assigned_user_id = fields.Many2one(
-        "res.users",
-        string="Agent Odoo Administrator",
-        ondelete="set null",
-        index=True,
+        "res.users", string="Agent Odoo Administrator", ondelete="set null", index=True,
     )
     assigned_at = fields.Datetime(string="Pick up time")
 
     def _wati_require_manual_sender(self):
-        """Fail closed if the current agent's configured identity changed after assignment.
-
-        This checks the WATI identity recorded when assignment was acknowledged;
-        it is not a substitute for an independently documented WATI agent lookup.
-        Keep this check on manual inbox paths, never on the shared WATI client
-        used by OTP and background automations.
-        """
+        """Check only manual inbox ownership; never affect OTP or automations."""
         self.ensure_one()
         user = self.env.user
         email = user._wati_require_operator_email()
@@ -67,85 +57,67 @@ class WatiConversation(models.Model):
             if self.assigned_user_id:
                 raise UserError(_(
                     "This conversation was received by %s. "
-                    "It must be transferred to you first before sending."
+                    "Receive it yourself before sending."
                 ) % self.assigned_user_id.name)
             raise UserError(_("Receive this conversation before sending."))
         if not self.operator_email or self.operator_email.strip().casefold() != email.casefold():
             raise UserError(_(
                 "Your WATI Operator Email does not match the agent assigned to this "
-                "conversation. Sending is blocked. Ask an administrator to restore "
-                "the correct WATI email and reassign the conversation in WATI."
+                "conversation. Sending is blocked. Restore the correct WATI email "
+                "and receive the conversation again."
             ))
         return email
 
     def _lock_assignment_row(self):
-        """Serialize assignment changes for this conversation."""
         self.ensure_one()
         self.flush_recordset(["assigned_user_id"])
         self.env.cr.execute(
-            "SELECT id FROM wati_conversation WHERE id = %s FOR UPDATE",
-            [self.id],
+            "SELECT id FROM wati_conversation WHERE id = %s FOR UPDATE", [self.id],
         )
         self.invalidate_recordset(
             ["assigned_user_id", "assigned_at", "operator_name", "operator_email"]
         )
 
     def assign_to_odoo_user(self, user, force=False):
+        """Any inbox agent may receive a conversation; update Odoo only after WATI ACK."""
         self.ensure_one()
         user.ensure_one()
-        self._lock_assignment_row()
-
-        previous_user = self.assigned_user_id
         actor = self.env.user
-        if previous_user and previous_user != user:
-            if not force:
-                raise UserError(_("This conversation was received by %s.") % previous_user.name)
-            if not actor._wati_can_supervise():
-                raise UserError(
-                    _(
-                        "You do not have the authority to transfer a conversation received by another employee. "
-                        "Ask a supervisor WATI Transfer execution."
-                    )
-                )
-
+        if user != actor and not actor._wati_can_supervise():
+            raise UserError(_("You can only receive a conversation for yourself."))
         email = user._wati_require_operator_email()
         if not self.wa_id:
-            raise UserError(_("There is no number WhatsApp for this conversation."))
-
+            raise UserError(_("There is no WhatsApp number for this conversation."))
+        self._lock_assignment_row()
+        previous_user = self.assigned_user_id
+        # Do not make an external request for a redundant claim with matching identity.
+        if previous_user == user and (self.operator_email or "").strip().casefold() == email.casefold():
+            return True
         try:
             client = WatiClient(self.env)
             response = client.assign_operator(self.wa_id, email)
             client._ensure_application_success(response, "operator assignment")
         except WatiConfigurationError as exc:
-            raise UserError(_("Settings WATI API Incomplete.")) from exc
+            raise UserError(_("WATI API settings are incomplete.")) from exc
         except WatiRequestError as exc:
             detail = (exc.response_text or str(exc) or "").strip()[:500]
-            if exc.status_code:
-                raise UserError(
-                    _("WATI Refusal to hire an employee (%s): %s") % (exc.status_code, detail)
-                ) from exc
-            raise UserError(_("Unable to contact WATI To appoint the employee: %s") % detail) from exc
+            raise UserError(_("WATI rejected the assignment. Check that your Agent email exists in WATI: %s") % detail) from exc
 
         now = fields.Datetime.now()
-        self.write(
-            {
-                "assigned_user_id": user.id,
-                "assigned_at": now,
-                "operator_name": user.name,
-                "operator_email": email,
-            }
-        )
-
+        self.write({
+            "assigned_user_id": user.id,
+            "assigned_at": now,
+            "operator_name": user.name,
+            "operator_email": email,
+        })
         if previous_user != user:
-            self.env["wati.assignment.log"].sudo().create(
-                {
-                    "conversation_id": self.id,
-                    "from_user_id": previous_user.id if previous_user else False,
-                    "to_user_id": user.id,
-                    "moved_by_user_id": actor.id,
-                    "moved_at": now,
-                }
-            )
+            self.env["wati.assignment.log"].sudo().create({
+                "conversation_id": self.id,
+                "from_user_id": previous_user.id if previous_user else False,
+                "to_user_id": user.id,
+                "moved_by_user_id": actor.id,
+                "moved_at": now,
+            })
         return True
 
     def send_session_message(self, text):
@@ -164,17 +136,17 @@ class WatiAssignmentLog(models.Model):
     _order = "moved_at desc, id desc"
 
     conversation_id = fields.Many2one(
-        "wati.conversation", required=True, ondelete="cascade", index=True
+        "wati.conversation", required=True, ondelete="cascade", index=True,
     )
     from_user_id = fields.Many2one(
-        "res.users", string="From the employee", ondelete="set null"
+        "res.users", string="From the employee", ondelete="set null",
     )
     to_user_id = fields.Many2one(
-        "res.users", string="To the employee", required=True, ondelete="restrict"
+        "res.users", string="To the employee", required=True, ondelete="restrict",
     )
     moved_by_user_id = fields.Many2one(
-        "res.users", string="Carry out the transfer", required=True, ondelete="restrict"
+        "res.users", string="Carry out the transfer", required=True, ondelete="restrict",
     )
     moved_at = fields.Datetime(
-        string="Transportation time", required=True, default=fields.Datetime.now, index=True
+        string="Transportation time", required=True, default=fields.Datetime.now, index=True,
     )
