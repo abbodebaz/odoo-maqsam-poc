@@ -22,8 +22,10 @@ This folder is the customer delivery package for the WATI WhatsApp Connector.
 
 ## Important
 
-The package does not include credentials, tokens, customer data, database dumps, staging URLs, or environment secrets.
+The package does not include credentials, tokens, customer data, database dumps, staging URLs, environment secrets, the Bayt Alebaa simulator or the service-completion proof-of-concept addon.
 
 Install the core addon first. Install optional integration addons only when the matching Odoo app is installed.
 
-Current delivery version: `19.0.11.0.4`.
+WATI Agent email approval is an administrator-operated control: the administrator must verify each Agent in WATI before entering the approved email. Matching two manually entered emails does not verify the WATI Agent exists. OTP, automations and webhook delivery are not gated by inbox approval.
+
+Current delivery version: `19.0.11.0.9`.

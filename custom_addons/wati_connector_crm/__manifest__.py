@@ -1,6 +1,6 @@
 {
     "name": "WATI Connector - CRM",
-    "version": "19.0.11.0.6",
+    "version": "19.0.11.0.9",
     "summary": "CRM integration for the WATI WhatsApp Connector",
     "category": "Productivity",
     "author": "Abdulrhman Bazarah",

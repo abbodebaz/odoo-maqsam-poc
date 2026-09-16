@@ -1,0 +1,101 @@
+name: WATI Clean Customer Release
+
+on:
+  push:
+    branches:
+      - release/wati-19.0.11.0.9-clean
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-and-package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact customer release
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run existing complete quality and release audits
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet pyyaml
+          python - <<'PY'
+          from pathlib import Path
+          import subprocess
+          import yaml
+
+          for workflow, job in (
+              ('.github/workflows/wati-quality.yml', 'static-validation'),
+              ('.github/workflows/wati-release-audit.yml', 'release-audit'),
+          ):
+              source = yaml.safe_load(Path(workflow).read_text(encoding='utf-8'))
+              for step in source['jobs'][job]['steps']:
+                  if 'run' in step:
+                      print(f"Running {workflow}: {step['name']}", flush=True)
+                      subprocess.run(['bash', '-euo', 'pipefail', '-c', step['run']], check=True)
+          PY
+
+      - name: Build clean customer ZIP and verify its contents
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import ast
+          import hashlib
+          import os
+          from pathlib import Path
+          import shutil
+          import zipfile
+
+          root = Path('.')
+          modules = ('wati_connector', 'wati_connector_crm', 'wati_connector_sale', 'wati_connector_account', 'wati_connector_project')
+          available = {p.name for p in Path('custom_addons').iterdir() if p.is_dir()}
+          assert available == set(modules), f'Unexpected addons in customer branch: {available ^ set(modules)}'
+          version = ast.literal_eval(Path('custom_addons/wati_connector/__manifest__.py').read_text())['version']
+          bundle = f'WATI-Odoo-19-{version}'
+          target = Path('dist') / bundle
+          (target / 'addons').mkdir(parents=True)
+          (target / 'docs').mkdir()
+          exclude = shutil.ignore_patterns('tests', 'notes', '__pycache__', '*.pyc', '*.pyo', '.DS_Store')
+          for name in modules:
+              shutil.copytree(Path('custom_addons') / name, target / 'addons' / name, ignore=exclude)
+          for name in ('INSTALLATION.md', 'CONFIGURATION.md', 'UPGRADE.md', 'TROUBLESHOOTING.md'):
+              shutil.copy2(Path('delivery') / name, target / 'docs' / name)
+          for name in ('CHANGELOG.md', 'ARCHITECTURE.md'):
+              shutil.copy2(Path('custom_addons/wati_connector') / name, target / 'docs' / name)
+          shutil.copy2('delivery/README_FIRST.md', target / 'README_FIRST.md')
+          (target / 'VERSION.txt').write_text(version + '\n')
+          (target / 'SOURCE_COMMIT.txt').write_text(os.environ['GITHUB_SHA'] + '\n')
+          files = sorted(p for p in target.rglob('*') if p.is_file())
+          (target / 'CHECKSUMS.txt').write_text(''.join(f'{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.relative_to(target).as_posix()}\n' for p in files))
+          archive = Path('dist') / f'{bundle}.zip'
+          with zipfile.ZipFile(archive, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
+              for item in sorted(p for p in target.rglob('*') if p.is_file()):
+                  zf.write(item, item.relative_to('dist'))
+          with zipfile.ZipFile(archive) as zf:
+              names = zf.namelist()
+              forbidden = ('bayt_alebaa_simulator', 'service_completion', '/tests/', '/notes/', '__pycache__', '.env')
+              assert not any(any(term in name for term in forbidden) for name in names), 'Demo, test, or private material in ZIP'
+              assert {name.split('/addons/')[1].split('/')[0] for name in names if '/addons/' in name} == set(modules)
+              assert zf.testzip() is None, 'Archive CRC check failed'
+          (Path('dist') / f'{bundle}.zip.sha256').write_text(f'{hashlib.sha256(archive.read_bytes()).hexdigest()}  {archive.name}\n')
+          print('CLEAN_RELEASE_OK', bundle, 'files', len(names), 'sha256', hashlib.sha256(archive.read_bytes()).hexdigest())
+          PY
+
+      - name: Upload verified customer bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: WATI-Odoo-19-clean-19.0.11.0.9
+          path: |
+            dist/WATI-Odoo-19-19.0.11.0.9.zip
+            dist/WATI-Odoo-19-19.0.11.0.9.zip.sha256
+          if-no-files-found: error
+          retention-days: 90

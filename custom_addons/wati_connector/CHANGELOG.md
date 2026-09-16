@@ -1,5 +1,13 @@
 # Changelog
 
+## 19.0.11.0.9 — Customer release: verified scope and inbox identity
+
+- Require administrator-approved Agent identity to access the full and mini inbox; block message data, media and human sends when the configured email differs from the approved email.
+- Preserve OTP, automations, webhook ingestion and normal assignment/transfer behavior.
+- Clarify that approval is manual and is not an automatic WATI Agent-directory check.
+- Remove the Bayt Alebaa simulator and service-completion proof-of-concept from the clean customer release branch and delivery ZIP.
+- Align all five shipping addon versions, update delivery documentation and add an explicit no-data-change upgrade migration.
+
 ## 19.0.11.0.4 — Final delivery hardening
 
 - Removed the last mixed-language runtime copy from Template Builder styling and kept the customer-facing source consistently English.
