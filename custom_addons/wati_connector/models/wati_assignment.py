@@ -52,6 +52,32 @@ class WatiConversation(models.Model):
     )
     assigned_at = fields.Datetime(string="Pick up time")
 
+    def _wati_require_manual_sender(self):
+        """Fail closed if the current agent's configured identity changed after assignment.
+
+        This checks the WATI identity recorded when assignment was acknowledged;
+        it is not a substitute for an independently documented WATI agent lookup.
+        Keep this check on manual inbox paths, never on the shared WATI client
+        used by OTP and background automations.
+        """
+        self.ensure_one()
+        user = self.env.user
+        email = user._wati_require_operator_email()
+        if self.assigned_user_id != user:
+            if self.assigned_user_id:
+                raise UserError(_(
+                    "This conversation was received by %s. "
+                    "It must be transferred to you first before sending."
+                ) % self.assigned_user_id.name)
+            raise UserError(_("Receive this conversation before sending."))
+        if not self.operator_email or self.operator_email.strip().casefold() != email.casefold():
+            raise UserError(_(
+                "Your WATI Operator Email does not match the agent assigned to this "
+                "conversation. Sending is blocked. Ask an administrator to restore "
+                "the correct WATI email and reassign the conversation in WATI."
+            ))
+        return email
+
     def _lock_assignment_row(self):
         """Serialize assignment changes for this conversation."""
         self.ensure_one()
@@ -87,9 +113,9 @@ class WatiConversation(models.Model):
             raise UserError(_("There is no number WhatsApp for this conversation."))
 
         try:
-            response = WatiClient(self.env).assign_operator(self.wa_id, email)
-            # WATI can return an application-level rejection inside HTTP 200.
-            WatiClient(self.env)._ensure_application_success(response, "operator assignment")
+            client = WatiClient(self.env)
+            response = client.assign_operator(self.wa_id, email)
+            client._ensure_application_success(response, "operator assignment")
         except WatiConfigurationError as exc:
             raise UserError(_("Settings WATI API Incomplete.")) from exc
         except WatiRequestError as exc:
@@ -128,14 +154,7 @@ class WatiConversation(models.Model):
         current_user._wati_require_operator_email()
         if not self.assigned_user_id:
             self.assign_to_odoo_user(current_user)
-        elif self.assigned_user_id != current_user:
-            raise UserError(
-                _(
-                    "This conversation was received by %s. "
-                    "It must be transferred to you first before sending."
-                )
-                % self.assigned_user_id.name
-            )
+        self._wati_require_manual_sender()
         return self._wati_send_text_via_client(text)
 
 
