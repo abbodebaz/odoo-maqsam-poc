@@ -1,0 +1,31 @@
+name: WATI Temporary Source Diagnostic
+on:
+  push:
+    branches:
+      - release/wati-19.0.11.0.9-clean
+permissions:
+  contents: read
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Identify remaining release source issues
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          skip = {'tests', 'docs', 'notes', 'i18n', 'migrations'}
+          for module in Path('custom_addons').glob('wati_connector*'):
+              for path in module.rglob('*'):
+                  if not path.is_file() or skip.intersection(path.parts) or path.suffix not in {'.py', '.xml', '.js', '.css', '.scss'}:
+                      continue
+                  text = path.read_text(encoding='utf-8')
+                  for lineno, line in enumerate(text.splitlines(), 1):
+                      if re.search('[\u0600-\u06FF]', line):
+                          print('ARABIC_RUNTIME', str(path), lineno, repr(line[:200]), flush=True)
+                      if re.search(r'\b(TODO|FIXME|XXX|HACK|DEBUG ONLY)\b', line, re.I):
+                          print('DEV_MARKER', str(path), lineno, repr(line[:200]), flush=True)
+                      if re.search(r'railway\.app|localhost|127\.0\.0\.1', line, re.I):
+                          print('DEV_URL', str(path), lineno, repr(line[:200]), flush=True)
+          PY
