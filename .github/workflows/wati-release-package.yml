@@ -1,0 +1,65 @@
+name: WATI Delivery Package
+
+on:
+  push:
+    branches:
+      - refactor/wati-commercial-ready
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build customer delivery ZIP
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION=$(python - <<'PY'
+          import ast
+          from pathlib import Path
+          manifest = ast.literal_eval(Path('custom_addons/wati_connector/__manifest__.py').read_text())
+          print(manifest['version'])
+          PY
+          )
+          ROOT="WATI-Odoo-19-${VERSION}"
+          mkdir -p "dist/${ROOT}/addons" "dist/${ROOT}/docs"
+          for addon in \
+            wati_connector \
+            wati_connector_crm \
+            wati_connector_sale \
+            wati_connector_account \
+            wati_connector_project
+          do
+            cp -a "custom_addons/${addon}" "dist/${ROOT}/addons/"
+          done
+          cp delivery/README_FIRST.md "dist/${ROOT}/README_FIRST.md"
+          cp delivery/INSTALLATION.md "dist/${ROOT}/docs/INSTALLATION.md"
+          cp delivery/CONFIGURATION.md "dist/${ROOT}/docs/CONFIGURATION.md"
+          cp delivery/UPGRADE.md "dist/${ROOT}/docs/UPGRADE.md"
+          cp delivery/TROUBLESHOOTING.md "dist/${ROOT}/docs/TROUBLESHOOTING.md"
+          cp custom_addons/wati_connector/CHANGELOG.md "dist/${ROOT}/docs/CHANGELOG.md"
+          cp custom_addons/wati_connector/ARCHITECTURE.md "dist/${ROOT}/docs/ARCHITECTURE.md"
+          printf '%s\n' "$VERSION" > "dist/${ROOT}/VERSION.txt"
+          printf '%s\n' "$GITHUB_SHA" > "dist/${ROOT}/SOURCE_COMMIT.txt"
+          (cd "dist/${ROOT}" && find . -type f ! -name CHECKSUMS.txt -print0 | sort -z | xargs -0 sha256sum > CHECKSUMS.txt)
+          (cd dist && zip -qr "${ROOT}.zip" "${ROOT}")
+          (cd dist && sha256sum "${ROOT}.zip" | tee "${ROOT}.zip.sha256")
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "archive=${ROOT}.zip" >> "$GITHUB_OUTPUT"
+
+      - name: Upload delivery package
+        uses: actions/upload-artifact@v4
+        with:
+          name: WATI-Odoo-19-${{ steps.package.outputs.version }}
+          path: |
+            dist/${{ steps.package.outputs.archive }}
+            dist/${{ steps.package.outputs.archive }}.sha256
+          if-no-files-found: error
+          retention-days: 90

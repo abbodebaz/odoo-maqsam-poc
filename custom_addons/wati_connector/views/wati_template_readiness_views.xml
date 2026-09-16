@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_template_form_readiness" model="ir.ui.view">
+        <field name="name">wati.template.form.readiness</field>
+        <field name="model">wati.template</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_template_form_designer"/>
+        <field name="priority">110</field>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='action_submit_for_approval']" position="replace">
+                <button name="action_open_submit_review" type="object" string="Review &amp; submit" class="btn-primary" icon="fa-check-circle" invisible="status != 'draft' or source != 'odoo'"/>
+            </xpath>
+            <xpath expr="//section[contains(@class, 'o_wati_template_provider_section')]" position="before">
+                <section class="o_wati_template_section" invisible="status != 'draft' or source != 'odoo'">
+                    <div class="o_wati_template_section_title"><div class="o_wati_template_step"><i class="fa fa-check-circle" title="Readiness"/></div><div><h2>Ready to submit?</h2><p>Odoo checks the important Meta/WATI requirements before you open the final review.</p></div></div>
+                    <div class="alert alert-success" role="status" invisible="readiness_state != 'ready'"><strong>Ready ✓</strong> <field name="readiness_message" readonly="1" class="d-inline"/></div>
+                    <div class="alert alert-warning" role="status" invisible="readiness_state != 'attention'"><strong><field name="readiness_missing_count" readonly="1" class="d-inline"/> item(s) need attention.</strong><field name="readiness_message" readonly="1" nolabel="1" class="mt-2"/></div>
+                </section>
+            </xpath>
+            <xpath expr="//field[@name='footer']" position="after">
+                <div class="text-muted mt-2"><i class="fa fa-text-width me-1" title="Character count"/><field name="footer_char_count" readonly="1" class="d-inline"/> / 60 characters</div>
+            </xpath>
+            <xpath expr="//div[contains(@class, 'o_wati_template_counter')]" position="replace">
+                <div class="o_wati_template_counter"><field name="body_char_count" readonly="1" class="d-inline"/> / 1024</div>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_wati_template_submit_review" model="ir.ui.view">
+        <field name="name">wati.template.submit.review</field>
+        <field name="model">wati.template</field>
+        <field name="arch" type="xml">
+            <form string="Review template before submission" create="false" edit="false" delete="false">
+                <sheet>
+                    <div class="oe_title"><h2>Final review</h2><p class="text-muted">Check exactly what will be submitted to WATI / Meta. Nothing is sent until you press the final button.</p></div>
+                    <div class="alert alert-warning" role="alert" invisible="readiness_state != 'attention'"><strong>Not ready yet.</strong><field name="readiness_message" readonly="1" nolabel="1" class="mt-2"/></div>
+                    <div class="alert alert-success" role="status" invisible="readiness_state != 'ready'"><strong>Ready for submission ✓</strong> All required checks passed.</div>
+                    <group>
+                        <group string="Template"><field name="name"/><field name="category"/><field name="language"/><field name="template_kind"/></group>
+                        <group string="Components"><field name="builder_header_type"/><field name="variable_count"/><field name="builder_button_type"/><field name="footer_char_count" string="Footer characters"/></group>
+                    </group>
+                    <group string="Customer preview"><field name="builder_header_preview" invisible="builder_header_type == 'NONE'"/><field name="preview_text" nolabel="1"/><field name="footer" invisible="not footer"/><field name="builder_button_preview" invisible="builder_button_type == 'NONE'"/></group>
+                </sheet>
+                <footer>
+                    <button name="action_submit_for_approval" type="object" string="Submit to WATI / Meta" class="btn-primary" icon="fa-paper-plane" invisible="readiness_state != 'ready'" confirm="This will submit the template to WATI / Meta for review. The content cannot be edited after submission. Continue?"/>
+                    <button string="Back to editing" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

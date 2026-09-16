@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="wati_connector.DeveloperSignature">
+        <div class="o_wati_developer_signature" aria-label="Developer attribution">
+            <span>Developed by</span>
+            <strong>Abdulrhman Bazarah</strong>
+        </div>
+    </t>
+</templates>

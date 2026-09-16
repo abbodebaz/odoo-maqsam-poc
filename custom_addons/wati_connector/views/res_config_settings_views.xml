@@ -7,41 +7,133 @@
         <field name="arch" type="xml">
             <xpath expr="//form" position="inside">
                 <app string="WATI WhatsApp" name="wati_connector" data-string="WATI WhatsApp">
-                    <block title="WATI API" name="wati_api_settings">
-                        <setting string="API Connection" help="بيانات الربط مع WATI API. الـToken يبقى في Backend Odoo ولا يتم كشفه للمتصفح.">
-                            <div class="content-group">
-                                <div class="row mt16">
-                                    <label for="wati_api_endpoint" class="col-lg-3 o_light_label"/>
-                                    <field name="wati_api_endpoint" placeholder="https://live-mt-server.wati.io/xxxxxx" class="col-lg-7"/>
-                                </div>
-                                <div class="row mt16">
-                                    <label for="wati_api_token" class="col-lg-3 o_light_label"/>
-                                    <field name="wati_api_token" password="True" class="col-lg-7"/>
-                                </div>
-                                <div class="row mt16">
-                                    <div class="col-lg-3"/>
-                                    <div class="col-lg-7">
-                                        <button name="action_wati_test_connection" type="object" string="اختبار الاتصال بـ WATI" class="btn btn-primary"/>
+                    <div class="wati-settings-intro alert alert-light border mb-3" role="status">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="fa fa-whatsapp fa-lg text-success" title="WhatsApp"/>
+                            <div class="min-w-0">
+                                <strong>WATI WhatsApp Settings</strong>
+                                <div class="text-muted">Settings are grouped by function for quick and simple access.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <notebook name="wati_settings_notebook" class="wati_settings_notebook">
+                        <page string="🔌 Connection &amp; WATI" name="wati_settings_connection">
+                            <block title="WATI API" name="wati_api_settings">
+                                <setting string="WATI Connection" help="Configure the connection to the WATI API." class="wati-setting-item">
+                                    <div class="content-group wati-setting-content">
+                                        <div class="mb-3">
+                                            <label for="wati_api_endpoint" class="o_light_label d-block mb-1"/>
+                                            <field name="wati_api_endpoint" placeholder="https://live-mt-server.wati.io/xxxxxx" class="w-100"/>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="wati_api_token" class="o_light_label d-block mb-1"/>
+                                            <field name="wati_api_token" password="True" class="w-100"/>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                                            <button name="action_wati_test_connection" type="object" string="Test Connection" class="btn btn-primary"/>
+                                            <span class="text-muted small">The token is stored securely in Odoo and is not exposed in the browser.</span>
+                                        </div>
                                     </div>
+                                </setting>
+                            </block>
+
+                            <block title="Webhook &amp; Incoming Events" name="wati_webhook_settings">
+                                <setting string="Incoming Webhook" help="Receive customer messages, message updates, and template lifecycle events." class="wati-setting-item">
+                                    <div class="content-group wati-setting-content">
+                                        <div class="mb-3">
+                                            <label for="wati_webhook_token" class="o_light_label d-block mb-1"/>
+                                            <field name="wati_webhook_token" password="True" placeholder="Create a long secret token" class="w-100"/>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label for="wati_webhook_url" class="o_light_label d-block mb-1"/>
+                                            <field name="wati_webhook_url" readonly="1" class="w-100"/>
+                                        </div>
+                                        <div class="text-muted small wati-helper-text">
+                                            Copy this URL into WATI and enable the required Messages, Templates, Quality, and Assignment events.
+                                        </div>
+                                    </div>
+                                </setting>
+                            </block>
+                        </page>
+
+                        <page string="👥 Permissions" name="wati_settings_access">
+                            <block title="WhatsApp Workspace Access" name="wati_workspace_access_settings">
+                                <div class="wati-settings-note alert alert-info mb16" role="status">
+                                    <strong>Centralized access control.</strong>
+                                    Choose who can access each area. The <strong>WATI Administrator</strong> role grants WhatsApp administration access without granting full Odoo administrator rights.
                                 </div>
-                            </div>
-                        </setting>
-                        <setting string="Incoming Webhook" help="يستقبل رسائل العملاء وحالات الرسائل من WATI داخل Odoo.">
-                            <div class="content-group">
-                                <div class="row mt16">
-                                    <label for="wati_webhook_token" class="col-lg-3 o_light_label"/>
-                                    <field name="wati_webhook_token" password="True" placeholder="ضع نصًا سريًا طويلًا" class="col-lg-7"/>
-                                </div>
-                                <div class="row mt16">
-                                    <label for="wati_webhook_url" class="col-lg-3 o_light_label"/>
-                                    <field name="wati_webhook_url" readonly="1" class="col-lg-7"/>
-                                </div>
-                                <div class="text-muted mt8">
-                                    انسخ Webhook URL كاملًا كما هو إلى WATI. لا تستخدم WATI API Token في رابط الـWebhook.
-                                </div>
-                            </div>
-                        </setting>
-                    </block>
+
+                                <setting string="Conversation Log" help="Access historical conversation records." class="wati-setting-item">
+                                    <div class="content-group wati-setting-content">
+                                        <field name="wati_access_conversations" class="w-100"/>
+                                        <div class="text-muted small mt8">Recommended for service teams and supervisors.</div>
+                                    </div>
+                                </setting>
+
+                                <setting string="Message Log" help="Access all incoming and outgoing message records." class="wati-setting-item">
+                                    <div class="content-group wati-setting-content">
+                                        <field name="wati_access_messages" class="w-100"/>
+                                        <div class="text-muted small mt8">This does not affect access to the daily Inbox.</div>
+                                    </div>
+                                </setting>
+
+                                <setting string="Template Center" help="Create, sync, and submit WhatsApp templates for review." class="wati-setting-item">
+                                    <div class="content-group wati-setting-content">
+                                        <field name="wati_access_templates" class="w-100"/>
+                                        <div class="text-muted small mt8">Recommended for supervisors and administrators.</div>
+                                    </div>
+                                </setting>
+
+                                <setting string="Automation Center" help="Create, edit, and activate WhatsApp automations." class="wati-setting-item">
+                                    <div class="content-group wati-setting-content">
+                                        <field name="wati_access_automation" class="w-100"/>
+                                        <div class="text-muted small mt8">Changes here can affect automated customer communication.</div>
+                                    </div>
+                                </setting>
+
+                                <setting string="Run Log" help="Review automation runs, results, and delivery errors." class="wati-setting-item">
+                                    <div class="content-group wati-setting-content">
+                                        <field name="wati_access_automation_logs" class="w-100"/>
+                                        <div class="text-muted small mt8">Recommended for supervisors and quality teams.</div>
+                                    </div>
+                                </setting>
+
+                                <setting string="Webhook Monitor" help="Review incoming webhook events and processing status." class="wati-setting-item">
+                                    <div class="content-group wati-setting-content">
+                                        <field name="wati_access_monitor" class="w-100"/>
+                                        <div class="text-muted small mt8">Advanced operational access intended for administrators.</div>
+                                    </div>
+                                </setting>
+                            </block>
+                        </page>
+
+                        <page string="💬 Inbox" name="wati_settings_inbox">
+                            <block title="Inbox Features" name="wati_inbox_feature_settings">
+                                <setting string="Quick Conversations"
+                                         help="Show a compact WhatsApp conversation panel from anywhere in Odoo."
+                                         class="wati-setting-item">
+                                    <field name="wati_enable_mini_inbox"/>
+                                </setting>
+
+                                <setting string="Interactive Buttons"
+                                         help="Show the interactive buttons composer in the Inbox."
+                                         class="wati-setting-item">
+                                    <field name="wati_enable_interactive_buttons"/>
+                                </setting>
+
+                                <setting string="Interactive Lists"
+                                         help="Show the interactive list composer in the Inbox."
+                                         class="wati-setting-item">
+                                    <field name="wati_enable_interactive_lists"/>
+                                </setting>
+                            </block>
+                        </page>
+
+                        <page string="⚡ Smart Buttons &amp; Customer Timeline" name="wati_settings_smart">
+                            <div id="wati_smart_button_settings_slot"/>
+                        </page>
+                    </notebook>
                 </app>
             </xpath>
         </field>

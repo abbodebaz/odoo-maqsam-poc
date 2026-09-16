@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_automation_rule_form_template_contract" model="ir.ui.view">
+        <field name="name">wati.automation.rule.form.template.contract</field>
+        <field name="model">wati.automation.rule</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_automation_rule_form_builder"/>
+        <field name="priority">165</field>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('wati_mapping_head_smart')]" position="after">
+                <div class="wati_contract_notice" role="status"
+                     invisible="not template_name or template_contract_state == 'valid'">
+                    <div class="wati_contract_notice_head">
+                        <div>
+                            <strong>Variable validation needs attention</strong>
+                            <small>WATI variable names must match before this automation can be activated.</small>
+                        </div>
+                        <field name="template_contract_state" widget="badge" readonly="1"
+                               decoration-success="template_contract_state == 'valid'"
+                               decoration-warning="template_contract_state == 'unknown'"
+                               decoration-danger="template_contract_state == 'invalid'"/>
+                    </div>
+                    <field name="template_contract_message" nolabel="1" readonly="1"
+                           invisible="not template_contract_message"/>
+                </div>
+            </xpath>
+
+            <xpath expr="//field[@name='parameter_ids']/list/field[@name='template_variable_label']" position="after">
+                <field name="api_param_name" string="WATI API name" optional="hide" readonly="1" groups="base.group_system"/>
+                <field name="placeholder_token" column_invisible="True"/>
+            </xpath>
+
+            <xpath expr="//field[@name='server_action_id']" position="after">
+                <field name="template_external_id" readonly="1"/>
+                <field name="template_contract_state" readonly="1"/>
+                <field name="template_contract_message" readonly="1"/>
+                <field name="template_contract_json" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

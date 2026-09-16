@@ -531,18 +531,18 @@
         const brandStrong = document.querySelector(".wati-brand strong");
         const brandSub = document.querySelector(".wati-brand span");
         const returnLink = document.querySelector(".wati-odoo-link");
-        if (brandStrong) brandStrong.textContent = "محادثات واتساب";
-        if (brandSub) brandSub.textContent = "خدمة العملاء";
+        if (brandStrong) brandStrong.textContent = "WhatsApp chats";
+        if (brandSub) brandSub.textContent = "Customer service";
         if (returnLink) {
-            returnLink.textContent = "العودة إلى Odoo";
-            returnLink.title = "العودة إلى WhatsApp داخل Odoo";
+            returnLink.textContent = "Back to Odoo";
+            returnLink.title = "Back to WhatsApp inside Odoo";
         }
 
         const templateTrigger = document.querySelector(".wati-template-trigger");
         if (templateTrigger) {
             templateTrigger.classList.add("ui-template-compose");
-            templateTrigger.title = "قوالب WhatsApp";
-            templateTrigger.setAttribute("aria-label", "قوالب WhatsApp");
+            templateTrigger.title = "Templates WhatsApp";
+            templateTrigger.setAttribute("aria-label", "Templates WhatsApp");
             const input = document.getElementById("messageInput");
             if (input && input.parentNode === composer) composer.insertBefore(templateTrigger, input);
         }
@@ -551,8 +551,8 @@
         const scrollButton = document.createElement("button");
         scrollButton.type = "button";
         scrollButton.className = "wati-scroll-bottom";
-        scrollButton.title = "النزول إلى آخر المحادثة";
-        scrollButton.setAttribute("aria-label", "النزول إلى آخر المحادثة");
+        scrollButton.title = "Scroll to the end of the conversation";
+        scrollButton.setAttribute("aria-label", "Scroll to the end of the conversation");
         scrollButton.innerHTML = '<span>↓</span><span class="wati-scroll-bottom-count">0</span>';
         if (chatContent) chatContent.appendChild(scrollButton);
         const scrollCount = scrollButton.querySelector(".wati-scroll-bottom-count");
@@ -579,7 +579,7 @@
 
         const lightbox = document.createElement("div");
         lightbox.className = "wati-lightbox";
-        lightbox.innerHTML = '<button type="button" class="wati-lightbox-close" aria-label="إغلاق">×</button><img alt="معاينة الصورة" />';
+        lightbox.innerHTML = '<button type="button" class="wati-lightbox-close" aria-label="Close">×</button><img alt="Image preview" />';
         document.body.appendChild(lightbox);
         const lightboxImg = lightbox.querySelector("img");
         function closeLightbox() {
@@ -611,8 +611,8 @@
             const today = new Date();
             const yesterday = new Date(today);
             yesterday.setDate(today.getDate() - 1);
-            if (date.toDateString() === today.toDateString()) return "اليوم";
-            if (date.toDateString() === yesterday.toDateString()) return "أمس";
+            if (date.toDateString() === today.toDateString()) return "Today";
+            if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
             return new Intl.DateTimeFormat("ar-SA", { day: "numeric", month: "long", year: date.getFullYear() !== today.getFullYear() ? "numeric" : undefined }).format(date);
         }
         function audioTime(seconds) {
@@ -690,7 +690,7 @@
                         strong.textContent = rawText;
                         if (textNode) textNode.style.display = "none";
                     } else {
-                        strong.textContent = "ملف مرفق";
+                        strong.textContent = "Attached file";
                     }
                 } else if (rawText && rawText === strong.textContent) {
                     if (textNode) textNode.style.display = "none";
@@ -708,12 +708,12 @@
                 toggle.type = "button";
                 toggle.className = "wati-bubble-menu-button";
                 toggle.textContent = "⋮";
-                toggle.title = "خيارات الرسالة";
+                toggle.title = "Message options";
                 const menu = document.createElement("div");
                 menu.className = "wati-bubble-menu";
                 const copy = document.createElement("button");
                 copy.type = "button";
-                copy.textContent = "نسخ النص";
+                copy.textContent = "Copy text";
                 copy.addEventListener("click", async () => {
                     const textParts = Array.from(bubble.children)
                         .filter((node) => !node.classList?.contains("wati-bubble-meta") && !node.classList?.contains("wati-media-content") && !node.classList?.contains("wati-bubble-actions"))
@@ -732,7 +732,7 @@
                     open.href = mediaLink.href;
                     open.target = "_blank";
                     open.rel = "noopener";
-                    open.textContent = "فتح المرفق";
+                    open.textContent = "Open the attachment";
                     menu.appendChild(open);
                 }
                 toggle.addEventListener("click", (event) => {
@@ -765,7 +765,7 @@
                     main.appendChild(badge);
                 }
                 badge.classList.toggle("mine", Boolean(item.assigned_to_me));
-                badge.textContent = item.assigned_to_me ? "عندي" : item.assigned_user_name;
+                badge.textContent = item.assigned_to_me ? "I have it" : item.assigned_user_name;
             });
         }
 
@@ -802,7 +802,7 @@
                     if (target) {
                         const divider = document.createElement("div");
                         divider.className = "wati-unread-divider";
-                        divider.textContent = `${Math.min(unread, inboundIndices.length)} رسائل غير مقروءة`;
+                        divider.textContent = `${Math.min(unread, inboundIndices.length)} Unread messages`;
                         target.before(divider);
                     }
                 }

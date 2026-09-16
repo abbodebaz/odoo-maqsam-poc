@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_wati_smart_button" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.wati.smart.button</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="wati_connector.res_config_settings_view_form_wati"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@id='wati_smart_button_settings_slot']" position="replace">
+                <block title="Smart Buttons &amp; Customer Timeline" name="wati_smart_button_settings">
+                    <div class="wati-settings-note alert alert-info mb16" role="status">
+                        <strong>WhatsApp is available automatically across Odoo.</strong>
+                        Applications and their record types are discovered automatically. New applications are enabled by default; disable only the applications where you do not want the WhatsApp controls to appear.
+                    </div>
+                    <div class="wati-settings-card">
+                        <div class="d-flex align-items-start gap-3 mb-3">
+                            <div class="wati-settings-card-icon"><i class="fa fa-whatsapp" title="WhatsApp"/></div>
+                            <div class="min-w-0">
+                                <h4 class="mb-1">Application visibility</h4>
+                                <p class="text-muted mb-0">One switch per installed Odoo application. No rules, automations, form-view setup, or manual button installation.</p>
+                            </div>
+                        </div>
+                        <button name="action_wati_manage_smart_buttons" type="object"
+                                string="Manage Applications" class="btn btn-primary" icon="fa-sliders"/>
+                        <div class="small text-muted mt-3">
+                            The same application policy controls both the WhatsApp Smart Button and Customer Timeline. Customer and mobile number are resolved automatically from the current record.
+                        </div>
+                    </div>
+                </block>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Global English/LTR polish on the automation builder. -->
+    <record id="view_wati_automation_rule_form_polish" model="ir.ui.view">
+        <field name="name">wati.automation.rule.form.polish</field>
+        <field name="model">wati.automation.rule</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_automation_rule_form_builder"/>
+        <field name="priority">260</field>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet[hasclass('wati_builder_sheet')]" position="attributes">
+                <attribute name="class" add="wati_builder_ltr_refresh" separator=" "/>
+            </xpath>
+
+            <xpath expr="//div[hasclass('wati_builder_title')]//field[@name='name']" position="attributes">
+                <attribute name="placeholder">Automation name</attribute>
+            </xpath>
+
+            <xpath expr="//button[@name='action_next_step']" position="attributes">
+                <attribute name="icon">fa-arrow-right</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_previous_step']" position="attributes">
+                <attribute name="icon">fa-arrow-left</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Step 1: remove documentation-style language and keep only the decision path. -->
+    <record id="view_wati_automation_rule_form_trigger_polish" model="ir.ui.view">
+        <field name="name">wati.automation.rule.form.trigger.polish</field>
+        <field name="model">wati.automation.rule</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_automation_rule_form_universal_event"/>
+        <field name="priority">270</field>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('wati_builder_step')][@invisible=&quot;setup_step != 'trigger'&quot;]/div[hasclass('wati_builder_step_head')]/div" position="replace">
+                <div>
+                    <h2>Choose a trigger</h2>
+                    <p>Pick the Odoo event that should start this automation.</p>
+                </div>
+            </xpath>
+
+            <xpath expr="//div[hasclass('wati_universal_event_intro')]/div" position="replace">
+                <div>
+                    <span class="wati_section_label">Trigger setup</span>
+                    <h3>Define the event</h3>
+                </div>
+            </xpath>
+            <xpath expr="//span[hasclass('wati_dynamic_badge')]" position="replace">
+                <span class="wati_dynamic_badge">Live Odoo data</span>
+            </xpath>
+
+            <xpath expr="(//div[hasclass('wati_event_question_title')])[1]" position="replace">
+                <div class="wati_event_question_title">Application</div>
+            </xpath>
+            <xpath expr="(//div[hasclass('wati_event_question_help')])[1]" position="replace">
+                <div class="wati_event_question_help">Where should Odoo listen?</div>
+            </xpath>
+
+            <xpath expr="(//div[hasclass('wati_event_question_title')])[2]" position="replace">
+                <div class="wati_event_question_title">Record type</div>
+            </xpath>
+            <xpath expr="(//div[hasclass('wati_event_question_help')])[2]" position="replace">
+                <div class="wati_event_question_help">Which records should be monitored?</div>
+            </xpath>
+
+            <xpath expr="(//div[hasclass('wati_event_question_title')])[3]" position="replace">
+                <div class="wati_event_question_title">Event</div>
+            </xpath>
+            <xpath expr="(//div[hasclass('wati_event_question_help')])[3]" position="replace">
+                <div class="wati_event_question_help">What should start the automation?</div>
+            </xpath>
+
+            <xpath expr="(//div[hasclass('wati_event_question_title')])[4]" position="replace">
+                <div class="wati_event_question_title">Field</div>
+            </xpath>
+            <xpath expr="(//div[hasclass('wati_event_question_help')])[4]" position="replace">
+                <div class="wati_event_question_help">Which field should be watched?</div>
+            </xpath>
+
+            <xpath expr="(//div[hasclass('wati_event_question_title')])[5]" position="replace">
+                <div class="wati_event_question_title">Condition</div>
+            </xpath>
+            <xpath expr="(//div[hasclass('wati_event_question_help')])[5]" position="replace">
+                <div class="wati_event_question_help">What value should trigger the message?</div>
+            </xpath>
+
+            <xpath expr="//div[hasclass('wati_event_live_summary')]//strong" position="replace">
+                <strong>Trigger summary</strong>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Step 2: simplify recipient selection copy. -->
+    <record id="view_wati_automation_rule_form_recipient_polish" model="ir.ui.view">
+        <field name="name">wati.automation.rule.form.recipient.polish</field>
+        <field name="model">wati.automation.rule</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_automation_rule_form_smart_recipient"/>
+        <field name="priority">270</field>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('wati_builder_step_head')]/div" position="replace">
+                <div>
+                    <h2>Choose the recipient</h2>
+                    <p>Select where the WhatsApp number should come from.</p>
+                </div>
+            </xpath>
+            <xpath expr="//div[hasclass('wati_recipient_mode_box')]/span[hasclass('wati_section_label')]" position="replace">
+                <span class="wati_section_label">Recipient source</span>
+            </xpath>
+            <xpath expr="//div[hasclass('wati_recipient_context')][@invisible=&quot;recipient_mode != 'auto'&quot;]//strong" position="replace">
+                <strong>Use the best available customer number</strong>
+            </xpath>
+            <xpath expr="//div[hasclass('wati_recipient_preview')]//strong" position="replace">
+                <strong>Recipient preview</strong>
+            </xpath>
+            <xpath expr="//div[hasclass('wati_policy_title')]" position="replace">
+                <div class="wati_policy_title">Duplicate protection</div>
+            </xpath>
+            <xpath expr="//field[@name='once_per_record']" position="attributes">
+                <attribute name="string">Send only once per record</attribute>
+            </xpath>
+            <xpath expr="//field[@name='channel_number']" position="attributes">
+                <attribute name="string">WATI channel (optional)</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_previous_step']" position="attributes">
+                <attribute name="icon">fa-arrow-left</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_next_step']" position="attributes">
+                <attribute name="icon">fa-arrow-right</attribute>
+                <attribute name="string">Next: Message</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Step 3: keep the new message composer but make navigation consistent. -->
+    <record id="view_wati_automation_rule_form_message_polish" model="ir.ui.view">
+        <field name="name">wati.automation.rule.form.message.polish</field>
+        <field name="model">wati.automation.rule</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_automation_rule_form_template_mapper"/>
+        <field name="priority">270</field>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='action_previous_step']" position="attributes">
+                <attribute name="icon">fa-arrow-left</attribute>
+                <attribute name="string">Previous: Recipient</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_next_step']" position="attributes">
+                <attribute name="icon">fa-arrow-right</attribute>
+                <attribute name="string">Next: Review</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Step 4: concise final review. -->
+    <record id="view_wati_automation_rule_form_review_polish" model="ir.ui.view">
+        <field name="name">wati.automation.rule.form.review.polish</field>
+        <field name="model">wati.automation.rule</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_automation_rule_form_smart_review"/>
+        <field name="priority">270</field>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('wati_review_step_head')]/div" position="replace">
+                <div>
+                    <h2>Review &amp; activate</h2>
+                    <p>Check the setup, send a test if needed, then activate.</p>
+                </div>
+            </xpath>
+            <xpath expr="//div[hasclass('wati_review_readiness_head')]//h3" position="replace">
+                <h3>Automation readiness</h3>
+            </xpath>
+            <xpath expr="//div[hasclass('wati_live_status_info')]/strong" position="replace">
+                <strong>WATI verification</strong>
+            </xpath>
+            <xpath expr="//div[hasclass('wati_review_section_head')]//h3" position="replace">
+                <h3>Preview the message</h3>
+            </xpath>
+            <xpath expr="//div[hasclass('wati_review_send_test_copy')]//h3" position="replace">
+                <h3>Send a test message</h3>
+            </xpath>
+            <xpath expr="//div[hasclass('wati_review_activate_box')]//strong" position="replace">
+                <strong>Ready to activate?</strong>
+            </xpath>
+            <xpath expr="//button[@name='action_previous_step']" position="attributes">
+                <attribute name="icon">fa-arrow-left</attribute>
+                <attribute name="string">Previous: Message</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

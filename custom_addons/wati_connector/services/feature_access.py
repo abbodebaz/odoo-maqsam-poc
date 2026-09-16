@@ -1,0 +1,145 @@
+from odoo.exceptions import AccessError
+
+
+ACCESS_ALL = "all"
+ACCESS_ADMIN = "admin"
+VALID_ACCESS_MODES = {ACCESS_ALL, ACCESS_ADMIN}
+
+
+FEATURE_ACCESS_REGISTRY = {
+    "conversations": {
+        "label": "Conversation Log",
+        "parameter": "wati_connector.access_conversations",
+        "default": ACCESS_ALL,
+        "menu_xmlids": ["wati_connector.menu_wati_conversations"],
+        "acl_xmlids": [],
+    },
+    "messages": {
+        "label": "Message Log",
+        "parameter": "wati_connector.access_messages",
+        "default": ACCESS_ALL,
+        "menu_xmlids": ["wati_connector.menu_wati_messages"],
+        "acl_xmlids": [],
+    },
+    "templates": {
+        "label": "Template Center",
+        "parameter": "wati_connector.access_templates",
+        "default": ACCESS_ADMIN,
+        "menu_xmlids": ["wati_connector.menu_wati_templates"],
+        "acl_xmlids": [
+            "wati_connector.access_wati_template_admin",
+            "wati_connector.access_wati_template_variable_admin",
+        ],
+    },
+    "automation": {
+        "label": "Automation Center",
+        "parameter": "wati_connector.access_automation",
+        "default": ACCESS_ADMIN,
+        "menu_xmlids": ["wati_connector.menu_wati_automation_rules"],
+        "acl_xmlids": [
+            "wati_connector.access_wati_automation_rule_admin",
+            "wati_connector.access_wati_automation_condition_admin",
+            "wati_connector.access_wati_automation_parameter_admin",
+            "wati_connector.access_wati_automation_value_choice_admin",
+            "wati_connector.access_wati_automation_template_choice_admin",
+        ],
+    },
+    "automation_logs": {
+        "label": "Run Log",
+        "parameter": "wati_connector.access_automation_logs",
+        "default": ACCESS_ADMIN,
+        "menu_xmlids": ["wati_connector.menu_wati_automation_logs"],
+        "acl_xmlids": ["wati_connector.access_wati_automation_log_supervisor"],
+    },
+    "monitor": {
+        "label": "Monitor Webhook",
+        "parameter": "wati_connector.access_monitor",
+        "default": ACCESS_ADMIN,
+        "menu_xmlids": ["wati_connector.menu_wati_webhook_events"],
+        "acl_xmlids": ["wati_connector.access_wati_webhook_event_admin"],
+    },
+}
+
+
+def feature_definition(feature_id):
+    return FEATURE_ACCESS_REGISTRY.get(feature_id) or {}
+
+
+def get_feature_mode(env, feature_id):
+    definition = feature_definition(feature_id)
+    if not definition:
+        return ACCESS_ALL
+    raw = env["ir.config_parameter"].sudo().get_param(
+        definition["parameter"], definition["default"]
+    )
+    value = str(raw or "").strip().lower()
+    return value if value in VALID_ACCESS_MODES else definition["default"]
+
+
+def is_wati_admin(env, user=None):
+    user = user or env.user
+    if env.su:
+        return True
+    root = env.ref("base.user_root", raise_if_not_found=False)
+    if root and user.id == root.id:
+        return True
+    return user.has_group("base.group_system") or user.has_group(
+        "wati_connector.group_wati_admin"
+    )
+
+
+def can_access_feature(env, feature_id, user=None):
+    user = user or env.user
+    if is_wati_admin(env, user=user):
+        return True
+    if not user.has_group("wati_connector.group_wati_user"):
+        return False
+    return get_feature_mode(env, feature_id) == ACCESS_ALL
+
+
+def ensure_feature_access(env, feature_id, user=None):
+    if can_access_feature(env, feature_id, user=user):
+        return True
+    label = feature_definition(feature_id).get("label") or "This feature"
+    raise AccessError(
+        f"You do not have access to {label}. Contact a supervisor WhatsApp If you need this permission."
+    )
+
+
+def sync_feature_access_controls(env, feature_ids=None):
+    """Synchronize menu visibility and dedicated-model ACLs from feature policy.
+
+    Odoo 19 uses ``group_ids`` on menus. Dedicated feature models move their ACL
+    between the base WATI user role and WATI Administrator according to company
+    policy. Conversation/message history share inbox models, so those policies
+    gate only their history screens and never revoke operational inbox access.
+    """
+
+    registry = FEATURE_ACCESS_REGISTRY
+    wanted = set(feature_ids or registry.keys())
+    user_group = env.ref("wati_connector.group_wati_user")
+    admin_group = env.ref("wati_connector.group_wati_admin")
+    system_group = env.ref("base.group_system")
+
+    result = {}
+    for feature_id, definition in registry.items():
+        if feature_id not in wanted:
+            continue
+
+        mode = get_feature_mode(env, feature_id)
+        target_group = user_group if mode == ACCESS_ALL else admin_group
+
+        menu_group_ids = [target_group.id, system_group.id]
+        for xmlid in definition.get("menu_xmlids", []):
+            menu = env.ref(xmlid, raise_if_not_found=False)
+            if menu:
+                menu.sudo().write({"group_ids": [(6, 0, menu_group_ids)]})
+
+        for xmlid in definition.get("acl_xmlids", []):
+            access = env.ref(xmlid, raise_if_not_found=False)
+            if access:
+                access.sudo().write({"group_id": target_group.id})
+
+        result[feature_id] = mode
+
+    return result

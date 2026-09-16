@@ -1,0 +1,330 @@
+.wati_review_step {
+    gap: 1.25rem;
+}
+
+.wati_review_step_head {
+    margin-bottom: .25rem;
+}
+
+.wati_review_kicker {
+    display: block;
+    color: #7b61a8;
+    font-size: .78rem;
+    font-weight: 700;
+    margin-bottom: .2rem;
+}
+
+.wati_review_readiness,
+.wati_review_test_section,
+.wati_review_send_test,
+.wati_review_activate_box,
+.wati_review_active_box {
+    border: 1px solid #e8e3ef;
+    border-radius: 18px;
+    background: #fff;
+}
+
+.wati_review_readiness {
+    padding: 1.25rem 1.35rem;
+    background: linear-gradient(180deg, #fff, #fcfbfe);
+}
+
+.wati_review_readiness_head,
+.wati_review_section_head,
+.wati_live_status,
+.wati_review_preview_meta,
+.wati_review_send_test,
+.wati_review_activate_box,
+.wati_review_active_box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.wati_review_readiness_head h3,
+.wati_review_section_head h3,
+.wati_review_send_test h3 {
+    margin: 0;
+    font-size: 1.08rem;
+}
+
+.wati_review_checklist textarea,
+.wati_review_checklist .o_input {
+    margin-top: .8rem;
+    border: 0 !important;
+    background: transparent !important;
+    padding: 0 !important;
+    line-height: 1.8;
+    box-shadow: none !important;
+}
+
+.wati_live_status {
+    border-top: 1px solid #eee9f4;
+    margin-top: 1rem;
+    padding-top: 1rem;
+}
+
+.wati_live_status_info {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    flex-wrap: wrap;
+}
+
+.wati_live_message {
+    margin-top: .65rem;
+}
+
+.wati_review_summary_grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .85rem;
+}
+
+.wati_review_summary_card {
+    min-height: 116px;
+    display: flex;
+    align-items: flex-start;
+    gap: .8rem;
+    padding: 1rem;
+    border: 1px solid #ece7f2;
+    border-radius: 16px;
+    background: #fff;
+}
+
+.wati_review_summary_number {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    background: #f2edf8;
+    color: #74569d;
+    font-weight: 800;
+}
+
+.wati_review_summary_card small,
+.wati_review_summary_card strong,
+.wati_review_summary_card span {
+    display: block;
+}
+
+.wati_review_summary_card small {
+    color: #8a8294;
+    margin-bottom: .25rem;
+}
+
+.wati_review_summary_card strong {
+    color: #31293a;
+    line-height: 1.45;
+}
+
+.wati_review_summary_card span {
+    color: #82798d;
+    font-size: .82rem;
+    margin-top: .3rem;
+    line-height: 1.45;
+}
+
+.wati_review_test_section {
+    overflow: hidden;
+}
+
+.wati_review_section_head {
+    align-items: flex-start;
+    padding: 1.2rem 1.3rem;
+    border-bottom: 1px solid #eee9f4;
+}
+
+.wati_review_section_head p,
+.wati_review_send_test p,
+.wati_review_activate_box p,
+.wati_review_active_box p,
+.wati_review_preview_empty p {
+    color: #7f7789;
+    margin: .35rem 0 0;
+    line-height: 1.55;
+}
+
+.wati_review_preview_actions {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex-wrap: wrap;
+}
+
+.wati_review_preview_empty {
+    min-height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 2rem;
+    text-align: center;
+    background: #fbfafc;
+}
+
+.wati_review_preview_icon {
+    font-size: 1.8rem;
+}
+
+.wati_review_preview_result {
+    padding: 1.15rem 1.3rem 1.3rem;
+    background: #fbfdfb;
+}
+
+.wati_review_preview_meta {
+    color: #81788a;
+    font-size: .82rem;
+    margin-bottom: .85rem;
+    flex-wrap: wrap;
+}
+
+.wati_review_preview_meta > div {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    flex-wrap: wrap;
+}
+
+.wati_review_message_preview {
+    max-width: 720px;
+    margin-inline-start: auto;
+    padding: 1rem 1.15rem;
+    border: 1px solid #dce9dd;
+    border-radius: 14px 14px 4px 14px;
+    background: #effaf0;
+    white-space: pre-wrap;
+    line-height: 1.8;
+}
+
+.wati_review_message_preview textarea,
+.wati_review_message_preview .o_input {
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    min-height: 72px;
+}
+
+.wati_review_record_note {
+    margin-top: .7rem;
+    color: #7b7284;
+    font-size: .82rem;
+}
+
+.wati_review_send_test {
+    padding: 1.15rem 1.3rem;
+}
+
+.wati_review_send_test_copy {
+    max-width: 60%;
+}
+
+.wati_review_send_test_controls {
+    min-width: 300px;
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+}
+
+.wati_review_send_test_controls .o_field_widget {
+    flex: 1 1 auto;
+}
+
+.wati_review_activate_box,
+.wati_review_active_box {
+    padding: 1.15rem 1.3rem;
+}
+
+.wati_review_activate_box {
+    border-color: #cfe7d3;
+    background: #f5fbf6;
+}
+
+.wati_review_active_box {
+    border-color: #cfe7d3;
+    background: #eff9f1;
+}
+
+.wati_review_activate_box > div,
+.wati_review_active_box > div {
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+}
+
+.wati_review_activate_icon,
+.wati_review_active_box > span {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #dff3e3;
+    color: #21833a;
+    font-weight: 900;
+    flex: 0 0 auto;
+}
+
+.wati_review_activate_button {
+    min-width: 190px;
+}
+
+.wati_review_technical {
+    margin-top: .25rem;
+}
+
+.wati_review_nav {
+    margin-top: .25rem;
+}
+
+@media (max-width: 991px) {
+    .wati_review_summary_grid {
+        grid-template-columns: 1fr;
+    }
+
+    .wati_review_section_head,
+    .wati_review_send_test,
+    .wati_review_activate_box,
+    .wati_review_active_box {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .wati_review_send_test_copy {
+        max-width: none;
+    }
+
+    .wati_review_send_test_controls {
+        min-width: 0;
+        width: 100%;
+    }
+}
+
+@media (max-width: 640px) {
+    .wati_review_preview_actions,
+    .wati_review_send_test_controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .wati_review_preview_actions .btn,
+    .wati_review_send_test_controls .btn,
+    .wati_review_activate_button {
+        width: 100%;
+    }
+
+    .wati_review_readiness,
+    .wati_review_section_head,
+    .wati_review_preview_result,
+    .wati_review_send_test,
+    .wati_review_activate_box,
+    .wati_review_active_box {
+        padding: 1rem;
+    }
+}

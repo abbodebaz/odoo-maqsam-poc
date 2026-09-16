@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_otp_flow_form_universal_triggers" model="ir.ui.view">
+        <field name="name">wati.otp.flow.form.universal.triggers</field>
+        <field name="model">wati.otp.flow</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_otp_flow_form_workflow"/>
+        <field name="priority">340</field>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('wati_otp_manual_button_card')]" position="after">
+                <div class="wati_otp_card wati_otp_universal_entry_card">
+                    <div class="wati_otp_card_title_row">
+                        <div>
+                            <h3>Universal entry points</h3>
+                            <p class="text-muted mb-0">Choose how this OTP Flow can be started. Internal Odoo options are always available; external entry points can be enabled only when needed.</p>
+                        </div>
+                        <span class="badge rounded-pill text-bg-light">Any module</span>
+                    </div>
+
+                    <div class="row g-3 mt-1">
+                        <div class="col-xl-6">
+                            <div class="wati_otp_subcard wati_otp_entry_section h-100">
+                                <div class="wati_otp_entry_section_title">
+                                    <div>
+                                        <h4 class="mb-1">Inside Odoo</h4>
+                                        <p class="text-muted mb-0">Use these when the request starts from Odoo itself.</p>
+                                    </div>
+                                    <span class="badge rounded-pill text-bg-success">Always available</span>
+                                </div>
+
+                                <div class="wati_otp_entry_option">
+                                    <div class="wati_otp_entry_option_head">
+                                        <div class="wati_otp_entry_identity">
+                                            <span class="wati_otp_entry_icon"><i class="fa fa-bolt" title="Server Action"/></span>
+                                            <div>
+                                                <strong>Reusable Server Action</strong>
+                                                <p>Run this OTP Flow from another Odoo button, workflow, or server action.</p>
+                                            </div>
+                                        </div>
+                                        <span class="badge rounded-pill text-bg-light" invisible="universal_server_action_id">Created on activation</span>
+                                        <span class="badge rounded-pill text-bg-success" invisible="not universal_server_action_id">Ready</span>
+                                    </div>
+                                    <div class="wati_otp_entry_use"><strong>Use it for:</strong> custom buttons, Actions menu items, server actions, scheduled jobs.</div>
+                                    <div class="wati_otp_entry_details">
+                                        <span class="wati_otp_entry_details_label">How to use</span>
+                                        <p>Select or run this generated Server Action from the Odoo process that should request the OTP.</p>
+                                        <field name="universal_server_action_id" readonly="1" nolabel="1" options="{'no_open': False}"/>
+                                    </div>
+                                </div>
+
+                                <div class="wati_otp_entry_option">
+                                    <div class="wati_otp_entry_option_head">
+                                        <div class="wati_otp_entry_identity">
+                                            <span class="wati_otp_entry_icon"><i class="fa fa-magic" title="Automated Action"/></span>
+                                            <div>
+                                                <strong>Automated Action</strong>
+                                                <p>Start OTP from an Odoo automation rule with your own conditions.</p>
+                                            </div>
+                                        </div>
+                                        <span class="badge rounded-pill text-bg-success">Ready</span>
+                                    </div>
+                                    <div class="wati_otp_entry_use"><strong>Use it for:</strong> Odoo Automated Actions, Studio automations, advanced stage or field conditions.</div>
+                                    <div class="wati_otp_entry_details">
+                                        <span class="wati_otp_entry_details_label">How to use</span>
+                                        <p>Paste this line into the Python code of the Automated Action. The current Odoo record is passed to OTP Bridge.</p>
+                                        <field name="automation_hook_example" readonly="1" nolabel="1"/>
+                                    </div>
+                                </div>
+
+                                <div class="wati_otp_entry_option mb-0">
+                                    <div class="wati_otp_entry_option_head">
+                                        <div class="wati_otp_entry_identity">
+                                            <span class="wati_otp_entry_icon"><i class="fa fa-code" title="Python Hook"/></span>
+                                            <div>
+                                                <strong>Python Hook</strong>
+                                                <p>Call OTP Bridge directly from a custom Odoo module.</p>
+                                            </div>
+                                        </div>
+                                        <span class="badge rounded-pill text-bg-success">Ready</span>
+                                    </div>
+                                    <div class="wati_otp_entry_use"><strong>Use it for:</strong> custom modules, model methods, custom controllers, scheduled code.</div>
+                                    <div class="wati_otp_entry_details">
+                                        <span class="wati_otp_entry_details_label">How to use</span>
+                                        <p>Call this method with the Odoo record that needs OTP verification.</p>
+                                        <field name="python_hook_example" readonly="1" nolabel="1"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xl-6">
+                            <div class="wati_otp_subcard wati_otp_entry_section h-100">
+                                <div class="wati_otp_entry_section_title">
+                                    <div>
+                                        <h4 class="mb-1">Portal &amp; external systems</h4>
+                                        <p class="text-muted mb-0">Enable only the channels this flow should accept.</p>
+                                    </div>
+                                    <span class="badge rounded-pill text-bg-light">Optional</span>
+                                </div>
+
+                                <div class="wati_otp_entry_option">
+                                    <div class="wati_otp_entry_option_head">
+                                        <div class="wati_otp_entry_identity">
+                                            <span class="wati_otp_entry_icon"><i class="fa fa-user" title="Portal"/></span>
+                                            <div>
+                                                <strong>Portal request</strong>
+                                                <p>Let a signed-in Odoo portal user request the OTP from a portal page.</p>
+                                            </div>
+                                        </div>
+                                        <div class="wati_otp_entry_switch">
+                                            <span class="badge rounded-pill text-bg-secondary" invisible="portal_entry_enabled">Disabled</span>
+                                            <span class="badge rounded-pill text-bg-success" invisible="not portal_entry_enabled">Enabled</span>
+                                            <field name="portal_entry_enabled" widget="boolean_toggle" nolabel="1"/>
+                                        </div>
+                                    </div>
+                                    <div class="wati_otp_entry_use"><strong>Use it for:</strong> customer portals, driver portals, technician pages, self-service screens.</div>
+                                    <div class="wati_otp_entry_details" invisible="not portal_entry_enabled">
+                                        <span class="wati_otp_entry_details_label">How to use</span>
+                                        <p>Send a POST request to this URL from a signed-in Odoo session. Replace <strong>&lt;record_id&gt;</strong> with the record ID. No integration secret is required.</p>
+                                        <field name="portal_request_url_pattern" readonly="1" nolabel="1"/>
+                                    </div>
+                                </div>
+
+                                <div class="wati_otp_entry_option">
+                                    <div class="wati_otp_entry_option_head">
+                                        <div class="wati_otp_entry_identity">
+                                            <span class="wati_otp_entry_icon"><i class="fa fa-exchange" title="REST API"/></span>
+                                            <div>
+                                                <strong>REST API</strong>
+                                                <p>Let another application or backend request OTP over HTTP.</p>
+                                            </div>
+                                        </div>
+                                        <div class="wati_otp_entry_switch">
+                                            <span class="badge rounded-pill text-bg-secondary" invisible="api_enabled">Disabled</span>
+                                            <span class="badge rounded-pill text-bg-success" invisible="not api_enabled">Enabled</span>
+                                            <field name="api_enabled" widget="boolean_toggle" nolabel="1"/>
+                                        </div>
+                                    </div>
+                                    <div class="wati_otp_entry_use"><strong>Use it for:</strong> mobile apps, middleware, external ERPs, integrations, internal APIs.</div>
+                                    <div class="wati_otp_entry_details" invisible="not api_enabled">
+                                        <span class="wati_otp_entry_details_label">How to use</span>
+                                        <p>POST JSON containing <strong>record_id</strong>. Send the integration secret in the <strong>X-WATI-OTP-Secret</strong> header or as <strong>secret</strong> in JSON.</p>
+                                        <field name="api_request_url" readonly="1" nolabel="1"/>
+                                    </div>
+                                </div>
+
+                                <div class="wati_otp_entry_option">
+                                    <div class="wati_otp_entry_option_head">
+                                        <div class="wati_otp_entry_identity">
+                                            <span class="wati_otp_entry_icon"><i class="fa fa-link" title="Webhook"/></span>
+                                            <div>
+                                                <strong>Webhook</strong>
+                                                <p>Let an external event trigger OTP for an Odoo record.</p>
+                                            </div>
+                                        </div>
+                                        <div class="wati_otp_entry_switch">
+                                            <span class="badge rounded-pill text-bg-secondary" invisible="webhook_enabled">Disabled</span>
+                                            <span class="badge rounded-pill text-bg-success" invisible="not webhook_enabled">Enabled</span>
+                                            <field name="webhook_enabled" widget="boolean_toggle" nolabel="1"/>
+                                        </div>
+                                    </div>
+                                    <div class="wati_otp_entry_use"><strong>Use it for:</strong> external workflow engines, delivery systems, ticketing tools, event callbacks.</div>
+                                    <div class="wati_otp_entry_details" invisible="not webhook_enabled">
+                                        <span class="wati_otp_entry_details_label">How to use</span>
+                                        <p>Configure the external system to POST JSON containing <strong>record_id</strong> to this URL and include the integration secret.</p>
+                                        <field name="webhook_request_url" readonly="1" nolabel="1"/>
+                                    </div>
+                                </div>
+
+                                <div class="wati_otp_entry_option mb-0">
+                                    <div class="wati_otp_entry_option_head">
+                                        <div class="wati_otp_entry_identity">
+                                            <span class="wati_otp_entry_icon"><i class="fa fa-globe" title="Website or Form"/></span>
+                                            <div>
+                                                <strong>Website / Form</strong>
+                                                <p>Request OTP from a protected website page or custom form.</p>
+                                            </div>
+                                        </div>
+                                        <div class="wati_otp_entry_switch">
+                                            <span class="badge rounded-pill text-bg-secondary" invisible="website_form_enabled">Disabled</span>
+                                            <span class="badge rounded-pill text-bg-success" invisible="not website_form_enabled">Enabled</span>
+                                            <field name="website_form_enabled" widget="boolean_toggle" nolabel="1"/>
+                                        </div>
+                                    </div>
+                                    <div class="wati_otp_entry_use"><strong>Use it for:</strong> Odoo website pages, custom forms, external web forms, service confirmation pages.</div>
+                                    <div class="wati_otp_entry_details" invisible="not website_form_enabled">
+                                        <span class="wati_otp_entry_details_label">How to use</span>
+                                        <p>POST JSON containing <strong>record_id</strong> to this URL. Include the integration secret so public visitors cannot trigger OTP freely.</p>
+                                        <field name="website_form_request_url" readonly="1" nolabel="1"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wati_otp_info mt-3" groups="base.group_system">
+                        <i class="fa fa-key" title="Integration security"/>
+                        <div class="w-100">
+                            <strong>External entry-point security</strong>
+                            <span>REST API, webhook, and website/form requests require this flow's integration secret. Portal requests use the signed-in user's Odoo permissions.</span>
+                            <div class="d-flex gap-2 align-items-center mt-2">
+                                <field name="integration_secret" readonly="1" nolabel="1" password="True" class="flex-grow-1"/>
+                                <button name="action_regenerate_integration_secret" type="object" string="Regenerate secret" class="btn btn-secondary" icon="fa-refresh"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end mt-3">
+                        <button name="action_prepare_entry_points" type="object" string="Prepare entry points" class="btn btn-secondary" icon="fa-plug"/>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

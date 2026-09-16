@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_automation_rule_form_smart_review" model="ir.ui.view">
+        <field name="name">wati.automation.rule.form.smart.review</field>
+        <field name="model">wati.automation.rule</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_automation_rule_form_builder"/>
+        <field name="priority">210</field>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='action_preview_latest_record']/ancestor::div[hasclass('wati_builder_step')][1]" position="replace">
+                <div class="wati_builder_step wati_review_step" invisible="setup_step != 'review'">
+                    <div class="wati_builder_step_head wati_review_step_head">
+                        <span class="wati_builder_step_no">4</span>
+                        <div>
+                            <h2>Review, test, then activate</h2>
+                            <p>See the entire scenario, view the message safely, then activate the automation and you are sure of everything.</p>
+                        </div>
+                    </div>
+
+                    <div class="wati_review_readiness">
+                        <div class="wati_review_readiness_head">
+                            <div>
+                                <span class="wati_review_kicker">Readiness</span>
+                                <h3>Is the automation ready to run?</h3>
+                            </div>
+                            <field name="readiness_state" widget="badge" readonly="1"
+                                   decoration-success="readiness_state == 'ready'"
+                                   decoration-warning="readiness_state == 'warning'"
+                                   decoration-danger="readiness_state == 'incomplete'"/>
+                        </div>
+                        <field name="readiness_message" nolabel="1" readonly="1" class="wati_review_checklist"/>
+
+                        <div class="wati_live_status" invisible="not template_name">
+                            <div class="wati_live_status_info">
+                                <strong>Checked WATI Real</strong>
+                                <field name="template_validation_state" widget="badge" readonly="1"
+                                       decoration-success="template_validation_state == 'valid'"
+                                       decoration-warning="template_validation_state == 'unverified'"
+                                       decoration-danger="template_validation_state == 'invalid'"/>
+                                <span invisible="not template_verified_at">Last check: <field name="template_verified_at" nolabel="1" readonly="1"/></span>
+                            </div>
+                            <button name="action_validate_template" type="object" string="Check the template now" icon="fa-shield" class="btn-secondary"/>
+                        </div>
+                        <field name="template_validation_message" nolabel="1" readonly="1"
+                               invisible="not template_validation_message" class="wati_live_message"/>
+                    </div>
+
+                    <div class="wati_review_summary_grid">
+                        <div class="wati_review_summary_card">
+                            <span class="wati_review_summary_number">1</span>
+                            <div>
+                                <small>When?</small>
+                                <strong><field name="event_summary" nolabel="1" readonly="1"/></strong>
+                            </div>
+                        </div>
+                        <div class="wati_review_summary_card">
+                            <span class="wati_review_summary_number">2</span>
+                            <div>
+                                <small>for whom?</small>
+                                <strong><field name="recipient_summary" nolabel="1" readonly="1"/></strong>
+                                <span><field name="recipient_preview_note" nolabel="1" readonly="1"/></span>
+                            </div>
+                        </div>
+                        <div class="wati_review_summary_card">
+                            <span class="wati_review_summary_number">3</span>
+                            <div>
+                                <small>What’s the message?</small>
+                                <strong><field name="review_message_summary" nolabel="1" readonly="1"/></strong>
+                                <span><field name="template_mapping_progress" nolabel="1" readonly="1"/></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wati_review_test_section">
+                        <div class="wati_review_section_head">
+                            <div>
+                                <span class="wati_review_kicker">Safe testing</span>
+                                <h3>View the message as it will appear before sending</h3>
+                                <p>We use a real log if one exists. If it is a rule Odoo New without data, we automatically create a demo preview instead of stopping you.</p>
+                            </div>
+                            <div class="wati_review_preview_actions">
+                                <button name="action_preview_latest_record" type="object" string="Create a smart preview" icon="fa-eye" class="btn-primary"/>
+                                <button name="action_preview_sample" type="object" string="Experimental data" icon="fa-flask" class="btn-secondary"/>
+                            </div>
+                        </div>
+
+                        <div class="wati_review_preview_empty" invisible="preview_text">
+                            <span class="wati_review_preview_icon">👁</span>
+                            <div>
+                                <strong>The preview has not been created yet</strong>
+                                <p>Press «Create a smart preview». No message will be sent and no data will be changed.</p>
+                            </div>
+                        </div>
+
+                        <div class="wati_review_preview_result" invisible="not preview_text">
+                            <div class="wati_review_preview_meta">
+                                <div>
+                                    <field name="preview_mode" widget="badge" readonly="1"
+                                           decoration-success="preview_mode == 'real'"
+                                           decoration-info="preview_mode == 'sample'"/>
+                                    <span><field name="preview_source_note" nolabel="1" readonly="1"/></span>
+                                </div>
+                                <span invisible="not preview_generated_at">Latest preview: <field name="preview_generated_at" nolabel="1" readonly="1"/></span>
+                            </div>
+                            <div class="wati_review_message_preview">
+                                <field name="preview_text" nolabel="1" readonly="1"/>
+                            </div>
+                            <div class="wati_review_record_note" invisible="not preview_record_name">
+                                User record: <strong><field name="preview_record_name" nolabel="1" readonly="1"/></strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wati_review_send_test">
+                        <div class="wati_review_send_test_copy">
+                            <span class="wati_review_kicker">Real demo submission</span>
+                            <h3>Send it to a test number before activation</h3>
+                            <p>The message will only go to the test number you type here, not to the client.</p>
+                        </div>
+                        <div class="wati_review_send_test_controls">
+                            <field name="test_phone" nolabel="1" placeholder="9665XXXXXXXX"/>
+                            <button name="action_send_test" type="object" string="Submit an experience" icon="fa-paper-plane"
+                                    class="btn-secondary" invisible="not test_phone"/>
+                        </div>
+                    </div>
+
+                    <div class="wati_review_activate_box" invisible="active">
+                        <div>
+                            <span class="wati_review_activate_icon">✓</span>
+                            <div>
+                                <strong>Ready to run?</strong>
+                                <p>After activation it will start Odoo It monitors the event and sends the template automatically as per the settings above.</p>
+                            </div>
+                        </div>
+                        <button name="action_activate_rule" type="object" string="Activate automation now" icon="fa-check-circle"
+                                class="btn-success wati_review_activate_button"/>
+                    </div>
+
+                    <div class="wati_review_active_box" invisible="not active">
+                        <span>✓</span>
+                        <div>
+                            <strong>Automation is now enabled</strong>
+                            <p>Odoo The event is monitored and will be triggered WATI Automatically when conditions are met.</p>
+                        </div>
+                        <button name="action_deactivate_rule" type="object" string="Pause" icon="fa-pause" class="btn-secondary"/>
+                    </div>
+
+                    <notebook groups="base.group_system" class="wati_technical_notebook wati_review_technical">
+                        <page string="Technical details">
+                            <group>
+                                <field name="model_name" readonly="1"/>
+                                <field name="base_automation_id" readonly="1"/>
+                                <field name="server_action_id" readonly="1"/>
+                                <field name="template_status" readonly="1"/>
+                                <field name="template_language" readonly="1"/>
+                                <field name="template_channel_number" readonly="1"/>
+                                <field name="template_validation_state" readonly="1"/>
+                                <field name="template_verified_at" readonly="1"/>
+                            </group>
+                        </page>
+                    </notebook>
+
+                    <div class="wati_builder_nav wati_review_nav">
+                        <button name="action_previous_step" type="object" string="Previous: The message" icon="fa-arrow-right" class="btn-secondary"/>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

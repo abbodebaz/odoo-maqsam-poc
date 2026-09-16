@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_universal_timeline_wizard_form" model="ir.ui.view">
+        <field name="name">wati.universal.timeline.wizard.form</field>
+        <field name="model">wati.universal.timeline.wizard</field>
+        <field name="arch" type="xml">
+            <form string="WhatsApp Customer Timeline" class="wati_customer_timeline_form">
+                <sheet>
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="rounded-circle bg-success-subtle text-success p-3"><i class="fa fa-whatsapp" title="WhatsApp"/></span>
+                            <div>
+                                <h2 class="mb-0">WhatsApp Timeline</h2>
+                                <div class="text-muted">Customer communication history</div>
+                            </div>
+                        </div>
+                        <span class="badge rounded-pill text-bg-success"><field name="message_count" class="d-inline"/> messages</span>
+                    </div>
+                    <div class="border rounded-3 p-3 mb-3 bg-light">
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <div class="text-muted small">Record</div>
+                                <field name="record_name" readonly="1" class="fw-semibold" nolabel="1"/>
+                                <div class="text-muted small mt-2">Customer</div>
+                                <field name="partner_id" readonly="1" nolabel="1"/>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div class="text-muted small">WhatsApp number</div>
+                                <field name="phone" readonly="1" nolabel="1"/>
+                                <div class="text-muted small mt-2">Last communication</div>
+                                <field name="last_message_at" readonly="1" nolabel="1"/>
+                            </div>
+                        </div>
+                    </div>
+                    <field name="rule_id" invisible="1"/>
+                    <field name="source_model" invisible="1"/>
+                    <field name="source_res_id" invisible="1"/>
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <h3 class="mb-0">Conversation history</h3>
+                        <span class="text-muted small">Newest messages first</span>
+                    </div>
+                    <field name="message_ids" readonly="1" nolabel="1" class="wati_timeline_messages">
+                        <kanban create="false" edit="false" delete="false" default_order="received_at desc, id desc" records_draggable="false" class="o_kanban_mobile">
+                            <field name="direction"/>
+                            <field name="received_at"/>
+                            <field name="text"/>
+                            <field name="status"/>
+                            <field name="operator_name"/>
+                            <field name="message_type"/>
+                            <templates>
+                                <t t-name="card">
+                                    <div t-att-class="record.direction.raw_value == 'outbound' ? 'ms-auto border border-success-subtle bg-success-subtle rounded-3 p-3 mb-2' : 'me-auto border rounded-3 p-3 mb-2'" style="max-width: 85%; min-width: 220px; overflow-wrap: anywhere;">
+                                        <div class="d-flex justify-content-between align-items-center gap-3 mb-2">
+                                            <span class="small fw-semibold" t-if="record.direction.raw_value == 'outbound'">Outgoing</span>
+                                            <span class="small fw-semibold" t-else="">Incoming</span>
+                                            <span class="text-muted small"><field name="received_at"/></span>
+                                        </div>
+                                        <div class="mb-2" style="white-space: pre-wrap;"><field name="text"/></div>
+                                        <div class="d-flex justify-content-end align-items-center gap-2 text-muted small">
+                                            <field name="operator_name" t-if="record.operator_name.raw_value"/>
+                                            <span class="badge rounded-pill text-bg-light"><field name="status"/></span>
+                                        </div>
+                                    </div>
+                                </t>
+                            </templates>
+                        </kanban>
+                    </field>
+                </sheet>
+                <footer>
+                    <button name="action_open_full_timeline" type="object" string="Open full history" class="btn-primary" icon="fa-external-link"/>
+                    <button string="Close" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_wati_universal_timeline" model="ir.actions.act_window">
+        <field name="name">WhatsApp Customer Timeline</field>
+        <field name="res_model">wati.universal.timeline.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

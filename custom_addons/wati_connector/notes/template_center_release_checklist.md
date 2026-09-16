@@ -1,0 +1,23 @@
+# Template Center Release Checklist
+
+- [x] Dedicated provider parser / normalizer
+- [x] Dedicated WATI client methods for create/delete
+- [x] Semantic failure detection for HTTP 2xx provider errors
+- [x] Draft model and variable samples
+- [x] Approval submission payload for STANDARD Utility/Marketing
+- [x] Remote template synchronization
+- [x] Per-template status refresh
+- [x] Provider deletion by WABA/name/language
+- [x] Provider identifier persistence
+- [x] Review / quality / category webhook processing
+- [x] Submitted/imported content immutability
+- [x] Remote-delete safety guard
+- [x] Feature access policy and dynamic ACL/menu synchronization
+- [x] Workspace card and in-app documentation
+- [x] Odoo list/search/form experience
+- [x] Unit/regression coverage for normalization, payloads, lifecycle and access policy
+- [ ] GitHub quality workflow green
+- [ ] Odoo module upgrade green on staging
+- [ ] Staging health endpoint 200
+- [ ] Manual sync from the connected WATI account verified
+- [ ] Manual provider submission verified with a disposable test template

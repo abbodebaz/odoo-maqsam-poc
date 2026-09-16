@@ -56,6 +56,12 @@
     max-width: 100%;
 }
 
+/* Customer / ticket / opportunity shortcuts are hidden from the Inbox header.
+   Their backend data and routes remain available for future UI placement. */
+.wati-context-actions {
+    display: none !important;
+}
+
 .wati-assignment-box {
     min-width: 0;
     max-width: 100%;

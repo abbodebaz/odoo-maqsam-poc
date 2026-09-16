@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="rule_wati_service_completion_portal" model="ir.rule">
+        <field name="name">Service Completion: portal own tasks</field>
+        <field name="model_id" ref="model_wati_service_completion_task"/>
+        <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+        <field name="domain_force">['|', ('assigned_user_id', '=', user.id), ('customer_id', 'child_of', user.partner_id.commercial_partner_id.id)]</field>
+    </record>
+</odoo>

@@ -1,140 +1,54 @@
-# Odoo × Maqsam POC
+# Odoo × WATI WhatsApp Connector
 
-Proof of concept for running **Odoo 19 Community** on Railway with an embedded **Maqsam Dialer**.
+Production-oriented WATI integration for Odoo 19. The connector keeps WhatsApp operations inside Odoo while preserving a clean boundary between provider transport, core WhatsApp features, and optional business-app integrations.
 
-> Railway POC is configured to install `maqsam_connector` during deployment before starting Odoo.
+## WATI delivery bundle
+
+- `wati_connector` — core application: inbox, conversations/messages, templates, automation, OTP Bridge, smart buttons, customer WhatsApp timeline, webhook monitoring, settings, access control, and WATI API transport.
+- `wati_connector_crm` — CRM lead/opportunity integration.
+- `wati_connector_sale` — quotations and sales-order integration.
+- `wati_connector_account` — customer-invoice integration.
+- `wati_connector_project` — project-task integration.
+
+The core module intentionally does not depend on CRM, Sales, Accounting, or Project. Optional Odoo models stay in their dedicated integration modules.
+
+## Repository scope
+
+This repository is WATI-only. `custom_addons/` is reserved for the `wati_connector*` delivery bundle, and CI rejects unrelated addons from being introduced into the repository.
 
 ## Architecture
 
-- Odoo 19 Community
-- PostgreSQL on Railway
-- Custom Odoo addon: `maqsam_connector`
-- Maqsam Autologin API
-- Maqsam Dialer embedded inside Odoo
+Provider HTTP calls are centralized in `wati_connector/services/`. Controllers remain transport-oriented and delegate business rules to models/services. Persistent correctness, idempotency, message correlation, template lifecycle state, automation logs, and webhook reconciliation are database-backed.
+
+Historical data corrections are versioned in `wati_connector/migrations/`. Production data XML is reserved for persistent configuration such as menus, sequences, access synchronization, and scheduled jobs; one-off repair functions must not run on every module upgrade.
+
+See `custom_addons/wati_connector/ARCHITECTURE.md` for the architectural boundaries and invariants.
+
+## Versioning
+
+WATI modules use Odoo-style five-part versions:
+
+`19.0.<release>.<minor>.<patch>`
+
+The delivery bundle is version-aligned. Release `19.0.11.0.2` is the pre-delivery cleanup baseline.
+
+## Quality gate
+
+`.github/workflows/wati-quality.yml` validates:
+
+- WATI-only addon scope under `custom_addons/`.
+- Python syntax and critical Ruff correctness rules.
+- XML and manifest integrity.
+- English-only runtime source outside `i18n/`.
+- No generated/debug artifacts committed to the WATI bundle.
+- No one-off repair XML in the production manifest.
+- No legacy Odoo `_sql_constraints` declarations in production models.
+- No optional Odoo business-model leakage into the core connector.
+- No direct HTTP transport outside the WATI service layer.
+- Aligned WATI module versions and clean production model filenames.
 
 ## Railway deployment
 
-### 1. Deploy this repository
+The Railway entrypoint is `odoo-railway-start.sh`. It waits for PostgreSQL, installs/upgrades the configured WATI module set, clears generated Odoo web assets after an upgrade, and starts Odoo 19.
 
-Create a Railway project and deploy this GitHub repository as a service. Railway should detect the root `Dockerfile` automatically.
-
-The Odoo container listens on port:
-
-```text
-8069
-```
-
-When generating a public domain in Railway, set the target port to `8069` if Railway does not detect it automatically.
-
-### 2. Add PostgreSQL
-
-In the same Railway project add a PostgreSQL service.
-
-In the Odoo service, create variable references to the PostgreSQL service for:
-
-```text
-PGHOST
-PGPORT
-PGUSER
-PGPASSWORD
-PGDATABASE
-```
-
-The official Odoo 19 Docker entrypoint understands the standard PostgreSQL variables `PGHOST`, `PGPORT`, `PGUSER`, and `PGPASSWORD`.
-
-### 3. Persistent storage
-
-Add a Railway Volume to the Odoo service and mount it at:
-
-```text
-/var/lib/odoo
-```
-
-This preserves the Odoo filestore between deployments.
-
-### 4. Open Odoo
-
-Generate a Railway public domain for the Odoo service and open it in the browser.
-
-Create your Odoo database and log in as administrator.
-
-### 5. Install the connector
-
-In Odoo:
-
-1. Open **Apps**.
-2. Update the Apps List if needed.
-3. Search for **Maqsam Connector**.
-4. Install it.
-
-The module is located at:
-
-```text
-custom_addons/maqsam_connector
-```
-
-## Configure Maqsam
-
-After installing the addon, open Odoo Settings and find the **Maqsam** section.
-
-Enter:
-
-- Maqsam Base URL
-- Access Key ID
-- Access Secret
-- Default Caller Number (optional)
-
-The Access Secret is used server-side by Odoo and is not included in the browser URL.
-
-### Map an Odoo user to a Maqsam agent
-
-Open the Odoo user record and set:
-
-```text
-Maqsam Agent Email
-```
-
-If it is empty, the connector falls back to the Odoo user's email/login.
-
-## Test the Dialer
-
-Open the new **Maqsam → Dialer** menu inside Odoo.
-
-Odoo calls its own server route:
-
-```text
-/maqsam/dialer
-```
-
-The server requests a short-lived Maqsam Autologin token and redirects the iframe to the Maqsam Dialer.
-
-Important: Odoo redirects are local by default, so external Maqsam Autologin redirects must explicitly use an external redirect (`local=False`). Otherwise `/autologin` is incorrectly opened on the Odoo domain and results in an Odoo 404 page.
-
-Expected user experience:
-
-```text
-Odoo
- └── Maqsam
-      └── Dialer
-           ├── Outgoing calls
-           └── Incoming calls
-```
-
-The employee stays inside Odoo while the Maqsam Dialer handles voice and call controls.
-
-## Next POC steps
-
-After deployment is verified, the next additions are:
-
-- Call button on CRM leads and Contacts
-- Auto-fill the customer's phone number
-- Incoming-call popup inside Odoo
-- Lookup caller in `res.partner`
-- Open the customer record automatically
-- Call history inside the customer timeline
-- Maqsam Notify webhook integration
-- Agent availability/status inside Odoo
-
-## Security
-
-Do not commit real Maqsam API credentials to GitHub. Configure credentials through Odoo Settings or Railway secrets only.
+The module set can be configured with `WATI_MODULES`. The default is `wati_connector`.

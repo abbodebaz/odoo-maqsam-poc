@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_automation_rule_form_template_mapper" model="ir.ui.view">
+        <field name="name">wati.automation.rule.form.template.mapper</field>
+        <field name="model">wati.automation.rule</field>
+        <field name="inherit_id" ref="wati_connector.view_wati_automation_rule_form_builder"/>
+        <field name="priority">139</field>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('wati_builder_step')][div[hasclass('wati_template_picker_box')]]" position="attributes">
+                <attribute name="class" add="wati_message_step" separator=" "/>
+            </xpath>
+
+            <xpath expr="//div[hasclass('wati_builder_step')][div[hasclass('wati_template_picker_box')]]/div[hasclass('wati_builder_step_head')]/div" position="replace">
+                <div>
+                    <h2>Choose the WhatsApp message</h2>
+                    <p>Pick an approved WATI template and confirm the variables it needs.</p>
+                </div>
+            </xpath>
+
+            <xpath expr="//div[hasclass('wati_template_picker_box')]" position="replace">
+                <div class="wati_template_picker_box wati_template_picker_smart">
+                    <div class="wati_template_picker_intro">
+                        <span class="wati_template_step_label">Message template</span>
+                        <strong>Select a WATI template</strong>
+                        <small>Only approved templates are shown.</small>
+                    </div>
+
+                    <div class="wati_template_field">
+                        <span class="wati_section_label">Selected template</span>
+                        <field name="template_name" nolabel="1" placeholder="No template selected" readonly="1"/>
+                        <div class="wati_template_meta" invisible="not template_name">
+                            <span class="wati_template_meta_item" invisible="not template_status">
+                                <i class="fa fa-check-circle" title="Template status"/>
+                                <field name="template_status" nolabel="1" readonly="1"/>
+                            </span>
+                            <span class="wati_template_meta_item" invisible="not template_language">
+                                <i class="fa fa-language" title="Template language"/>
+                                <field name="template_language" nolabel="1" readonly="1"/>
+                            </span>
+                            <span class="wati_template_meta_item" invisible="not template_channel_number">
+                                <i class="fa fa-phone" title="WATI channel"/>
+                                <field name="template_channel_number" nolabel="1" readonly="1"/>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="wati_template_picker_actions">
+                        <button name="action_pick_template" type="object" string="Browse WATI templates" icon="fa-whatsapp" class="btn-primary"/>
+                        <button name="action_fetch_template_params" type="object" string="Sync" icon="fa-refresh"
+                                class="btn-secondary" invisible="not template_name"/>
+                    </div>
+                </div>
+            </xpath>
+
+            <xpath expr="//div[hasclass('wati_template_preview')]" position="replace">
+                <div class="wati_template_preview wati_template_preview_smart">
+                    <div class="wati_template_preview_empty" invisible="template_body">
+                        <span class="wati_preview_icon"><i class="fa fa-whatsapp" title="WhatsApp preview"/></span>
+                        <strong>WhatsApp preview</strong>
+                        <small>Select a template to preview the message here.</small>
+                    </div>
+
+                    <div class="wati_template_preview_content" invisible="not template_body">
+                        <div class="wati_template_preview_head">
+                            <div class="wati_preview_identity">
+                                <span class="wati_preview_icon wati_preview_icon_small"><i class="fa fa-whatsapp" title="WhatsApp preview"/></span>
+                                <div>
+                                    <span class="wati_template_step_label">WhatsApp preview</span>
+                                    <strong><field name="template_name" nolabel="1" readonly="1"/></strong>
+                                </div>
+                            </div>
+                            <div class="wati_template_variable_count">
+                                <field name="template_parameter_count" nolabel="1" readonly="1"/>
+                                <span>variables</span>
+                            </div>
+                        </div>
+                        <div class="wati_template_message_canvas">
+                            <div class="wati_template_message_bubble">
+                                <field name="template_body" nolabel="1" readonly="1"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+
+            <xpath expr="//div[hasclass('wati_mapping_head')]" position="replace">
+                <div class="wati_mapping_head wati_mapping_head_smart">
+                    <div>
+                        <span class="wati_template_step_label">Variables</span>
+                        <h3>Connect template variables to Odoo</h3>
+                        <p>Map only the values the message needs.</p>
+                    </div>
+                    <div class="wati_mapping_actions" invisible="not template_parameter_count">
+                        <div class="wati_mapping_progress">
+                            <field name="template_mapping_state" widget="badge" readonly="1"
+                                   decoration-success="template_mapping_state == 'ready'"
+                                   decoration-warning="template_mapping_state == 'partial'"/>
+                            <field name="template_mapping_progress" nolabel="1" readonly="1"/>
+                        </div>
+                        <button name="action_auto_map_parameters" type="object" string="Auto-map" icon="fa-magic"
+                                class="btn-secondary"/>
+                    </div>
+                </div>
+            </xpath>
+
+            <xpath expr="//field[@name='parameter_ids']" position="replace">
+                <div class="wati_no_template_variables" invisible="template_parameter_count != 0 or not template_name">
+                    <span class="wati_no_template_variables_icon">✓</span>
+                    <div>
+                        <strong>No variables required</strong>
+                        <small>This template is ready to continue to review.</small>
+                    </div>
+                </div>
+
+                <div class="wati_parameter_mapper" invisible="not template_parameter_count">
+                    <field name="parameter_ids" nolabel="1">
+                        <list editable="bottom" create="false" delete="false" string="Message variables">
+                            <field name="sequence" column_invisible="True"/>
+                            <field name="template_variable_label" string="Variable" readonly="1"/>
+                            <field name="param_name" column_invisible="True"/>
+                            <field name="source_type" string="Value source"/>
+                            <field name="model_id" column_invisible="True"/>
+                            <field name="source_field_id" string="Odoo field"
+                                   options="{'no_create': True, 'no_open': True}"
+                                   invisible="source_type != 'field'"/>
+                            <field name="static_value" string="Value"
+                                   invisible="source_type != 'static'"/>
+                            <field name="source_path" string="Advanced path" optional="hide"
+                                   groups="base.group_system" invisible="source_type != 'field'"/>
+                            <field name="mapping_summary" string="Status" readonly="1"/>
+                        </list>
+                    </field>
+                    <div class="wati_parameter_mapper_hint">
+                        <i class="fa fa-info-circle" title="Variable mapping help"/>
+                        <p>Variables come directly from WATI. Choose where each value should come from in Odoo.</p>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

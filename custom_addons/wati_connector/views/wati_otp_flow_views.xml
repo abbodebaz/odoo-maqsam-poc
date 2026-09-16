@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wati_otp_flow_list" model="ir.ui.view">
+        <field name="name">wati.otp.flow.list</field>
+        <field name="model">wati.otp.flow</field>
+        <field name="arch" type="xml">
+            <list string="OTP Flows" decoration-success="mapping_state == 'ready' and active" decoration-muted="not active">
+                <field name="sequence" widget="handle"/>
+                <field name="active" widget="boolean_toggle"/>
+                <field name="name"/>
+                <field name="model_id"/>
+                <field name="trigger_method"/>
+                <field name="template_id"/>
+                <field name="mapping_state" widget="badge"/>
+                <field name="waiting_count" string="Waiting"/>
+                <field name="verified_count" string="Verified"/>
+                <field name="failed_count" string="Expired / Failed"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_wati_otp_flow_form" model="ir.ui.view">
+        <field name="name">wati.otp.flow.form</field>
+        <field name="model">wati.otp.flow</field>
+        <field name="arch" type="xml">
+            <form string="OTP Flow" class="wati_otp_flow_form">
+                <header>
+                    <button name="action_previous_step" type="object" string="Previous" icon="fa-arrow-left" class="btn-secondary" invisible="setup_step == 'source'"/>
+                    <button name="action_next_step" type="object" string="Next" icon="fa-arrow-right" class="btn-primary" invisible="setup_step == 'verification'"/>
+                    <button name="action_activate" type="object" string="Activate OTP Flow" icon="fa-check" class="btn-primary" invisible="setup_step != 'verification' or active"/>
+                    <field name="active" widget="boolean_toggle"/>
+                </header>
+                <sheet>
+                    <field name="technical_key" invisible="1"/>
+                    <field name="available_app_menu_ids" invisible="1"/>
+                    <field name="available_model_ids" invisible="1"/>
+                    <field name="smart_recipient_metadata" invisible="1"/>
+
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_transactions" type="object" class="oe_stat_button" icon="fa-shield">
+                            <field name="transaction_count" widget="statinfo" string="OTP Transactions"/>
+                        </button>
+                    </div>
+
+                    <div class="oe_title wati_otp_title">
+                        <span class="wati_otp_eyebrow">WHATSAPP OTP FLOW</span>
+                        <h1><field name="name" placeholder="Example: Installation Completion"/></h1>
+                        <div class="wati_otp_ready_line">
+                            <field name="mapping_state" widget="badge" readonly="1"/>
+                            <field name="mapping_summary" readonly="1" nolabel="1"/>
+                        </div>
+                    </div>
+
+                    <div class="wati_otp_statusbar">
+                        <field name="setup_step" widget="statusbar" statusbar_visible="source,recipient,message,verification"/>
+                    </div>
+
+                    <div class="wati_otp_builder_step" invisible="setup_step != 'source'">
+                        <div class="wati_otp_step_heading">
+                            <span class="wati_otp_step_number">1</span>
+                            <div>
+                                <h2>Source &amp; Trigger</h2>
+                                <p>Choose where this service lives in Odoo and when the OTP should be created.</p>
+                            </div>
+                        </div>
+                        <div class="wati_otp_card">
+                            <group>
+                                <group>
+                                    <field name="app_menu_id" options="{'no_create': True}" domain="[('id', 'in', available_app_menu_ids)]"/>
+                                    <field name="model_id" options="{'no_create': True}" domain="[('id', 'in', available_model_ids)]"/>
+                                </group>
+                                <group>
+                                    <field name="trigger_method" widget="radio"/>
+                                </group>
+                            </group>
+                        </div>
+                        <div class="wati_otp_card" invisible="trigger_method != 'field'">
+                            <h3>When should Odoo send the OTP?</h3>
+                            <group>
+                                <group><field name="trigger_field_id" options="{'no_create': True}"/></group>
+                                <group>
+                                    <field name="trigger_operator"/>
+                                    <field name="trigger_value" invisible="trigger_operator != 'equals'" placeholder="Value that should trigger the OTP"/>
+                                </group>
+                            </group>
+                        </div>
+                        <div class="wati_otp_info" invisible="trigger_method != 'manual'">
+                            <i class="fa fa-mouse-pointer"/>
+                            <div>
+                                <strong>Manual service action</strong>
+                                <span>After activation, Odoo adds “Send OTP · Flow name” to the Actions menu for this record type.</span>
+                            </div>
+                        </div>
+                        <div class="wati_otp_info" invisible="trigger_method != 'hook'">
+                            <i class="fa fa-code"/>
+                            <div>
+                                <strong>Integration hook</strong>
+                                <span>Your custom button can call the flow by its integration key. OTP Bridge still generates and verifies the code.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wati_otp_builder_step" invisible="setup_step != 'recipient'">
+                        <div class="wati_otp_step_heading">
+                            <span class="wati_otp_step_number">2</span>
+                            <div>
+                                <h2>Who receives the OTP?</h2>
+                                <p>Choose where Odoo should get the customer’s WhatsApp number.</p>
+                            </div>
+                        </div>
+                        <div class="wati_otp_card wati_otp_recipient_modes">
+                            <field name="recipient_mode" widget="radio" options="{'horizontal': True}" nolabel="1"/>
+                        </div>
+                        <div class="wati_otp_info" invisible="recipient_mode != 'auto'">
+                            <i class="fa fa-magic"/>
+                            <div>
+                                <strong>Automatic — Recommended</strong>
+                                <span>Odoo checks Mobile, Phone, WhatsApp, and linked contact fields automatically at send time.</span>
+                            </div>
+                        </div>
+                        <div class="wati_otp_card" invisible="recipient_mode == 'auto'">
+                            <div class="wati_detected_label"><i class="fa fa-check-circle"/> Detected automatically — no typing required</div>
+                            <h3 invisible="recipient_mode != 'direct'">Select a phone field from this record</h3>
+                            <h3 invisible="recipient_mode != 'related'">Select a phone field from a related record</h3>
+                            <field name="recipient_path" widget="wati_smart_recipient" nolabel="1" placeholder="Choose the recipient phone field"/>
+                        </div>
+                        <div class="wati_otp_preview">
+                            <i class="fa fa-whatsapp"/>
+                            <div>
+                                <strong>Recipient preview</strong>
+                                <field name="recipient_summary" nolabel="1" readonly="1"/>
+                                <field name="recipient_preview_note" nolabel="1" readonly="1"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wati_otp_builder_step" invisible="setup_step != 'message'">
+                        <div class="wati_otp_step_heading">
+                            <span class="wati_otp_step_number">3</span>
+                            <div>
+                                <h2>WhatsApp Message</h2>
+                                <p>Choose an approved WATI template and tell Odoo what each variable means.</p>
+                            </div>
+                        </div>
+                        <div class="wati_otp_card">
+                            <group>
+                                <group><field name="template_id" options="{'no_create': True}"/></group>
+                                <group><field name="channel_number" placeholder="Optional — use a specific WATI number"/></group>
+                            </group>
+                            <div class="wati_otp_template_note">
+                                <i class="fa fa-info-circle"/> Utility, Marketing, or Authentication templates are supported. One variable must be mapped to OTP Code.
+                            </div>
+                        </div>
+                        <div class="wati_otp_card" invisible="not template_id">
+                            <h3>Template variables</h3>
+                            <p class="text-muted">Set one variable to <strong>OTP Code</strong>. Other variables can come from the Odoo record or use a fixed value.</p>
+                            <field name="binding_ids" nolabel="1">
+                                <list editable="bottom" create="false" delete="false">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="variable_name"/>
+                                    <field name="source_type"/>
+                                    <field name="field_path" invisible="source_type != 'record'" placeholder="Example: partner_id.name"/>
+                                    <field name="static_value" invisible="source_type != 'static'"/>
+                                </list>
+                            </field>
+                        </div>
+                    </div>
+
+                    <div class="wati_otp_builder_step" invisible="setup_step != 'verification'">
+                        <div class="wati_otp_step_heading">
+                            <span class="wati_otp_step_number">4</span>
+                            <div>
+                                <h2>Verification &amp; Completion</h2>
+                                <p>Control OTP security and what Odoo does after the customer confirms the code.</p>
+                            </div>
+                        </div>
+                        <div class="wati_otp_card">
+                            <h3>OTP security</h3>
+                            <group>
+                                <group>
+                                    <field name="code_length"/>
+                                    <field name="validity_minutes"/>
+                                </group>
+                                <group>
+                                    <field name="max_attempts"/>
+                                    <field name="allow_resend"/>
+                                    <field name="resend_cooldown_seconds" invisible="not allow_resend"/>
+                                </group>
+                            </group>
+                            <div class="wati_otp_security_note"><i class="fa fa-lock"/> The OTP itself is never stored as plain text. Only a salted cryptographic hash is saved.</div>
+                        </div>
+                        <div class="wati_otp_card">
+                            <h3>After successful verification</h3>
+                            <field name="completion_mode" widget="radio" options="{'horizontal': True}" nolabel="1"/>
+                            <group invisible="completion_mode != 'field'">
+                                <field name="completion_field_id" options="{'no_create': True}"/>
+                                <field name="completion_value" placeholder="Value to write after verification"/>
+                            </group>
+                            <group invisible="completion_mode != 'action'">
+                                <field name="completion_server_action_id" options="{'no_create': True}"/>
+                            </group>
+                        </div>
+                        <div class="wati_otp_review">
+                            <div><span>Flow</span><strong><field name="name" nolabel="1" readonly="1"/></strong></div>
+                            <div><span>Record type</span><strong><field name="model_id" nolabel="1" readonly="1"/></strong></div>
+                            <div><span>Template</span><strong><field name="template_id" nolabel="1" readonly="1"/></strong></div>
+                            <div><span>Validity</span><strong><field name="validity_minutes" nolabel="1" readonly="1"/> min</strong></div>
+                        </div>
+                    </div>
+
+                    <group string="Internal integration" groups="base.group_system" class="mt-4">
+                        <field name="technical_key"/>
+                        <field name="base_automation_id" readonly="1"/>
+                        <field name="trigger_server_action_id" readonly="1"/>
+                        <field name="manual_action_id" readonly="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_wati_otp_flows" model="ir.actions.act_window">
+        <field name="name">OTP Bridge</field>
+        <field name="res_model">wati.otp.flow</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Create your first managed OTP service flow</p>
+            <p>Choose the Odoo service, customer number, WATI template, verification policy, and completion action.</p>
+        </field>
+    </record>
+
+    <record id="view_wati_otp_transaction_list" model="ir.ui.view">
+        <field name="name">wati.otp.transaction.list</field>
+        <field name="model">wati.otp.transaction</field>
+        <field name="arch" type="xml">
+            <list string="OTP Transactions" create="false" delete="false" decoration-success="state == 'verified'" decoration-warning="state == 'sent'" decoration-danger="state in ['failed', 'locked', 'expired']" decoration-muted="state == 'cancelled'">
+                <field name="create_date" string="Requested"/>
+                <field name="state" widget="badge"/>
+                <field name="flow_id"/>
+                <field name="res_name"/>
+                <field name="phone_masked"/>
+                <field name="template_name"/>
+                <field name="attempt_count"/>
+                <field name="expires_at"/>
+                <field name="verified_at" optional="show"/>
+                <field name="verified_by_id" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_wati_otp_transaction_form" model="ir.ui.view">
+        <field name="name">wati.otp.transaction.form</field>
+        <field name="model">wati.otp.transaction</field>
+        <field name="arch" type="xml">
+            <form string="OTP Transaction" create="false" delete="false">
+                <header>
+                    <button name="action_open_verify" type="object" string="Verify OTP" icon="fa-key" class="btn-primary" invisible="state != 'sent'"/>
+                    <button name="action_resend" type="object" string="Resend" icon="fa-refresh" class="btn-secondary" invisible="state != 'sent'"/>
+                    <button name="action_cancel" type="object" string="Cancel" class="btn-secondary" invisible="state != 'sent'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,sent,verified,expired,locked,failed,cancelled"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="res_name" readonly="1"/></h1></div>
+                    <div class="alert alert-info" role="alert"><strong>Security:</strong> The customer’s OTP is never stored or displayed here. Verification uses a salted cryptographic hash.</div>
+                    <group>
+                        <group>
+                            <field name="flow_id" readonly="1"/>
+                            <field name="model_name" readonly="1"/>
+                            <field name="res_id" readonly="1"/>
+                            <field name="phone_masked" readonly="1"/>
+                            <field name="template_name" readonly="1"/>
+                            <field name="source" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="sent_at" readonly="1"/>
+                            <field name="expires_at" readonly="1"/>
+                            <field name="attempt_count" readonly="1"/>
+                            <field name="max_attempts" readonly="1"/>
+                            <field name="verified_at" readonly="1"/>
+                            <field name="verified_by_id" readonly="1"/>
+                            <field name="requested_by_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Error" invisible="not error_message"><field name="error_message" nolabel="1" readonly="1"/></group>
+                    <group string="WATI response" invisible="not provider_excerpt" groups="wati_connector.group_wati_admin"><field name="provider_excerpt" nolabel="1" readonly="1"/></group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_wati_otp_transactions" model="ir.actions.act_window">
+        <field name="name">OTP Transactions</field>
+        <field name="res_model">wati.otp.transaction</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="view_wati_otp_verify_wizard_form" model="ir.ui.view">
+        <field name="name">wati.otp.verify.wizard.form</field>
+        <field name="model">wati.otp.verify.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Verify OTP" class="wati_otp_verify_wizard">
+                <div class="text-center py-3">
+                    <div class="wati_otp_verify_icon"><i class="fa fa-shield"/></div>
+                    <h3>Enter the customer’s OTP</h3>
+                    <p class="text-muted">Use the code the customer received on WhatsApp.</p>
+                </div>
+                <field name="transaction_id" invisible="1"/>
+                <field name="code" nolabel="1" placeholder="000000" class="text-center"/>
+                <footer>
+                    <button name="action_verify" type="object" string="Verify OTP" icon="fa-check" class="btn-primary"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="menu_wati_otp_bridges" model="ir.ui.menu">
+        <field name="name">OTP Bridge</field>
+        <field name="action" ref="action_wati_otp_flows"/>
+    </record>
+    <record id="menu_wati_otp_logs" model="ir.ui.menu">
+        <field name="name">OTP Transactions</field>
+        <field name="action" ref="action_wati_otp_transactions"/>
+    </record>
+</odoo>
